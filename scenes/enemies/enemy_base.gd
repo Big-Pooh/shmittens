@@ -2,19 +2,29 @@ extends Area2D
 
 class_name EnemyBase
 
-# Shared enemy behaviour: health, hit flash, score, drops, death.
-# Enemy scenes put a Sprite2D named "Sprite2D" and a CollisionShape2D under the root.
+# Shared enemy behaviour: health, hit flash, score, drops, death, and the common movement frame:
+#   - if slot_position is set, the enemy first flies there (entry), then
+#   - _behave(delta) runs every physics frame and on_beat(n) on every music beat.
+# Subclasses override _behave / on_beat. Enemy scenes put a Sprite2D named "Sprite2D" and a
+# CollisionShape2D under the root.
 
 signal died(enemy: EnemyBase)
 
 @export var max_health = 3
 @export var score_value = 100
-# Drop chances on death (rolled in this order; at most one drop).
-@export var yarn_chance = 0.03
-@export var battery_chance = 0.04
-@export var cheese_chance = 0.6
+# Drops are decided by the shot that kills (no randomness):
+#   PERFECT click -> 2 cheese, GOOD click -> 1 cheese,
+#   anything else (off-beat, held fire, skills) -> every Nth such kill drops 1 cheese (Game).
+@export var drops = true
+
+const ENTRY_SPEED = 420.0
 
 @onready var sprite: Sprite2D = $Sprite2D
+
+var slot_position = Vector2.INF   # where to fly in to; INF = no entry phase
+var entering = false
+var beats_alive = 0               # beats since the entry finished
+var last_hit_judgement = -1       # Conductor.Judgement of the latest hit, -1 = not a judged click
 
 var health: float
 var is_dead = false
@@ -25,11 +35,51 @@ func _ready():
 	collision_layer = Game.LAYER_ENEMY
 	collision_mask = 0
 	health = max_health
+	entering = slot_position != Vector2.INF
+	Conductor.beat.connect(_on_conductor_beat)
 
 
-func take_damage(amount: float):
+func _physics_process(delta):
 	if is_dead:
 		return
+	if entering:
+		position = position.move_toward(slot_position, ENTRY_SPEED * delta)
+		if position.is_equal_approx(slot_position):
+			entering = false
+		return
+	_behave(delta)
+	if is_off_screen_left():
+		queue_free()
+
+
+func _on_conductor_beat(n: int):
+	if entering or is_dead:
+		return
+	beats_alive += 1
+	on_beat(n)
+
+
+# Override: per-frame movement after the entry.
+func _behave(_delta: float):
+	pass
+
+
+# Override: what to do on each beat (n = beat number since the track started).
+func on_beat(_n: int):
+	pass
+
+
+# Called by player shots with the shot's travel direction and timing judgement
+# (shield mice use both; -1 = held/auto shot).
+func take_hit(amount: float, _direction: Vector2, judgement: int = -1):
+	take_damage(amount, judgement)
+
+
+# Skills call this directly (judgement -1).
+func take_damage(amount: float, judgement: int = -1):
+	if is_dead:
+		return
+	last_hit_judgement = judgement
 	health -= amount
 	if health <= 0:
 		die()
@@ -53,23 +103,31 @@ func die():
 	tween.chain().tween_callback(queue_free)
 
 
-func _flash():
-	sprite.modulate = Color(3, 3, 3)
+func _flash(color := Color(3, 3, 3)):
+	sprite.modulate = color
 	create_tween().tween_property(sprite, "modulate", Color.WHITE, 0.12)
 
 
+# Visual warning one beat before an attack.
+func telegraph():
+	_flash(Color(2.5, 1.2, 0.4))
+
+
 func _drop():
-	var roll = randf()
-	var type = -1
-	if roll < yarn_chance:
-		type = Pickup.Type.YARN
-	elif roll < yarn_chance + battery_chance:
-		type = Pickup.Type.BATTERY
-	elif roll < yarn_chance + battery_chance + cheese_chance:
-		type = Pickup.Type.CHEESE
-	if type != -1:
+	if not drops:
+		return
+	var cheese = 0
+	match last_hit_judgement:
+		Conductor.Judgement.PERFECT:
+			cheese = 2
+		Conductor.Judgement.GOOD:
+			cheese = 1
+		_:
+			cheese = 1 if Game.register_plain_kill() else 0
+	for i in cheese:
 		# deferred: we may be inside a physics callback here
-		get_tree().current_scene.add_child.call_deferred(Pickup.create(type, global_position))
+		var pickup = Pickup.create(Pickup.Type.CHEESE, global_position + Vector2(i * 18, i * -14))
+		get_tree().current_scene.add_child.call_deferred(pickup)
 
 
 func fire_shot(direction: Vector2, speed: float = 320.0):

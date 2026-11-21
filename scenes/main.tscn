@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scenes/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scenes/levels/starfield.gd" id="2_stars"]
 [ext_resource type="PackedScene" uid="uid://f1gu2d5ud7nt" path="res://scenes/player/shmitten.tscn" id="3_cat"]
-[ext_resource type="Script" path="res://scenes/levels/wave_director.gd" id="4_waves"]
+[ext_resource type="Script" path="res://scenes/levels/level_runner.gd" id="4_waves"]
 [ext_resource type="Script" path="res://scenes/ui/hud.gd" id="5_hud"]
 [ext_resource type="Script" path="res://scenes/ui/crosshair.gd" id="6_cross"]
 [ext_resource type="Script" path="res://scenes/gestures/gesture_input.gd" id="7_gesture"]
@@ -17,7 +17,7 @@ script = ExtResource("2_stars")
 [node name="Shmitten" parent="." instance=ExtResource("3_cat")]
 position = Vector2(180, 360)
 
-[node name="WaveDirector" type="Node" parent="."]
+[node name="LevelRunner" type="Node" parent="."]
 script = ExtResource("4_waves")
 
 [node name="HUD" type="CanvasLayer" parent="."]

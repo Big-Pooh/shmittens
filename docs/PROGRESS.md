@@ -8,8 +8,8 @@ Resume a session by reading this file and `docs/PLAN.md` only. The full history 
 | 1 | M0 setup + M1 core shooter | ✅ done |
 | 2 | M2 rhythm | ✅ done |
 | 3 | M3 gestures (playtest check-in after) | ✅ done (playtest still pending) |
-| 4 | M4a enemies + levels | ⏭ next |
-| 5 | M4b bosses + screens | — |
+| 4 | M4a enemies + levels (+ rhythm revision 1) | ✅ done |
+| 5 | M4b bosses + screens | ⏭ next |
 | 6 | M5 polish | — |
 
 ## How to run
@@ -40,26 +40,27 @@ Resume a session by reading this file and `docs/PLAN.md` only. The full history 
   - `enemy_shot.gd`.
 - **`scenes/pickups/pickup.gd`:** cheese, battery and yarn.
 - **`scenes/levels/`:**
-  - `wave_director.gd`: endless growing grunt formations, a placeholder until Day 4;
+  - `levels.gd`: all level/wave data and formations;
+  - `level_runner.gd`: intro → waves on bars → clear → next level;
   - `starfield.gd`.
+- **Enemies:** `grunt`, `gunner`, `dasher`, `shield_mouse` (all extend `enemy_base.gd`; behaviour in `on_beat(n)` / `_behave(delta)`).
+- **Design rules:** see "Revision 1" in `docs/PLAN.md`. Drops and enemy attacks are deterministic and rhythm-driven.
 - **`scenes/ui/`:**
   - `hud.gd`: built in code;
   - `crosshair.gd`: the sprite cursor, confined to the window.
 
-## Next session (Day 4: enemies + levels)
-1. Enemy types, each extending `enemy_base.gd` and acting on `Conductor.beat`, with art added to `tools/gen_art.py`:
-   - **Gunner:** hovers; flashes on the beat before firing an aimed shot every 4 beats.
-   - **Dasher:** charges horizontally at the cat's height on the downbeat (bar).
-   - **Shield mouse:** a front shield blocks shots coming from the left within ±60°; skills and shots from an angle get through.
-2. `LevelData` and `WaveData` resources (`scenes/levels/`):
-   - a level holds its track, a list of waves, and a boss (Day 5);
-   - a wave holds enemy type, formation (grid/column/V), count, health and timing.
-3. Replace the endless `wave_director` with a level runner: waves start on bar boundaries; "LEVEL CLEAR" when all are done.
-4. Three levels:
-   - level1 (110 BPM): grunts and gunners;
-   - level2 (125 BPM): adds dashers;
-   - level3 (140 BPM): adds shield mice.
-5. Tests: each enemy's beat behaviour, the shield-mouse blocking angles, and level progression (forcing waves to clear).
+## Next session (Day 5: bosses + screens)
+1. Boss base (extends `enemy_base`):
+   - big health with a HUD health bar;
+   - **armour:** off-beat and held shots do 50%, on-beat shots and skills 100% (Revision 1);
+   - attack patterns scheduled on beats/bars, with warning flashes; phases by health.
+2. Bosses (art in `gen_art.py`; boss music `boss1-3` already exists):
+   - L1 Mecha-Mouse Tank: bullet fans on beats;
+   - L2 Mouse Mothership: launches grunts and fires a laser on downbeats;
+   - L3 Rat King: 2 phases, with the queen's cage. Defeating him → rescue ending.
+3. Level runner: after the last wave → boss intro (switch to the boss track) → boss fight → LEVEL CLEAR.
+4. Screens: title (start / quit), story cards from `Levels.LEVELS[i].story` before each level, pause (resume / beat offset slider / quit), game over (retry level / quit to title), victory/rescue ending.
+5. Tests: boss armour multipliers, phase change, boss → level clear, the screen flow.
 
 ## Known issues / notes
 - **Playtest pending:** gesture recognition with real mouse strokes, slow-motion feel, rhythm windows and latency, skill balance.

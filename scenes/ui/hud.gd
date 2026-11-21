@@ -26,14 +26,15 @@ func _ready():
 	_build()
 	Game.lives_changed.connect(_on_lives)
 	Game.score_changed.connect(func(s): score_label.text = "SCORE  %06d" % s)
-	Game.wave_changed.connect(func(w): wave_label.text = "WAVE %d" % w)
+	Game.wave_changed.connect(func(_w): _update_wave_label())
+	Game.level_changed.connect(func(_l): _update_wave_label())
 	Game.charges_changed.connect(_on_charges)
 	Game.gun_level_changed.connect(func(l): gun_label.text = "GUN Lv %d" % l)
 	Game.combo_changed.connect(_on_combo)
 	_on_combo(Game.combo, Game.multiplier())
 	_on_lives(Game.lives)
 	score_label.text = "SCORE  %06d" % Game.score
-	wave_label.text = "WAVE %d" % Game.wave
+	_update_wave_label()
 	_on_charges(Game.charges, Game.cheese)
 	gun_label.text = "GUN Lv %d" % Game.gun_level
 
@@ -69,9 +70,9 @@ func _build():
 	score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(score_label)
 
-	wave_label = _label("", 26)
-	wave_label.position = Vector2(1080, 12)
-	wave_label.size = Vector2(180, 40)
+	wave_label = _label("", 24)
+	wave_label.position = Vector2(960, 14)
+	wave_label.size = Vector2(300, 40)
 	wave_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	add_child(wave_label)
 
@@ -119,6 +120,10 @@ func _build():
 	message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	message.hide()
 	add_child(message)
+
+
+func _update_wave_label():
+	wave_label.text = "LEVEL %d   WAVE %d/%d" % [Game.level + 1, Game.wave, Game.wave_total]
 
 
 func _on_lives(lives: int):

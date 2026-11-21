@@ -2,47 +2,40 @@ extends EnemyBase
 
 class_name Grunt
 
-# Robot mouse grunt: flies in from the right to its slot in the formation, then marches left
-# one step on every music beat (Conductor.beat) while bobbing, and sometimes fires straight ahead.
+# Robot mouse grunt: flies in to its formation slot, then marches left one step on every
+# music beat while bobbing. Firing is a fixed rotation (no randomness): on beat 3 of each bar,
+# the grunts whose fire_slot matches (bar % fire_slots) shoot straight ahead - in a grid that's
+# one column per bar, sweeping across the formation.
 
-const ENTRY_SPEED = 420.0
 const STEP_DISTANCE = 14.0
 const BOB_AMPLITUDE = 8.0
-const FIRE_CHANCE_PER_STEP = 0.035
+const FIRE_BEAT = 2   # 0-based beat in the bar (beat 3)
 
-var slot_position: Vector2   # where it settles before marching
-var entering = true
 var bob_time = 0.0
+var fire_slot = 0
+var fire_slots = 1
 
 
 func _ready():
 	super()
 	bob_time = randf() * TAU
-	Conductor.beat.connect(_on_beat)
 
 
-func _on_beat(_n: int):
-	if not entering and not is_dead:
-		step()
-
-
-func _physics_process(delta):
-	if is_dead:
-		return
+func _behave(delta):
 	bob_time += delta
-	if entering:
-		position = position.move_toward(slot_position, ENTRY_SPEED * delta)
-		if position.is_equal_approx(slot_position):
-			entering = false
-		return
-
 	sprite.position.y = sin(bob_time * 3.0) * BOB_AMPLITUDE
-	if is_off_screen_left():
-		queue_free()
+
+
+func on_beat(n: int):
+	step()
+	if should_fire(n):
+		fire_shot(Vector2.LEFT)
+
+
+func should_fire(n: int) -> bool:
+	var bar = n / Conductor.BEATS_PER_BAR
+	return n % Conductor.BEATS_PER_BAR == FIRE_BEAT and bar % fire_slots == fire_slot
 
 
 func step():
-	var tween = create_tween()
-	tween.tween_property(self, "position:x", position.x - STEP_DISTANCE, 0.08)
-	if randf() < FIRE_CHANCE_PER_STEP:
-		fire_shot(Vector2.LEFT)
+	create_tween().tween_property(self, "position:x", position.x - STEP_DISTANCE, 0.08)

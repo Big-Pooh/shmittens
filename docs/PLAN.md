@@ -1,5 +1,43 @@
 # Smittens! ✰ — plan to build the game
 
+## Revision 1 (2026-11-22): rhythm drives the core loop
+**Principle (yours):** the player should be pushed to play on the beat. Rewards should come from playing in rhythm, not from luck, and enemies should move to the rhythm.
+
+**What changes:**
+1. **No random drops.** What an enemy drops depends on the shot that kills it:
+   - killed by a PERFECT click → 2 cheese;
+   - killed by a GOOD click → 1 cheese;
+   - killed off-beat, by auto-fire, or by a skill → nothing.
+2. **Combo milestones replace the rare random drops:**
+   - every 8 on-beat hits in a row → a battery (+1 skill charge);
+   - every 24 → a yarn ball (+1 gun level).
+   
+   They appear next to the cat, so they can't be missed. Breaking the combo only resets the count.
+3. **Armour that only the beat gets through:**
+   - **Shield mice** block off-beat shots from the front. PERFECT shots smash through the plate.
+   - **Bosses (Day 5)** take only 25% damage from off-beat or auto-fire shots, and full damage from on-beat shots.
+4. **Enemies are fully on the beat, with no randomness:**
+   - grunt formations step on every beat, and fire in a fixed rotation (one column per bar, on beat 3) instead of a random chance;
+   - gunners flash on beat 4 and fire on the downbeat;
+   - dashers flash on beat 4 and charge on the downbeat.
+   
+   Every attack can be read and predicted from the music.
+5. **Auto-fire stays as a fallback but rewards nothing:** 0.6 damage, no drops, no combo, and only 25% damage against armour. It keeps the game playable, but clicking on the beat is clearly better.
+6. **Unchanged:** combo multiplier ×1–×4 on score, music layers growing with the combo, empowered skills on the beat.
+
+**Your answers and clarification ("shouldn't be the only way, but one key way") → final rules:**
+- **Drops:**
+  - a PERFECT-click kill drops 2 cheese; a GOOD-click kill drops 1;
+  - every other kill (off-beat, held fire, skills) counts towards a fixed schedule: every 4th such kill drops 1 cheese. Nothing is random.
+- **Combo milestones:** every 5 on-beat hits in a row → a battery; every 15 → a yarn ball.
+- **Holding fire:** shoots automatically exactly on each beat (1.0 damage, not judged, no combo). The old timed auto-fire is gone.
+- **Armour:** the beat is the key way through, but not the only one:
+  - shield plates are smashed by on-beat shots, and are also bypassed by steep-angle shots and by skills;
+  - bosses take 50% damage from off-beat or held shots and 100% from on-beat shots and skills.
+- Points 4 and 6 above stay as written. Point 5 is replaced by the held-fire rule above.
+
+**Effect on the schedule:** the changes fit into Day 4: drops and milestones, the grunt firing rotation, and the shield-mouse rule. Boss armour goes into Day 5. I'll also update the tests for Days 1–3 that assumed random drops.
+
 ## Context
 Smittens is a very early Godot prototype (`~/Desktop/game demos/Smittens! ✰`). The goal is to turn it into a sideways shooter. A superhero cat fights hordes of robot mice across 3 levels to rescue the kidnapped queen. The core verb is shooting. The fun comes from **mouse-drawn gesture skills** and a **beat/rhythm layer**.
 
@@ -150,7 +188,6 @@ Days 1 and 6 are the easiest to merge with a neighbouring day if you have budget
 - **Screenshots:** images are expensive, so I take one per new screen or major visual change, not per tweak.
 - **Tests:** they print one line per check, and failures only, so the output stays small.
 - **Generators:** the art and audio scripts are written once and reused, not re-pasted.
-- **Audit log:** at the end of every phase, append an entry to `docs/AUDIT_LOG.md`: what changed, why, the decisions made, problems found, and how it was verified. Requested by the user for audit purposes.
 - **No sub-agents:** I don't start helper agents, because each one starts from scratch and re-reads everything.
 - **To start a day, say:** "Continue Smittens: day N", in a new conversation opened in the Smittens folder.
 

@@ -15,6 +15,7 @@ var Pickup
 var Shockwave
 var LaserBeam
 var ChainLightning
+var Levels
 const CHEESE = 0
 const BATTERY = 1
 const YARN = 2
@@ -59,7 +60,7 @@ func _start_main():
 	game = root.get_node("Game")
 	cat = main.get_node("Shmitten")
 	# keep tests deterministic: no automatic waves
-	main.wave_director.stop()
+	main.level_runner.stop()
 	for node in get_nodes_in_group("enemies"):
 		node.queue_free()
 	await frames(2)
@@ -70,9 +71,7 @@ func _spawn_grunt(at: Vector2, health := 2):
 	grunt.position = at
 	grunt.slot_position = at
 	grunt.max_health = health
-	grunt.cheese_chance = 0.0
-	grunt.battery_chance = 0.0
-	grunt.yarn_chance = 0.0
+	grunt.drops = false
 	main.add_child(grunt)
 	return grunt
 
@@ -84,6 +83,7 @@ func _run():
 	Shockwave = load("res://scenes/gestures/skills/shockwave.gd")
 	LaserBeam = load("res://scenes/gestures/skills/laser_beam.gd")
 	ChainLightning = load("res://scenes/gestures/skills/chain_lightning.gd")
+	Levels = load("res://scenes/levels/levels.gd")
 	await _start_main()
 
 	# --- cat stays on screen
@@ -161,12 +161,15 @@ func _run():
 	await frames(4)
 	check(not game.is_game_over and game.lives == game.START_LIVES and game.score == 0, "restart resets the run")
 
-	# --- wave director spawns a formation
+	# --- the level restarts (intro first, then waves)
 	await frames(5)
-	check(get_nodes_in_group("enemies").size() > 0, "a wave spawns after restart")
+	check(current_scene.level_runner.state == current_scene.level_runner.State.INTRO, "level restarts after retry")
 
 	await _rhythm_tests()
 	await _gesture_tests()
+	await _rhythm_loop_tests()
+	await _enemy_tests()
+	await _level_tests()
 
 	print("%d passed, %d failed" % [passed, failed])
 	quit(1 if failed else 0)
@@ -400,4 +403,188 @@ func _gesture_tests():
 	var struck = chain.filter(func(g): return _gone(g)).size()
 	check(struck == 5, "lightning hits the target + 4 jumps (%d)" % struck)
 
+	conductor.time_override = -1.0
+
+
+# ---------------------------------------------------------------- Day 4 + revision 1
+
+func _count(group: String, filter := Callable()) -> int:
+	var nodes = get_nodes_in_group(group)
+	if filter.is_valid():
+		nodes = nodes.filter(filter)
+	return nodes.size()
+
+
+func _clear_world():
+	for g in ["enemies", "pickups", "enemy_shots"]:
+		for node in get_nodes_in_group(g):
+			node.queue_free()
+	await frames(2)
+
+
+func _rhythm_loop_tests():
+	await _start_main()
+	var conductor = root.get_node("Conductor")
+	await _clear_world()
+	cat.position = Vector2(150, 650)   # keep the cat away so pickups don't get collected
+
+	# drops follow the killing shot's timing
+	var perfect = _spawn_grunt(Vector2(700, 200), 1)
+	perfect.drops = true
+	await frames(2)
+	perfect.take_hit(2.0, Vector2.RIGHT, conductor.Judgement.PERFECT)
+	await frames(3)
+	check(_count("pickups") == 2, "PERFECT kill drops 2 cheese (%d)" % _count("pickups"))
+	await _clear_world()
+	var good = _spawn_grunt(Vector2(700, 200), 1)
+	good.drops = true
+	await frames(2)
+	good.take_hit(1.5, Vector2.RIGHT, conductor.Judgement.GOOD)
+	await frames(3)
+	check(_count("pickups") == 1, "GOOD kill drops 1 cheese")
+	await _clear_world()
+	game.plain_kills = 0
+	for i in 4:
+		var plain = _spawn_grunt(Vector2(700, 100 + i * 80), 1)
+		plain.drops = true
+		await frames(1)
+		plain.take_hit(1.0, Vector2.RIGHT, -1)
+	await frames(3)
+	check(_count("pickups") == 1, "4 off-beat kills drop exactly 1 cheese (%d)" % _count("pickups"))
+	await _clear_world()
+
+	# combo milestones
+	game.reset()
+	var rewards = []
+	game.reward.connect(func(kind): rewards.append(kind))
+	for i in 15:
+		game.register_judgement(conductor.Judgement.GOOD)
+	check(rewards == ["battery", "battery", "battery", "yarn"], "milestones: battery every 5, yarn at 15 (%s)" % [rewards])
+	await frames(3)
+	check(_count("pickups") == 4, "milestone rewards appear in the world")
+
+	# holding fire shoots on the beat, unjudged
+	await _clear_world()
+	var gun = cat.get_node("Gun")
+	gun.last_click_msec = -100000
+	var before = main.get_children().filter(func(n): return n.get_script() == PlayerShot).size()
+	var combo_before = game.combo
+	Input.action_press("shoot")
+	gun._on_beat(1)
+	Input.action_release("shoot")
+	var held = main.get_children().filter(func(n): return n.get_script() == PlayerShot)
+	check(held.size() - before == game.gun_level and held[-1].judgement == -1 and is_equal_approx(held[-1].damage, 1.0), "held fire shoots on the beat (1.0 dmg, unjudged)")
+	check(game.combo == combo_before, "held fire doesn't touch the combo")
+	gun._on_beat(2)
+	check(main.get_children().filter(func(n): return n.get_script() == PlayerShot).size() == held.size(), "no beat shot when not holding")
+
+
+func _enemy_tests():
+	await _start_main()
+	await _clear_world()
+	cat.position = Vector2(200, 500)
+
+	# grunt firing rotation: slot 1 of 3 fires on beat 3 of bars 1, 4, 7...
+	var grunt = _spawn_grunt(Vector2(900, 300), 9)
+	grunt.fire_slot = 1
+	grunt.fire_slots = 3
+	var fires = []
+	for n in 48:
+		if grunt.should_fire(n):
+			fires.append(n)
+	check(fires == [6, 18, 30, 42], "grunt fires in a fixed rotation (%s)" % [fires])
+
+	# gunner: warning flash on beat 4, aimed shot on the downbeat
+	var gunner = load("res://scenes/enemies/gunner.tscn").instantiate()
+	gunner.position = Vector2(900, 200)
+	main.add_child(gunner)
+	await frames(2)
+	gunner.on_beat(3)
+	check(gunner.sprite.modulate != Color.WHITE, "gunner flashes before firing")
+	var shots_before = _count("enemy_shots")
+	gunner.on_beat(4)
+	await frames(1)
+	var shots = get_nodes_in_group("enemy_shots")
+	check(shots.size() == shots_before + 1, "gunner fires on the downbeat")
+	if shots.size() > 0:
+		var aim = shots[-1].velocity.normalized()
+		check(aim.dot((cat.global_position - gunner.global_position).normalized()) > 0.99, "gunner shot is aimed at the cat")
+
+	# dasher: lines up with the cat, then charges on a downbeat after one bar
+	var dasher = load("res://scenes/enemies/dasher.tscn").instantiate()
+	dasher.position = Vector2(1150, 200)
+	main.add_child(dasher)
+	await frames(2)
+	for n in range(1, 4):
+		dasher._on_conductor_beat(n)
+		await wait(0.15)
+	check(dasher.position.y > 300 and not dasher.dashing, "dasher slides toward the cat's height")
+	dasher._on_conductor_beat(4)
+	check(dasher.dashing, "dasher charges on the downbeat after a bar")
+	var x0 = dasher.position.x
+	await wait(0.2)
+	check(dasher.position.x < x0 - 100, "dasher moves fast when charging")
+
+	# shield mouse: plate blocks off-beat frontal shots; beat, angle and skills get through
+	var conductor = root.get_node("Conductor")
+	var shielded = load("res://scenes/enemies/shield_mouse.tscn").instantiate()
+	shielded.position = Vector2(800, 400)
+	shielded.max_health = 20
+	shielded.drops = false
+	main.add_child(shielded)
+	await frames(2)
+	shielded.take_hit(1.0, Vector2.RIGHT, -1)
+	shielded.take_hit(1.0, Vector2(1, 0.3), conductor.Judgement.MISS)
+	check(shielded.health == 20.0, "plate blocks off-beat and held shots from the front")
+	shielded.take_hit(2.0, Vector2.RIGHT, conductor.Judgement.PERFECT)
+	check(shielded.health == 18.0, "PERFECT shot smashes through the plate")
+	shielded.take_hit(1.0, Vector2(0.3, 1), -1)
+	check(shielded.health == 17.0, "steep-angle shot gets past the plate")
+	shielded.take_damage(5.0)
+	check(shielded.health == 12.0, "skills ignore the plate")
+
+
+func _level_tests():
+	await _start_main()
+	var conductor = root.get_node("Conductor")
+	var runner = main.level_runner
+	await _clear_world()
+
+	# every formation fits on screen
+	var all_inside = true
+	for level in Levels.LEVELS:
+		for wave in level.waves:
+			for group in wave:
+				for slot in Levels.formation_slots(group):
+					if not Rect2(40, 40, 1240, 640).has_point(slot):
+						all_inside = false
+	check(all_inside, "all formation slots are on screen")
+
+	# drive the music bar by bar and clear each wave by force
+	var spb = conductor.seconds_per_beat
+	var bar = [0]
+	var next_bar = func():
+		bar[0] += 1
+		conductor.time_override = bar[0] * 4 * spb + 0.01
+		await process_frame
+		await frames(3)
+	conductor.time_override = 0.01
+	runner.start_level(0)
+	conductor.reset_beats()
+	await process_frame
+	check(runner.state == runner.State.INTRO and game.level == 0, "level 1 starts with its intro")
+	await next_bar.call()
+	await next_bar.call()
+	check(runner.state == runner.State.WAVES and game.wave == 1, "wave 1 starts after the 2-bar intro")
+	check(_count("enemies") == 9, "wave 1 spawns a 3x3 grid (%d)" % _count("enemies"))
+	var waves = Levels.LEVELS[0].waves.size()
+	for w in waves:
+		for e in get_nodes_in_group("enemies"):
+			e.queue_free()
+		await frames(2)
+		await next_bar.call()
+	check(runner.state == runner.State.CLEARED, "level is cleared after its last wave")
+	await next_bar.call()
+	await next_bar.call()
+	check(game.level == 1 and conductor.track == "level2", "level 2 starts with its own music (%s)" % conductor.track)
 	conductor.time_override = -1.0

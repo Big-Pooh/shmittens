@@ -55,5 +55,5 @@ func _on_area_entered(area):
 		return
 	if area is EnemyBase and not area.is_dead:
 		spent = true
-		area.take_damage(damage)
+		area.take_hit(damage, velocity, judgement)
 		queue_free()

@@ -48,6 +48,45 @@ SPRITES = {
         ......KYK...KYK..KK.
         .......K.....K......
     """,
+    # gunner: heavier dark-metal mouse with an orange cannon on its nose
+    "gunner.png": """
+        .......KKK...........
+        ......KPPPK..........
+        ......KPPPK...KKK....
+        .......KKKKKKKDDDK...
+        ..KKKKKDDDDDDDDDDGK..
+        KKOOOKKDDRDDDDDDDGGK.
+        KOOOOOKDDDDDDDDDDGGK.
+        KKOOOKKDDDDDDDDDGGGK.
+        ..KKKKKKDDDDDDDGGGK..
+        .....KKDDDDDDDDGGK.KK
+        ......KKYKKKKYKKK.K.K
+        .......KYK...KYK..KK.
+        ........K.....K......
+    """,
+    # dasher: sleek racing mouse with a red stripe and a jet flame at the back
+    "dasher.png": """
+        .........KKK...........
+        ........KPPK...........
+        .....KKKKKKKKKKKK......
+        ...KKLLLLLLLLLLLLKKOO..
+        .KKWRLLLLRRRRRRLLLKYOO.
+        KKLLLLLLLLLLLLLLLLKOYO.
+        .KKLLLLLLLLLLLLLLKKOO..
+        ...KKKKKKKKKKKKKKK.....
+    """,
+    # the shield mouse carries this plate in front of it
+    "shield_plate.png": """
+        .KKK.
+        KBBBK
+        KBCBK
+        KBCBK
+        KBBBK
+        KBCBK
+        KBCBK
+        KBBBK
+        .KKK.
+    """,
     "player_shot.png": """
         ..CCCCCC..
         .CWWWWWWC.

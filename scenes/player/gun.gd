@@ -2,23 +2,29 @@ extends Node2D
 
 # Fires toward the mouse.
 # - A click fires immediately and is judged against the music beat:
-#     PERFECT x2 damage, GOOD x1.5, off-beat x1 and the combo resets.
-# - Holding the button auto-fires weaker, unjudged shots.
+#     PERFECT x2 damage, GOOD x1.5, off-beat x1 (and the combo resets).
+# - Holding the button fires automatically exactly on each beat: 1.0 damage, not judged, no
+#   combo - an easy fallback that also teaches the rhythm.
 # Gun level (1-5) = number of streams, fanned out by SPREAD_DEGREES.
 
-const AUTO_FIRE_INTERVAL = 1.0 / 6.0
 const SPREAD_DEGREES = 7.0
 const CLICK_DAMAGE = 1.0
-const AUTO_DAMAGE = 0.6
+const HELD_DAMAGE = 1.0
 const JUDGEMENT_DAMAGE = {
 	Conductor.Judgement.MISS: 1.0,
 	Conductor.Judgement.GOOD: 1.5,
 	Conductor.Judgement.PERFECT: 2.0,
 }
+# a held beat-shot is skipped if the player clicked this close to the beat (no double shots)
+const CLICK_SUPPRESS_MSEC = 150
 
 @onready var player: Shmitten = get_parent()
 
-var cooldown = 0.0
+var last_click_msec = -100000
+
+
+func _ready():
+	Conductor.beat.connect(_on_beat)
 
 
 func _unhandled_input(event):
@@ -26,16 +32,16 @@ func _unhandled_input(event):
 		click()
 
 
-func _process(delta):
-	cooldown -= delta
-	if Input.is_action_pressed("shoot") and cooldown <= 0.0:
-		fire(AUTO_DAMAGE)
+func _on_beat(_n: int):
+	if Input.is_action_pressed("shoot") and Time.get_ticks_msec() - last_click_msec > CLICK_SUPPRESS_MSEC:
+		fire(HELD_DAMAGE)
 
 
 # A deliberate click: judged on the beat.
 func click():
 	if not player.can_shoot():
 		return
+	last_click_msec = Time.get_ticks_msec()
 	var judgement = Conductor.judge()
 	Game.register_judgement(judgement)
 	fire(CLICK_DAMAGE * JUDGEMENT_DAMAGE[judgement], judgement)
@@ -44,7 +50,6 @@ func click():
 func fire(damage: float = CLICK_DAMAGE, judgement: int = -1):
 	if not player.can_shoot():
 		return
-	cooldown = AUTO_FIRE_INTERVAL
 	var direction = get_global_mouse_position() - global_position
 	if direction.length() < 1.0:
 		direction = Vector2.RIGHT

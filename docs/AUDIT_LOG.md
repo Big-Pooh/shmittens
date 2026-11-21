@@ -271,3 +271,82 @@ One entry per phase: what changed, why, the decisions made, and how it was verif
 
 ### Process note
 The plan had a playtest check-in after this milestone. You asked me to keep going until tokens run out, so I'm continuing to Day 4 without waiting. Your playtest feedback on gestures and rhythm can still be applied in the Day 6 polish.
+
+---
+
+## Design revision 1: rhythm drives the core loop (2026-11-22)
+**Request:** "the player should be incentivized to use the rhythm mechanic... enemies should move on rhythm, the match between the shot and the extra you get shouldn't be random." Clarified: rhythm "shouldn't be the only way, but one key way".
+
+**Decisions (your answers to the 3 questions):**
+- Rewards:
+  - the timing of the killing shot decides the drop;
+  - combo milestones are "bigger streak rewards" (every 5 / every 15).
+- Held fire: "auto-fire on the beat".
+- Armour: broken by on-beat shots, but not only by them.
+
+**Resulting rules:**
+- **Drops:**
+  - PERFECT-click kill → 2 cheese; GOOD-click kill → 1 cheese;
+  - every other kill counts towards a fixed schedule: every 4th drops 1 cheese.
+  - The old random drop chances (cheese 60%, battery 4%, yarn 3%) are removed.
+- **Combo milestones:** every 5 on-beat hits in a row → battery; every 15 → yarn. They appear next to the cat.
+- **Held fire:** fires automatically on each beat (1.0 damage, not judged, no combo). It's skipped if you clicked within 150 ms of that beat, to avoid double shots. Replaces the 6-shots-a-second timed auto-fire from Day 1/2.
+- **Shield plates:** block off-beat and held shots from the front (±60°). On-beat shots, shots from a steep angle, and skills get through.
+- **Enemy attacks are deterministic and on the beat:**
+  - grunts fire in a fixed rotation: one grid column per bar, on beat 3;
+  - gunners flash on beat 4 and fire on the downbeat;
+  - dashers flash on beat 4 and charge on a downbeat.
+- **Boss armour (Day 5):** off-beat and held shots do 50%; on-beat shots and skills do 100%.
+
+**Why:** with this, rhythm is the most rewarding way to play (more cheese, which means skills; streak rewards; armour breaking), while the other approaches still progress at a lower rate, as you clarified.
+
+**Files:** the revision is recorded in `docs/PLAN.md` ("Revision 1").
+
+---
+
+## Phase 4: Day 4, M4a enemies + levels, plus revision 1 (2026-11-22)
+
+### What changed
+- **Enemy framework (`enemy_base.gd`):** the shared base now owns:
+  - the entry flight to a formation slot;
+  - `_behave(delta)` for per-frame movement and `on_beat(n)` for beat actions;
+  - `beats_alive`;
+  - `telegraph()` (an orange flash before an attack);
+  - `take_hit(amount, direction, judgement)` for player shots and `take_damage(amount, judgement)` for skills;
+  - rhythm-based drops.
+  
+  The grunt was refactored onto this.
+  - *Why:* every enemy type needs the same entry and beat hookup; centralising it keeps each type to a few lines.
+- **New enemies** (art added to `tools/gen_art.py`):
+  - **gunner:** aimed shots on downbeats, with a warning flash first; drifts left each bar;
+  - **dasher:** lines up with the cat's height each beat (at most 90 px per beat), then charges at 900 px/s on the first downbeat after a full bar, with a warning first;
+  - **shield mouse:** a grunt with a plate, following the revision rules above.
+- **Levels (`scenes/levels/levels.gd`):**
+  - 3 levels × 5 waves: Mouse Factory (grunts, gunners), Sewer Fleet (adds dashers), Rat King's Castle (adds shield mice);
+  - formations: grid, column, V, and a line for dashers;
+  - a title, music track, boss track and story text for each level.
+  - **Deviation from the plan:** levels are a GDScript data file, not `.tres` resources.
+    - *Why:* it's far less to write and maintain, and every wave is readable in one place.
+    - Easy to convert to resources later if you want to edit levels in the inspector.
+- **Level runner (`level_runner.gd`):** replaces the Day 1 endless wave spawner (deleted).
+  - Sequence: a 2-bar title intro → each wave spawns on a bar → the next wave starts on the bar after the previous one is cleared → "LEVEL CLEAR" → after 2 bars, the next level with its own music.
+  - After level 3: "ALL LEVELS CLEAR". Day 5 inserts the bosses before each level clear.
+- **Retry:** game over → R restarts the **current** level (`Game.start_level`), as planned.
+- **HUD:** shows "LEVEL n  WAVE w/total".
+
+### Problems found and fixed
+None. All 79 tests passed on the first run after the changes.
+
+### Verification
+- Tests: 79 passed, 0 failed. The 25 new checks cover:
+  - PERFECT and GOOD drops; exactly 1 cheese per 4 plain kills;
+  - the milestone sequence (battery ×3, then yarn at 15) and the rewards appearing in the world;
+  - held fire shoots on the beat, unjudged and without touching the combo; no beat shot when not holding;
+  - the grunt firing rotation (beats 6, 18, 30, 42 for slot 1 of 3);
+  - the gunner's warning flash and its aimed downbeat shot;
+  - the dasher lining up, charging, and its speed;
+  - the shield plate: blocks off-beat and held shots, PERFECT smashes through, steep angles and skills get through;
+  - every formation slot is on screen;
+  - level intro → wave 1 is a 3×3 grid → cleared after 5 waves → level 2 starts with its own track.
+- A screenshot of a mixed Level 3 wave shows the shield plates, gunners, dasher and grunt volley rendering correctly.
+- **Not verified:** difficulty and balance across the 15 waves; how readable the warning flashes are in real play.

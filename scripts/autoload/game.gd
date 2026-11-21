@@ -10,6 +10,8 @@ signal wave_changed(wave: int)
 signal game_over
 signal combo_changed(combo: int, multiplier: int)
 signal judged(judgement: int)
+signal reward(kind: String)          # "battery" / "yarn" from combo milestones
+signal level_changed(level: int)
 
 const START_LIVES = 3
 const CHEESE_PER_CHARGE = 10
@@ -17,6 +19,11 @@ const MAX_CHARGES = 3
 const MAX_GUN_LEVEL = 5
 # On-beat clicks in a row needed for score multiplier x1, x2, x3, x4
 const COMBO_TIERS = [0, 5, 12, 24]
+# Combo milestones (on-beat hits in a row) that hand out rewards
+const BATTERY_EVERY = 5
+const YARN_EVERY = 15
+# Kills that weren't on-beat clicks drop 1 cheese every this many kills
+const PLAIN_KILLS_PER_CHEESE = 4
 
 # Physics layer bits (match [layer_names] in project.godot)
 const LAYER_PLAYER = 1
@@ -35,6 +42,11 @@ var cheese = 0
 var gun_level = 1
 var wave = 0
 var combo = 0
+var plain_kills = 0
+var level = 0
+var wave_total = 0
+# level to (re)start at when the main scene loads; kept across reset() so retry works
+var start_level = 0
 var is_game_over = false
 var drawing = false   # true while a skill gesture is being drawn (gun is disabled)
 
@@ -47,6 +59,7 @@ func reset():
 	gun_level = 1
 	wave = 0
 	combo = 0
+	plain_kills = 0
 	is_game_over = false
 	drawing = false
 	combo_changed.emit(combo, multiplier())
@@ -107,6 +120,10 @@ func register_judgement(judgement: int):
 		combo = 0
 	else:
 		combo += 1
+		if combo % BATTERY_EVERY == 0:
+			reward.emit("battery")
+		if combo % YARN_EVERY == 0:
+			reward.emit("yarn")
 	judged.emit(judgement)
 	combo_changed.emit(combo, multiplier())
 	Conductor.set_layers(multiplier() + 1)
@@ -116,6 +133,20 @@ func reset_combo():
 	combo = 0
 	combo_changed.emit(combo, multiplier())
 	Conductor.set_layers(2)
+
+
+# Returns true when this non-rhythm kill earns a cheese (every PLAIN_KILLS_PER_CHEESE-th).
+func register_plain_kill() -> bool:
+	plain_kills += 1
+	return plain_kills % PLAIN_KILLS_PER_CHEESE == 0
+
+
+func set_level(value: int, total_waves: int):
+	level = value
+	wave_total = total_waves
+	wave = 0
+	level_changed.emit(level)
+	wave_changed.emit(wave)
 
 
 func set_wave(value: int):
