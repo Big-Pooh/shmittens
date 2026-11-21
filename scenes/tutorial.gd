@@ -97,9 +97,9 @@ func _show_step():
 		0:
 			panel_label.text = "STEP 1/5   Fly around with  W A S D"
 		1:
-			panel_label.text = "STEP 2/5   Watch the beat bar and the sparkles...\nthen LEFT-CLICK exactly on the beat (%d/%d)" % [beat_clicks, BEAT_CLICKS_NEEDED]
+			panel_label.text = "STEP 2/5   Watch the beat bar and the sparkles...\nthen press SPACE exactly on the beat (%d/%d)   (the mouse aims)" % [beat_clicks, BEAT_CLICKS_NEEDED]
 		2:
-			panel_label.text = "STEP 3/5   HOLD the left button: Shmitten fires on every beat (%d/%d)" % [held_beats, HELD_BEATS_NEEDED]
+			panel_label.text = "STEP 3/5   HOLD SPACE: Shmitten fires on every beat by itself (%d/%d)" % [held_beats, HELD_BEATS_NEEDED]
 		3:
 			panel_label.text = "STEP 4/5   Shoot the practice mice ON THE BEAT.\nOn-beat kills drop cheese; streaks give batteries. Earn a skill charge!"
 			_spawn_practice_mice()

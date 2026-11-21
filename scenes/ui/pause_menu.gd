@@ -46,7 +46,7 @@ func _build():
 	offset_slider.value_changed.connect(set_beat_offset)
 	box.add_child(offset_slider)
 	var hint = Label.new()
-	hint.text = "If on-beat clicks feel early, move right; if late, move left."
+	hint.text = "If on-beat shots feel early, move right; if late, move left."
 	hint.add_theme_font_size_override("font_size", 14)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(hint)

@@ -1,7 +1,7 @@
 extends Node2D
 
 # Fires toward the mouse.
-# - A click fires immediately and is judged against the music beat:
+# - Pressing SPACE (the "shoot" action; the mouse aims) fires immediately and is judged:
 #     PERFECT x2 damage, GOOD x1.5, off-beat x1 (and the combo resets).
 # - Holding the button fires automatically exactly on each beat: 1.0 damage, not judged, no
 #   combo - an easy fallback that also teaches the rhythm.

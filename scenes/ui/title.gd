@@ -56,7 +56,7 @@ func _ready():
 	buttons.add_child(quit)
 	start.grab_focus()
 
-	var controls = _label("WASD move  ·  click on the beat to shoot  ·  hold right-click and draw to cast skills  ·  Esc pause", 16, Color(0.7, 0.7, 0.8))
+	var controls = _label("WASD move  ·  mouse aims  ·  SPACE on the beat to shoot  ·  hold right-click and draw to cast skills  ·  Esc pause", 16, Color(0.7, 0.7, 0.8))
 	controls.position = Vector2(0, 670)
 	add_child(controls)
 
