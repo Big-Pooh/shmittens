@@ -7,6 +7,7 @@ class_name Mothership
 #   Odd bars:  beat 2 lines up with the cat and shows the warning line (2 beats),
 #              beat 4 fires a screen-wide beam at that height (lasts most of a beat).
 # Phase 2: launches 2 grunts every bar; beam still on odd bars.
+# Melody: one aimed shot per lead note (faster in phase 2).
 
 const TEXTURE = preload("res://Art/Generated/boss_mothership.png")
 const GRUNT = preload("res://scenes/enemies/grunt.tscn")
@@ -15,6 +16,10 @@ const GRUNT = preload("res://scenes/enemies/grunt.tscn")
 func _init():
 	build(TEXTURE, 5.0, 66.0, 160.0)
 	boss_name = "MOUSE MOTHERSHIP"
+
+
+func on_lead_note(pitch: int, _length: int):
+	melody_shot(pitch, 260.0 if phase == 1 else 300.0)
 
 
 func on_beat(n: int):

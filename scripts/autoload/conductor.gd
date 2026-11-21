@@ -12,6 +12,8 @@ extends Node
 signal beat(n: int)        # n counts beats since the track started (0, 1, 2, ...)
 signal bar(n: int)
 signal track_started(track_name: String)
+# A note of the lead melody starts now (pitch = scale index 0..7, length in 8th notes).
+signal lead_note(pitch: int, length: int)
 
 enum Judgement { MISS, GOOD, PERFECT }
 
@@ -45,6 +47,7 @@ var _pause_started_usec = -1
 # bumped by play(); lets the beat loop notice a track change made by a beat listener
 var _generation = 0
 var _last_beat = -1
+var _last_eighth = -1
 var _layer_count = 0
 var _music_bus = -1
 var _lowpass: AudioEffectLowPassFilter
@@ -93,6 +96,7 @@ func play(track_name: String, layers: int = 2):
 	_player.play()
 	_start_usec = Time.get_ticks_usec()
 	_last_beat = -1
+	_last_eighth = -1
 	_generation += 1
 	# tests drive the clock directly: a new track restarts it at 0, like the real clock
 	if time_override >= 0.0:
@@ -191,11 +195,27 @@ func _process(_delta):
 		# a listener started a new track (e.g. boss music): stop emitting the old track's beats
 		if _generation != generation:
 			break
+	if _generation != generation:
+		return
+	# lead melody notes (8th-note grid), from the generated MusicPatterns
+	var eighth_now = int(floor(beat_position() * 2.0))
+	while _last_eighth < eighth_now:
+		_last_eighth += 1
+		if _last_eighth < 0:
+			continue
+		var bar_index = (_last_eighth / 8) % MusicPatterns.BARS
+		var step = _last_eighth % 8
+		for note in MusicPatterns.LEAD[bar_index]:
+			if note[0] == step:
+				lead_note.emit(note[1], note[2])
+		if _generation != generation:
+			break
 
 
 # Tests: restart beat counting (used together with time_override).
 func reset_beats():
 	_last_beat = -1
+	_last_eighth = -1
 
 
 func _exit_tree():

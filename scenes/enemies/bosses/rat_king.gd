@@ -2,11 +2,11 @@ extends Boss
 
 class_name RatKing
 
-# Level 3 (final) boss.
-# Phase 1, every bar: 5-shot fan on the downbeat, a tight aimed triple (360) on beat 3,
-#   warning flash on beat 4; moves every 2 bars.
-# Phase 2 (below half health): summons 2 shield mice immediately and every 2 bars,
-#   a 10-shot ring on the downbeat and a 5-shot fan on beat 3.
+# Level 3 (final) boss. Plays the music:
+#   drums  - phase 1: 5-shot fan on the downbeat; phase 2: 10-shot ring on the downbeat and
+#            2 shield-mouse guards every 2 bars; warning flash on beat 4; moves.
+#   melody - aimed shot per lead note (a tight triple on long notes); phase 2: pairs.
+# Phase 2 starts below half health and summons guards immediately.
 
 const TEXTURE = preload("res://Art/Generated/boss_rat_king.png")
 const SHIELD_MOUSE = preload("res://scenes/enemies/shield_mouse.tscn")
@@ -20,29 +20,28 @@ func _init():
 func on_beat(n: int):
 	var beat = n % Conductor.BEATS_PER_BAR
 	var bar = n / Conductor.BEATS_PER_BAR
-	if phase == 1:
-		match beat:
-			0:
+	match beat:
+		0:
+			if phase == 1:
 				fan(5, 11.0, 320.0)
-			1:
-				if bar % 2 == 0:
-					move_to_y(200.0 if (bar / 2) % 2 == 0 else 520.0)
-			2:
-				fan(3, 4.0, 360.0)
-			3:
-				telegraph()
-	else:
-		match beat:
-			0:
+			else:
 				ring(10, 250.0, bar * 0.31)
-			1:
-				if bar % 2 == 0:
-					_summon_guards()
-			2:
-				fan(5, 10.0, 340.0)
-			3:
-				telegraph()
+		1:
+			if phase == 1 and bar % 2 == 0:
+				move_to_y(200.0 if (bar / 2) % 2 == 0 else 520.0)
+			elif phase == 2 and bar % 2 == 0:
+				_summon_guards()
+		3:
+			telegraph()
+			if phase == 2:
 				move_to_y(player_position().y, 0.3)
+
+
+func on_lead_note(pitch: int, length: int):
+	if phase == 1:
+		melody_shot(pitch, 330.0, 3 if length >= 2 else 1, 4.0)
+	else:
+		melody_shot(pitch, 340.0, 2, 6.0)
 
 
 func on_phase_2():

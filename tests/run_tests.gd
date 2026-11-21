@@ -181,6 +181,7 @@ func _run():
 	await _tutorial_tests()
 	await _assist_tests()
 	_rank_tests()
+	await _lead_note_tests()
 	await _boss_assist_tests()
 	await _guardian_tests()
 	await _fever_tests()
@@ -662,9 +663,18 @@ func _boss_tests():
 	tank.take_damage(tank.health - tank.max_health * 0.4)
 	check(tank.phase == 2 and phases == [2], "boss enters phase 2 below half health")
 	shots = _count("enemy_shots")
-	tank.on_beat(6)
+	tank.on_beat(8)
 	await frames(1)
 	check(_count("enemy_shots") - shots == 7, "phase 2 tank fires 7-shot fans")
+	# bosses play the melody: one shot per lead note, higher notes aim higher
+	var t2 = tank
+	shots = _count("enemy_shots")
+	t2.phase = 1
+	t2.on_lead_note(7, 1)
+	t2.on_lead_note(0, 1)
+	await frames(1)
+	var melody = get_nodes_in_group("enemy_shots").slice(-2)
+	check(_count("enemy_shots") - shots == 2 and melody[0].velocity.y < melody[1].velocity.y, "lead notes fire melody shots; higher pitch aims higher")
 	tank.queue_free()
 	await _clear_world()
 
@@ -1088,3 +1098,19 @@ func _volley_rate_tests():
 	check(normal[0].fire_slots == 3 and gentle[0].fire_slots == 6, "level 1 volley rate halves grunt fire frequency")
 	for e in normal + gentle:
 		e.free()
+
+
+func _lead_note_tests():
+	await _start_main()
+	main.level_runner.stop()
+	var conductor = root.get_node("Conductor")
+	var notes = []
+	conductor.lead_note.connect(func(pitch, length): notes.append([pitch, length]))
+	conductor.time_override = 0.0
+	conductor.play("level1", 2)
+	# advance one full bar (8 eighth notes) of the first bar's melody
+	conductor.time_override = 4 * conductor.seconds_per_beat - 0.01
+	await process_frame
+	await process_frame
+	check(notes.size() == MusicPatterns.LEAD[0].size() and notes[0] == [MusicPatterns.LEAD[0][0][1], MusicPatterns.LEAD[0][0][2]], "Conductor emits the lead melody notes of bar 1 (%d)" % notes.size())
+	conductor.time_override = -1.0

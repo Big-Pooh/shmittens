@@ -7,7 +7,9 @@ class_name Boss
 #   skills do full damage. Rhythm is the key way through, not the only one.
 # - Phase 2 below half health (on_phase_2 hook).
 # - Guaranteed reward on death: 5 cheese + a battery + a yarn.
-# - Attack helpers: fan (aimed spread), ring (all directions).
+# - Attack helpers: fan (aimed spread), ring (all directions), melody_shot (follows the lead melody).
+# - Bosses "play" the music: on_lead_note() fires on each note of the lead melody
+#   (Conductor.lead_note); the drums (beats/bars) drive the big attacks in on_beat().
 # Subclasses call build() in _init and script their attacks in on_beat(n).
 
 signal health_changed(health: float, max_health: float)
@@ -19,6 +21,7 @@ const ASSIST_HEALTH_CUT = 0.15      # beginner care: boss health -15% per assist
 
 var boss_name = "BOSS"
 var phase = 1
+var _note_count = 0
 
 
 func build(texture: Texture2D, sprite_scale: float, hit_radius: float, health: float):
@@ -42,6 +45,7 @@ func _ready():
 	super()
 	add_to_group("bosses")
 	health_changed.emit(health, max_health)
+	Conductor.lead_note.connect(_on_lead_note)
 
 
 func take_hit(amount: float, _direction: Vector2, judgement: int = -1):
@@ -61,6 +65,31 @@ func take_damage(amount: float, judgement: int = -1):
 		_flash(Color(3, 1, 1))
 		Game.shake(10.0)
 		on_phase_2()
+
+
+func _on_lead_note(pitch: int, length: int):
+	if entering or is_dead:
+		return
+	_note_count += 1
+	if Game.assist >= 2 and _note_count % 2 == 0:
+		return   # beginner care: only every other note when heavily assisted
+	on_lead_note(pitch, length)
+
+
+# Override: what to fire on each lead-melody note (default: one melody shot).
+func on_lead_note(pitch: int, _length: int):
+	melody_shot(pitch, 280.0)
+
+
+# Aimed at the cat, tilted by the note's pitch: higher notes aim higher.
+func melody_shot(pitch: int, speed: float, count: int = 1, spread_degrees: float = 5.0):
+	var aim = (player_position() - global_position).angle()
+	# tilt toward the top of the screen for higher notes, whichever way the boss is aiming
+	var up_sign = 1.0 if cos(aim) < 0.0 else -1.0
+	var tilt = (pitch - (MusicPatterns.SCALE_STEPS - 1) / 2.0) * 6.0 * up_sign
+	var base = aim + deg_to_rad(tilt)
+	for i in count:
+		fire_shot(Vector2.from_angle(base + deg_to_rad((i - (count - 1) / 2.0) * spread_degrees)), speed)
 
 
 # Override for a phase-2 entrance (summons etc.).
