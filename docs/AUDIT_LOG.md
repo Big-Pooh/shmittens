@@ -533,3 +533,61 @@ Day 7: the tutorial you asked for.
 
 ### Next
 Your request: sped-up full playthroughs with 3 player profiles (beginner, average, speedrunner), then improvements based on what they show, with special care for the beginner.
+
+---
+
+## Phase 8: persona playthroughs, Monte Carlo, tuning (2026-11-22)
+
+### Requests
+- 3 sped-up playthrough sets (beginner, average, speedrunner), with improvements based on what they show and special care for the beginner.
+- Efficient Monte Carlo simulations with KPIs: fun level and drop rate by level.
+- "Don't break the game and always be able to revert."
+- "Let the beginner finish without hurting the better players; find a tweak that rewards better players."
+
+### Safety and reversibility
+- All work is on the **`tuning/personas` branch**. `main` is untouched at Day 7 (`151b250`).
+- **One commit per decision.** Each message records the evidence and `Revert: git revert <commit>`.
+- The full test suite passed before every commit: 125 → 152 tests.
+
+### Tooling (`ce0fa58`, no gameplay change)
+- `tests/persona_bot.gd`: an automated player. Profiles differ in:
+  - timing accuracy (σ 130 / 60 / 25 ms);
+  - reaction (0.45 / 0.25 / 0.13 s) and dodge reliability;
+  - held-fire habit, pickup greed;
+  - drawing wobble, messy-shape chance, and on-beat release.
+- `tests/playthrough.gd`: a headless run with a fixed 60 fps clock, about 110× real time. It retries via the game's own `retry()`, up to 6 game overs per level, and outputs JSON stats.
+- `tools/montecarlo.py`: runs in parallel (8 workers) and writes the report. The models are documented in the file.
+- **Game hooks:** a simulated music clock, an aim override instead of the mouse, and hit causes for statistics.
+
+### Tuning decisions
+Evidence is from the playthroughs and Monte Carlo runs.
+
+| # | Commit | Change | Why |
+|---|---|---|---|
+| 1 | `6d2dd1a` | Grunt volley warning; beam and dasher warnings 2 beats | Average players died to the beam (up to 13×) and to rams; warnings were about 0.45 s |
+| 2 | `c96528e` | Checkpoints (retry at the current wave or boss); assist (slower shots, +lives) after game overs; L1/L2 shots ×0.8/×0.9 | Beginners never cleared L1; every game over restarted the level |
+| 3 | `797bf09` | Level ranks S/A/B/C (time vs par, PERFECT %, no game over) | Speedrunners finished in about 2 min with nothing to master |
+| 4 | `6df5fb0` | Narrower beam, mothership phase-2 rhythm, lighter Rat King phase 2; assisted boss armour 75% and thinner fans | Beginners stuck at the L1 boss; average players at the mothership and Rat King |
+| 5 | `b85ec28` | Guardian bubble after a game over | Beginners still cleared L1 only 40% of the time |
+| 6 | `2f986a8` | **FEVER:** 16 on-beat hits in a row → 8 beats of piercing, +50% shots | The "reward better players" request |
+| 7 | `ace5e2c` | Assist carries into the next level, reduced by 1; +1 warning beat when assisted; fixed `%%` formatting | Beginners entered L2 with no help (0% clear) |
+| 8 | `f27cf3c` | Assisted bosses: −15% health per assist level; fewer beams; launched grunts don't shoot | Beginners: 32 deaths at the mothership |
+| 9 | `e940213` | Early guardian after 2 deaths; thinner assisted rings; boss-launched grunts don't march | Beginners: 5% L3 clear; L2 rams |
+| 10 | `377962d` | L1 grunt volleys half as often; Rat King triple 420 → 360 | Beginners: 53% L1 drop (first impression) |
+
+### Results
+Full tables are in `docs/KPI.md`; raw reports are in `montecarlo/report_original.md` and `montecarlo/report.md`.
+- **Beginner:** finishes 0% → 55%; L1 drop 100% → 46%; L1 fun 20 → 44.
+- **Average:** finishes 7% → 100%; drop by level 30/74/92% → 6/7/10%; fun 51/33/30 → 65/66/62.
+- **Speedrunner:** finish rate unchanged at 100%. Fun 76/74/62 → 78/67/69. The L2 dip is a known small regression, probably from the phase-2 launches every bar.
+
+### Problems found and fixed
+- **A real bug:** `%%` in a GDScript format string caused a formatting error on the level-clear screen.
+- **Game over erased the checkpoint:** game over stopped the runner before the retry read the checkpoint. The checkpoint is now saved at game over.
+- **Simulation realism:** per-point jitter made the automated player's drawings fizzle about 25% of the time. It now uses smooth hand wobble.
+- **Test assumptions updated** where the design deliberately changed: dasher warning timing, and retry lives.
+
+### Open issues
+- Beginners and the **final boss**: 55% clear and 84% modelled drop in L3.
+- Speedrunner L2 fun dip.
+- All of this is modelled. A human playtest is still the real check.
