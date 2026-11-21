@@ -1,0 +1,42 @@
+[gd_scene load_steps=6 format=3 uid="uid://f1gu2d5ud7nt"]
+
+[ext_resource type="Script" path="res://scenes/player/shmitten.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://2cn34p3orw6f" path="res://Art/Popo-AnimationSheet.png" id="2_sheet"]
+[ext_resource type="Script" path="res://scenes/player/gun.gd" id="3_gun"]
+
+[sub_resource type="CircleShape2D" id="core"]
+radius = 9.0
+
+[sub_resource type="CircleShape2D" id="pickup_radius"]
+radius = 44.0
+
+[node name="Shmitten" type="CharacterBody2D"]
+collision_layer = 0
+collision_mask = 0
+motion_mode = 1
+script = ExtResource("1_script")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.6, 1.6)
+texture = ExtResource("2_sheet")
+hframes = 10
+vframes = 5
+
+[node name="Hitbox" type="Area2D" parent="."]
+position = Vector2(4, 6)
+collision_layer = 1
+collision_mask = 12
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
+shape = SubResource("core")
+
+[node name="PickupArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 16
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PickupArea"]
+shape = SubResource("pickup_radius")
+
+[node name="Gun" type="Node2D" parent="."]
+position = Vector2(30, 4)
+script = ExtResource("3_gun")
