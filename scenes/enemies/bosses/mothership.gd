@@ -6,7 +6,7 @@ class_name Mothership
 #   Even bars: launches 3 grunts on the downbeat.
 #   Odd bars:  beat 2 lines up with the cat and shows the warning line (2 beats),
 #              beat 4 fires a screen-wide beam at that height (lasts most of a beat).
-# Phase 2: launches 2 grunts AND fires the beam every bar.
+# Phase 2: launches 2 grunts every bar; beam still on odd bars.
 
 const TEXTURE = preload("res://Art/Generated/boss_mothership.png")
 const GRUNT = preload("res://scenes/enemies/grunt.tscn")
@@ -21,7 +21,7 @@ func on_beat(n: int):
 	var beat = n % Conductor.BEATS_PER_BAR
 	var bar = n / Conductor.BEATS_PER_BAR
 	var launch_bar = phase == 2 or bar % 2 == 0
-	var beam_bar = phase == 2 or bar % 2 == 1
+	var beam_bar = bar % 2 == 1
 	if beat == 0 and launch_bar:
 		var count = 2 if phase == 2 else 3
 		var slots = []

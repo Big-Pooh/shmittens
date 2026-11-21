@@ -14,6 +14,7 @@ signal health_changed(health: float, max_health: float)
 signal phase_changed(phase: int)
 
 const OFFBEAT_ARMOR = 0.5
+const ASSIST_OFFBEAT_ARMOR = 0.75   # beginner care: with any assist, off-beat shots do 75%
 
 var boss_name = "BOSS"
 var phase = 1
@@ -43,7 +44,8 @@ func _ready():
 
 func take_hit(amount: float, _direction: Vector2, judgement: int = -1):
 	var on_beat = judgement == Conductor.Judgement.GOOD or judgement == Conductor.Judgement.PERFECT
-	take_damage(amount * (1.0 if on_beat else OFFBEAT_ARMOR), judgement)
+	var armor = ASSIST_OFFBEAT_ARMOR if Game.assist > 0 else OFFBEAT_ARMOR
+	take_damage(amount * (1.0 if on_beat else armor), judgement)
 
 
 func take_damage(amount: float, judgement: int = -1):
@@ -90,6 +92,8 @@ func player_position() -> Vector2:
 
 # `count` shots spread over `spread_degrees` between each, centred on the cat.
 func fan(count: int, spread_degrees: float, speed: float):
+	if Game.assist >= 2:
+		count = max(count - 2, 3)   # beginner care: thinner fans after repeated game overs
 	var base = (player_position() - global_position).angle()
 	for i in count:
 		var angle = base + deg_to_rad((i - (count - 1) / 2.0) * spread_degrees)

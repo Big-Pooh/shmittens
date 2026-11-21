@@ -6,7 +6,7 @@ class_name RatKing
 # Phase 1, every bar: 5-shot fan on the downbeat, a tight aimed triple on beat 3,
 #   warning flash on beat 4; moves every 2 bars.
 # Phase 2 (below half health): summons 2 shield mice immediately and every 2 bars,
-#   a 12-shot ring on the downbeat and a 7-shot fan on beat 3.
+#   a 10-shot ring on the downbeat and a 5-shot fan on beat 3.
 
 const TEXTURE = preload("res://Art/Generated/boss_rat_king.png")
 const SHIELD_MOUSE = preload("res://scenes/enemies/shield_mouse.tscn")
@@ -34,12 +34,12 @@ func on_beat(n: int):
 	else:
 		match beat:
 			0:
-				ring(12, 280.0, bar * 0.26)
+				ring(10, 250.0, bar * 0.31)
 			1:
 				if bar % 2 == 0:
 					_summon_guards()
 			2:
-				fan(7, 9.0, 360.0)
+				fan(5, 10.0, 340.0)
 			3:
 				telegraph()
 				move_to_y(player_position().y, 0.3)

@@ -181,6 +181,7 @@ func _run():
 	await _tutorial_tests()
 	await _assist_tests()
 	_rank_tests()
+	await _boss_assist_tests()
 	await _screen_tests()
 
 	print("%d passed, %d failed" % [passed, failed])
@@ -997,3 +998,23 @@ func _rank_tests():
 	check(Levels.rank(60, 45, 0.5, false) == "A", "rank A: within 1.5x par, 50% perfect")
 	check(Levels.rank(200, 45, 0.9, false) == "B", "rank B: slow but no game over")
 	check(Levels.rank(30, 45, 0.9, true) == "C", "rank C: cleared after a game over")
+
+
+func _boss_assist_tests():
+	await _start_main()
+	await _clear_world()
+	main.level_runner.stop()
+	cat.is_invulnerable = true
+	game.assist = 1
+	var tank = await _make_boss("res://scenes/enemies/bosses/mecha_tank.gd")
+	var full = tank.health
+	tank.take_hit(10.0, Vector2.RIGHT, -1)
+	check(is_equal_approx(tank.health, full - 7.5), "with assist, off-beat shots do 75% to bosses")
+	game.assist = 2
+	var shots = _count("enemy_shots")
+	tank.fan(5, 12.0, 300.0)
+	await frames(1)
+	check(_count("enemy_shots") - shots == 3, "assist 2 thins boss fans (5 -> 3)")
+	game.assist = 0
+	tank.queue_free()
+	cat.is_invulnerable = false

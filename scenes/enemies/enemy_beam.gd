@@ -6,7 +6,7 @@ class_name EnemyBeam
 # Shows a thin warning line for `warn_time`, then is deadly for `active_time`.
 # The cat is hit if its centre is within half the beam width. A shield blocks it (via hit()).
 
-const WIDTH = 46.0
+const WIDTH = 38.0
 const COLOR = Color(1.0, 0.3, 0.3)
 
 var right_x = 1280.0
