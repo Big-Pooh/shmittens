@@ -1,14 +1,21 @@
 extends Node2D
 
-# Runs a play session: starts the current level, shows level/wave messages, hands out
-# combo rewards, shows game over and retries the level on R / Enter.
+# Runs a play session: starts the current level, shows level/wave/boss messages, hands out
+# combo rewards, frees the Queen after the final boss, shows game over (R retry level,
+# Esc title) and moves to the ending after the last level.
 
 const REWARD_TYPES = {"battery": Pickup.Type.BATTERY, "yarn": Pickup.Type.YARN}
+const TITLE_SCENE = "res://scenes/ui/title.tscn"
+const ENDING_SCENE = "res://scenes/ui/ending.tscn"
+const QUEEN_CAGE_POSITION = Vector2(1190, 130)
+const ENDING_DELAY = 3.5
 
 @onready var hud: Hud = $HUD
 @onready var crosshair = $Crosshair
 @onready var level_runner: LevelRunner = $LevelRunner
 @onready var player: Shmitten = $Shmitten
+
+var queen_cage: QueenCage
 
 
 func _ready():
@@ -17,7 +24,9 @@ func _ready():
 	Game.reward.connect(_on_reward)
 	level_runner.level_started.connect(_on_level_started)
 	level_runner.wave_started.connect(func(_i, _total): hud.hide_message())
-	level_runner.level_cleared.connect(func(_i): hud.show_message("LEVEL CLEAR!"))
+	level_runner.boss_incoming.connect(_on_boss_incoming)
+	level_runner.boss_spawned.connect(_on_boss_spawned)
+	level_runner.level_cleared.connect(_on_level_cleared)
 	level_runner.all_levels_cleared.connect(_on_all_levels_cleared)
 	level_runner.start_level(Game.start_level)
 
@@ -29,7 +38,29 @@ func _exit_tree():
 
 func _on_level_started(index: int):
 	var level = Levels.LEVELS[index]
-	hud.show_message("LEVEL %d\n%s" % [index + 1, level.title])
+	hud.show_message("LEVEL %d - %s\n%s" % [index + 1, level.title, level.story])
+
+
+func _on_boss_incoming(boss_name: String):
+	hud.show_message("WARNING!\n%s" % boss_name)
+
+
+func _on_boss_spawned(boss: Boss):
+	hud.hide_message()
+	hud.show_boss(boss)
+	# the final boss keeps the Queen caged in the corner
+	if level_runner.level_index == Levels.count() - 1:
+		queen_cage = QueenCage.new()
+		queen_cage.position = QUEEN_CAGE_POSITION
+		add_child(queen_cage)
+
+
+func _on_level_cleared(index: int):
+	if index == Levels.count() - 1 and queen_cage:
+		hud.show_message("THE QUEEN IS FREE!")
+		queen_cage.release(player.global_position)
+	else:
+		hud.show_message("LEVEL CLEAR!")
 
 
 # Combo milestone rewards appear right in front of the cat.
@@ -39,18 +70,23 @@ func _on_reward(kind: String):
 
 
 func _on_all_levels_cleared():
-	hud.show_message("ALL LEVELS CLEAR!\nscore %d" % Game.score)
 	Game.start_level = 0
+	await get_tree().create_timer(ENDING_DELAY, false).timeout
+	get_tree().change_scene_to_file(ENDING_SCENE)
 
 
 func _on_game_over():
 	level_runner.stop()
 	Conductor.stop()
 	crosshair.set_captured(false)
-	hud.show_message("GAME OVER\nscore %d   -   press R to retry level %d" % [Game.score, Game.level + 1])
+	hud.show_message("GAME OVER\nscore %d\nR - retry level %d     Esc - title" % [Game.score, Game.level + 1])
 
 
 func _unhandled_input(event):
-	if Game.is_game_over and event.is_action_pressed("restart"):
+	if not Game.is_game_over:
+		return
+	if event.is_action_pressed("restart"):
 		Game.start_level = Game.level
 		get_tree().reload_current_scene()
+	elif event.is_action_pressed("pause"):
+		get_tree().change_scene_to_file(TITLE_SCENE)

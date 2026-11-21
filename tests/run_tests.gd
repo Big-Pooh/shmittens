@@ -16,6 +16,8 @@ var Shockwave
 var LaserBeam
 var ChainLightning
 var Levels
+var EnemyBeam
+var ShieldMouseScript
 const CHEESE = 0
 const BATTERY = 1
 const YARN = 2
@@ -84,6 +86,8 @@ func _run():
 	LaserBeam = load("res://scenes/gestures/skills/laser_beam.gd")
 	ChainLightning = load("res://scenes/gestures/skills/chain_lightning.gd")
 	Levels = load("res://scenes/levels/levels.gd")
+	EnemyBeam = load("res://scenes/enemies/enemy_beam.gd")
+	ShieldMouseScript = load("res://scenes/enemies/shield_mouse.gd")
 	await _start_main()
 
 	# --- cat stays on screen
@@ -170,6 +174,8 @@ func _run():
 	await _rhythm_loop_tests()
 	await _enemy_tests()
 	await _level_tests()
+	await _boss_tests()
+	await _screen_tests()
 
 	print("%d passed, %d failed" % [passed, failed])
 	quit(1 if failed else 0)
@@ -565,7 +571,7 @@ func _level_tests():
 	var bar = [0]
 	var next_bar = func():
 		bar[0] += 1
-		conductor.time_override = bar[0] * 4 * spb + 0.01
+		conductor.time_override = bar[0] * 4 * conductor.seconds_per_beat + 0.01
 		await process_frame
 		await frames(3)
 	conductor.time_override = 0.01
@@ -583,8 +589,148 @@ func _level_tests():
 			e.queue_free()
 		await frames(2)
 		await next_bar.call()
-	check(runner.state == runner.State.CLEARED, "level is cleared after its last wave")
+	check(runner.state == runner.State.BOSS_INTRO and conductor.track == "boss1", "after the last wave: boss warning + boss music")
+	# a track change restarts the beat clock: restart our fake clock too
+	bar[0] = 0
 	await next_bar.call()
 	await next_bar.call()
+	var bosses = get_nodes_in_group("bosses")
+	check(runner.state == runner.State.BOSS and bosses.size() == 1, "boss spawns after the 2-bar warning")
+	if bosses.size() == 1:
+		bosses[0].die()
+	await frames(2)
+	check(runner.state == runner.State.CLEARED, "killing the boss clears the level")
+	await next_bar.call()
+	await next_bar.call()
+	bar[0] = 0
 	check(game.level == 1 and conductor.track == "level2", "level 2 starts with its own music (%s)" % conductor.track)
 	conductor.time_override = -1.0
+
+
+# ---------------------------------------------------------------- Day 5: bosses + screens
+
+func _make_boss(path: String, at := Vector2(1000, 360)):
+	var boss = load(path).new()
+	boss.position = at
+	boss.drops = false
+	main.add_child(boss)
+	await frames(2)
+	return boss
+
+
+func _boss_tests():
+	await _start_main()
+	var conductor = root.get_node("Conductor")
+	await _clear_world()
+	cat.position = Vector2(200, 360)
+	cat.is_invulnerable = true   # keep the cat alive through boss attacks
+
+	# armour: off-beat/held 50%, on-beat 100%, skills 100%
+	var tank = await _make_boss("res://scenes/enemies/bosses/mecha_tank.gd")
+	var full = tank.max_health
+	tank.take_hit(10.0, Vector2.RIGHT, -1)
+	check(is_equal_approx(tank.health, full - 5.0), "held shot does 50% to a boss")
+	tank.take_hit(10.0, Vector2.RIGHT, conductor.Judgement.MISS)
+	check(is_equal_approx(tank.health, full - 10.0), "off-beat click does 50% to a boss")
+	tank.take_hit(10.0, Vector2.RIGHT, conductor.Judgement.PERFECT)
+	check(is_equal_approx(tank.health, full - 20.0), "on-beat click does full damage to a boss")
+	tank.take_damage(10.0)
+	check(is_equal_approx(tank.health, full - 30.0), "skills do full damage to a boss")
+
+	# tank pattern: 5-shot fan on the downbeat; phase 2 below half health: 7-shot fans
+	var shots = _count("enemy_shots")
+	tank.on_beat(4)
+	await frames(1)
+	check(_count("enemy_shots") - shots == 5, "tank fires a 5-shot fan on the downbeat")
+	var phases = []
+	tank.phase_changed.connect(func(p): phases.append(p))
+	tank.take_damage(tank.health - tank.max_health * 0.4)
+	check(tank.phase == 2 and phases == [2], "boss enters phase 2 below half health")
+	shots = _count("enemy_shots")
+	tank.on_beat(6)
+	await frames(1)
+	check(_count("enemy_shots") - shots == 7, "phase 2 tank fires 7-shot fans")
+	tank.queue_free()
+	await _clear_world()
+
+	# mothership: launches grunts on even bars; beam hits only along its line
+	var ship = await _make_boss("res://scenes/enemies/bosses/mothership.gd")
+	var before = _count("enemies")
+	ship.on_beat(0)
+	await frames(2)
+	check(_count("enemies") - before == 3, "mothership launches 3 grunts")
+	var beam = EnemyBeam.create(900, 300, 0.0, 1.0)
+	check(beam.hits(Vector2(200, 310)) and not beam.hits(Vector2(200, 380)) and not beam.hits(Vector2(1000, 300)), "beam hits only along its line")
+	beam.free()
+	ship.queue_free()
+	await _clear_world()
+
+	# rat king: phase 2 summons shield mice
+	var king = await _make_boss("res://scenes/enemies/bosses/rat_king.gd")
+	before = get_nodes_in_group("enemies").filter(func(e): return e.get_script() == ShieldMouseScript).size()
+	king.take_damage(king.max_health * 0.6)
+	await frames(2)
+	var guards = get_nodes_in_group("enemies").filter(func(e): return e.get_script() == ShieldMouseScript).size() - before
+	check(guards == 2, "Rat King summons 2 shield mice entering phase 2 (%d)" % guards)
+	king.queue_free()
+	await _clear_world()
+
+	# boss death drops a guaranteed reward
+	var reward_tank = await _make_boss("res://scenes/enemies/bosses/mecha_tank.gd")
+	reward_tank.drops = true
+	reward_tank.die()
+	await frames(3)
+	check(_count("pickups") == 7, "boss drops 5 cheese + battery + yarn (%d)" % _count("pickups"))
+
+	# final level: boss fight shows the caged Queen; clearing frees her
+	await _clear_world()
+	var runner = main.level_runner
+	conductor.time_override = 0.01
+	runner.start_level(2)
+	runner.wave_index = Levels.LEVELS[2].waves.size() - 1
+	runner.state = runner.State.WAVES
+	runner._next_wave()   # -> boss intro
+	runner._spawn_boss()
+	await frames(2)
+	check(main.queen_cage != null and main.queen_cage.is_inside_tree(), "final boss fight shows the caged Queen")
+	var cleared = []
+	runner.all_levels_cleared.connect(func(): cleared.append(true))
+	runner.boss.die()
+	await frames(2)
+	check(runner.state == runner.State.CLEARED, "final boss defeated -> cleared")
+	runner.bars_to_wait = 1
+	runner._on_bar(0)
+	check(cleared == [true], "after the final level: all levels cleared")
+	conductor.time_override = -1.0
+	cat.is_invulnerable = false
+
+
+func _screen_tests():
+	await _start_main()
+	# pause menu: pauses, slider sets and saves the beat offset, resume unpauses
+	var conductor = root.get_node("Conductor")
+	var saved = conductor.offset_ms
+	var pause = main.get_node("PauseMenu")
+	pause.toggle()
+	check(paused and pause.is_open(), "pause menu pauses the game")
+	pause.offset_slider.value = 35
+	check(is_equal_approx(conductor.offset_ms, 35.0), "offset slider sets the beat offset")
+	pause.toggle()
+	check(not paused and not pause.is_open(), "resume unpauses")
+	conductor.set_offset_ms(saved)
+
+	# title -> start -> main at level 1
+	change_scene_to_file("res://scenes/ui/title.tscn")
+	for i in 3:
+		await process_frame
+	check(current_scene.name == "Title", "title screen loads")
+	current_scene.start_game()
+	for i in 3:
+		await process_frame
+	check(current_scene.name == "Main" and game.level == 0, "Start begins level 1")
+
+	# ending screen loads and shows the score
+	change_scene_to_file("res://scenes/ui/ending.tscn")
+	for i in 3:
+		await process_frame
+	check(current_scene.name == "Ending", "ending screen loads")

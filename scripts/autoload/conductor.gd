@@ -40,6 +40,8 @@ var _player: AudioStreamPlayer
 var _stream: AudioStreamSynchronized
 var _start_usec = 0
 var _pause_started_usec = -1
+# bumped by play(); lets the beat loop notice a track change made by a beat listener
+var _generation = 0
 var _last_beat = -1
 var _layer_count = 0
 var _music_bus = -1
@@ -86,6 +88,10 @@ func play(track_name: String, layers: int = 2):
 	_player.play()
 	_start_usec = Time.get_ticks_usec()
 	_last_beat = -1
+	_generation += 1
+	# tests drive the clock directly: a new track restarts it at 0, like the real clock
+	if time_override >= 0.0:
+		time_override = 0.0
 	playing = true
 	track_started.emit(track)
 
@@ -168,12 +174,16 @@ func _process(_delta):
 	if not playing and time_override < 0.0:
 		return
 	var current = int(floor(beat_position()))
+	var generation = _generation
 	while _last_beat < current:
 		_last_beat += 1
 		if _last_beat >= 0:
 			beat.emit(_last_beat)
 			if _last_beat % BEATS_PER_BAR == 0:
 				bar.emit(_last_beat / BEATS_PER_BAR)
+		# a listener started a new track (e.g. boss music): stop emitting the old track's beats
+		if _generation != generation:
+			break
 
 
 # Tests: restart beat counting (used together with time_override).

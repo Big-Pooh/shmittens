@@ -242,6 +242,16 @@ Days 1 and 6 are the easiest to merge with a neighbouring day if you have budget
 
 **Day 1 stops when** the tests pass, one gameplay screenshot looks right, and the work is committed. Not on Day 1: music, beat, gestures, other enemy types, bosses, menus.
 
+## Addition (2026-11-22): tutorial
+You asked for a small tutorial at the start, to be built **after everything else is done** (after Day 6). It will be a short guided intro before Level 1, with one step at a time:
+1. move;
+2. click on the beat (the beat bar explained);
+3. hold to fire on the beat;
+4. pick up cheese and watch the charges fill;
+5. draw each of the 4 gestures.
+
+It can be skipped, and is offered once on the first Start.
+
 ## Verification
 - **Headless test scripts**, like the Space Invaders playtest:
   - **Recogniser:** synthetic circles, triangles, zigzags and lines (different sizes, directions and noise) are classified correctly, and random scribbles are rejected.

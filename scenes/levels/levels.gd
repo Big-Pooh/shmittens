@@ -22,6 +22,7 @@ const LEVELS = [
 		"title": "MOUSE FACTORY",
 		"track": "level1",
 		"boss_track": "boss1",
+		"boss": "tank",
 		"story": "The Rat King has taken the Queen!\nShmitten flies into the Mouse Factory to find her.",
 		"waves": [
 			[{"enemy": "grunt", "formation": "grid", "columns": 3, "rows": 3, "health": 2}],
@@ -36,6 +37,7 @@ const LEVELS = [
 		"title": "SEWER FLEET",
 		"track": "level2",
 		"boss_track": "boss2",
+		"boss": "mothership",
 		"story": "The trail leads down into the sewers,\nwhere the mouse fleet guards the way.",
 		"waves": [
 			[{"enemy": "dasher", "formation": "line", "count": 3, "health": 2}],
@@ -51,6 +53,7 @@ const LEVELS = [
 		"title": "RAT KING'S CASTLE",
 		"track": "level3",
 		"boss_track": "boss3",
+		"boss": "rat_king",
 		"story": "At last, the Rat King's castle.\nThe Queen is somewhere inside...",
 		"waves": [
 			[{"enemy": "shield", "formation": "grid", "columns": 3, "rows": 3, "health": 4}],
@@ -65,6 +68,13 @@ const LEVELS = [
 		],
 	},
 ]
+
+const BOSS_SCRIPTS = {
+	"tank": preload("res://scenes/enemies/bosses/mecha_tank.gd"),
+	"mothership": preload("res://scenes/enemies/bosses/mothership.gd"),
+	"rat_king": preload("res://scenes/enemies/bosses/rat_king.gd"),
+}
+const BOSS_SLOT = Vector2(1060, 360)
 
 const SPACING = Vector2(78, 70)
 const DEFAULT_RIGHT_X = 1180.0
@@ -128,3 +138,11 @@ static func create_group(group: Dictionary) -> Array:
 				enemy.fire_slots = 3
 		enemies.append(enemy)
 	return enemies
+
+
+# The level's boss, flying in from the right to BOSS_SLOT (not yet added to the tree).
+static func create_boss(level_index: int) -> Boss:
+	var boss = BOSS_SCRIPTS[LEVELS[level_index].boss].new()
+	boss.slot_position = BOSS_SLOT
+	boss.position = Vector2(SPAWN_X + 80, BOSS_SLOT.y)
+	return boss

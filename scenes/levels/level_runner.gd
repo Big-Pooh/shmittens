@@ -3,19 +3,23 @@ extends Node
 class_name LevelRunner
 
 # Plays a level from Levels.LEVELS in time with the music:
-#   INTRO   - title shown for INTRO_BARS bars
-#   WAVES   - each wave spawns on a bar; when it's cleared the next one waits for the next bar
-#   CLEARED - after the last wave (Day 5: boss fight goes here), then the next level starts
-#   DONE    - all levels finished
+#   INTRO      - title + story for INTRO_BARS bars
+#   WAVES      - each wave spawns on a bar; when it's cleared the next one waits for the next bar
+#   BOSS_INTRO - "WARNING" + boss name, boss music starts, BOSS_INTRO_BARS bars
+#   BOSS       - until the boss dies
+#   CLEARED    - CLEARED_BARS bars, then the next level (or DONE after the last one)
 
 signal level_started(index: int)
 signal wave_started(index: int, total: int)
+signal boss_incoming(boss_name: String)
+signal boss_spawned(boss: Boss)
 signal level_cleared(index: int)
 signal all_levels_cleared
 
-enum State { IDLE, INTRO, WAVES, CLEARED, DONE }
+enum State { IDLE, INTRO, WAVES, BOSS_INTRO, BOSS, CLEARED, DONE }
 
-const INTRO_BARS = 2
+const INTRO_BARS = 3
+const BOSS_INTRO_BARS = 2
 const CLEARED_BARS = 2
 
 var state = State.IDLE
@@ -23,6 +27,7 @@ var level_index = 0
 var wave_index = -1
 var alive = 0
 var bars_to_wait = 0
+var boss: Boss
 
 
 func _ready():
@@ -37,6 +42,7 @@ func start_level(index: int):
 	level_index = clamp(index, 0, Levels.count() - 1)
 	wave_index = -1
 	alive = 0
+	boss = null
 	state = State.INTRO
 	bars_to_wait = INTRO_BARS
 	Game.set_level(level_index, level().waves.size())
@@ -49,7 +55,7 @@ func stop():
 
 
 func _on_bar(_n: int):
-	if state == State.IDLE or state == State.DONE or Game.is_game_over:
+	if state == State.IDLE or state == State.DONE or state == State.BOSS or Game.is_game_over:
 		return
 	if bars_to_wait > 0:
 		bars_to_wait -= 1
@@ -62,6 +68,8 @@ func _on_bar(_n: int):
 		State.WAVES:
 			if alive <= 0:
 				_next_wave()
+		State.BOSS_INTRO:
+			_spawn_boss()
 		State.CLEARED:
 			if level_index + 1 < Levels.count():
 				start_level(level_index + 1)
@@ -74,9 +82,7 @@ func _next_wave():
 	wave_index += 1
 	var waves = level().waves
 	if wave_index >= waves.size():
-		state = State.CLEARED
-		bars_to_wait = CLEARED_BARS
-		level_cleared.emit(level_index)
+		_start_boss_intro()
 		return
 	Game.set_wave(wave_index + 1)
 	for group in waves[wave_index]:
@@ -90,3 +96,26 @@ func _next_wave():
 func _on_enemy_gone():
 	alive -= 1
 	# the next wave starts on the next bar (handled in _on_bar)
+
+
+func _start_boss_intro():
+	state = State.BOSS_INTRO
+	bars_to_wait = BOSS_INTRO_BARS
+	boss = Levels.create_boss(level_index)
+	Game.set_wave(-1)   # HUD shows BOSS
+	# switching tracks restarts the bar count, so the intro is measured in boss-music bars
+	Conductor.play(level().boss_track, Game.multiplier() + 1)
+	boss_incoming.emit(boss.boss_name)
+
+
+func _spawn_boss():
+	state = State.BOSS
+	boss.died.connect(_on_boss_died)
+	get_tree().current_scene.add_child(boss)
+	boss_spawned.emit(boss)
+
+
+func _on_boss_died(_boss):
+	state = State.CLEARED
+	bars_to_wait = CLEARED_BARS
+	level_cleared.emit(level_index)

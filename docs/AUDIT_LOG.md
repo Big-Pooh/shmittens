@@ -361,3 +361,67 @@ None. All 79 tests passed on the first run after the changes.
 **Why paused:** you asked to stop after Day 4 so your usage limit can reset.
 
 **Not verified yet:** the boss behaviour. No boss tests exist until Day 5 continues.
+
+---
+
+## Phase 5: Day 5, M4b bosses + screens (2026-11-22)
+
+### What changed
+**Bosses (`scenes/enemies/bosses/`)**
+- **`boss.gd` base:**
+  - armour per Revision 1: off-beat and held shots do 50%; on-beat clicks and skills do 100%;
+  - phase 2 below 50% health (marked "ENRAGED");
+  - a guaranteed drop of 5 cheese + battery + yarn;
+  - helpers: aimed fan, ring, move, summon;
+  - never despawns off-screen.
+- **Mecha-Mouse Tank (L1, 120 HP):**
+  - phase 1: warning on beat 4, a 5-shot fan on the downbeat, repositions every 2 bars;
+  - phase 2: 7-shot fans on beats 1 and 3, tracking the cat.
+- **Mouse Mothership (L2, 160 HP):**
+  - even bars: launches 3 grunts;
+  - odd bars: lines up with the cat on beat 2, shows a warning line on beat 3, fires a screen-wide beam on beat 4;
+  - phase 2: both every bar.
+- **The Rat King (L3, 220 HP):**
+  - phase 1: fan on the downbeat, an aimed triple on beat 3;
+  - phase 2: summons 2 shield mice immediately and every 2 bars, a 12-shot ring on the downbeat, 7-shot fans.
+- **Enemy beam (`enemy_beam.gd`):** a blinking warning line, then a deadly band 46 px tall. It goes through `player.hit()`, so the shield and invulnerability still protect.
+- *Why:* every attack is scheduled on beats or bars with a warning one beat earlier, following your principle that attacks should be readable from the music. No boss randomness.
+
+**Level flow (`level_runner.gd`, `levels.gd`)**
+- Sequence: INTRO (title + story, 3 bars) → WAVES → BOSS_INTRO ("WARNING" + boss name; boss music starts; 2 bars) → BOSS → CLEARED (2 bars) → next level or DONE.
+- The HUD shows "BOSS" instead of the wave count during the fight, plus a boss name and health bar.
+- **Final level:** the caged Queen hangs in the corner during the Rat King fight. On victory the cage opens, she flies to the cat, and the ending screen follows 3.5 s later.
+
+**Screens**
+- **Title** (now the start scene): name, story line, the animated cat, Start / Quit, a controls hint, and level 1 drums in the background.
+- **Pause (Esc):** Resume, a beat-offset slider (−200 to +200 ms in 5 ms steps, saved) with an explanation, and Quit to title.
+- **Game over:** R retries the current level; Esc goes to the title.
+- **Ending:** "THE QUEEN IS FREE!", the cat and the Queen, the final score, and a click to return to the title.
+
+### Problems found and fixed
+- **Switching music inside a beat handler could replay old beats.**
+  - *Cause:* the boss music now starts from inside a bar signal, and that was already true for level changes. A new track restarted the beat count halfway through the beat loop.
+  - *Fix:* the Conductor tracks a "generation" number and stops emitting when the track changes mid-loop.
+  - In tests, a new track now also resets the fake clock to 0, matching what the real clock does.
+- **Godot refused the pause script.**
+  - *Cause:* the pause menu's `set_offset()` clashed with a built-in Godot method.
+  - *Fix:* renamed it to `set_beat_offset()`.
+- **Wrong node names.** The title and ending scenes were named "Utitle"/"Uending" because macOS `sed` doesn't support `\U`. Corrected.
+- **Level flow test updated.** The old "level 1 cleared" test expected no boss; it now checks waves → warning → boss → clear → level 2.
+
+### Verification
+- Tests: 101 passed, 0 failed. The 22 new checks cover:
+  - boss armour: held, off-beat, on-beat and skill damage;
+  - the tank's 5-shot then 7-shot fans and the phase-2 switch;
+  - mothership launches, and the beam hitting only along its line;
+  - the Rat King's phase-2 guards;
+  - the boss reward drop of 7 pickups;
+  - the runner's last wave → boss → cleared, the final boss → caged Queen → all levels cleared;
+  - pause, the offset slider and resume;
+  - title → Start → level 1; the ending screen loads.
+- A 2×2 screenshot sheet checked the title, the enraged Rat King with the caged Queen and boss bar, the pause menu and the ending.
+- **Not verified:** boss difficulty and fight length; whether 3 bars of story text is enough reading time.
+
+### Requests noted for later
+- **Tutorial:** added to the plan, to be built after Day 6.
+- **Background beat hints** (sparkles pulsing with the beat): scheduled for Day 6 polish.

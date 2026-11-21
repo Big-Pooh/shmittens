@@ -19,6 +19,9 @@ var cheese_bar: ProgressBar
 var gun_label: Label
 var message: Label
 var combo_label: Label
+var boss_box: VBoxContainer
+var boss_label: Label
+var boss_bar: ProgressBar
 
 
 func _ready():
@@ -114,6 +117,22 @@ func _build():
 	beat_bar.position = Vector2(640 - 220, 664)
 	add_child(beat_bar)
 
+	boss_box = VBoxContainer.new()
+	boss_box.position = Vector2(390, 78)
+	boss_box.custom_minimum_size = Vector2(500, 0)
+	boss_box.hide()
+	add_child(boss_box)
+	boss_label = _label("", 20, Color(1, 0.5, 0.5))
+	boss_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	boss_box.add_child(boss_label)
+	boss_bar = ProgressBar.new()
+	boss_bar.custom_minimum_size = Vector2(500, 14)
+	boss_bar.show_percentage = false
+	var boss_fill = StyleBoxFlat.new()
+	boss_fill.bg_color = Color(0.9, 0.2, 0.3)
+	boss_bar.add_theme_stylebox_override("fill", boss_fill)
+	boss_box.add_child(boss_bar)
+
 	message = _label("", 48, GOLD)
 	message.position = Vector2(0, 280)
 	message.size = Vector2(1280, 160)
@@ -123,7 +142,10 @@ func _build():
 
 
 func _update_wave_label():
-	wave_label.text = "LEVEL %d   WAVE %d/%d" % [Game.level + 1, Game.wave, Game.wave_total]
+	if Game.wave < 0:
+		wave_label.text = "LEVEL %d   BOSS" % (Game.level + 1)
+	else:
+		wave_label.text = "LEVEL %d   WAVE %d/%d" % [Game.level + 1, Game.wave, Game.wave_total]
 
 
 func _on_lives(lives: int):
@@ -149,6 +171,16 @@ func _on_combo(combo: int, multiplier: int):
 		combo_label.pivot_offset = combo_label.size / 2
 		combo_label.scale = Vector2.ONE * 1.25
 		create_tween().tween_property(combo_label, "scale", Vector2.ONE, 0.12)
+
+
+func show_boss(boss: Boss):
+	boss_label.text = boss.boss_name
+	boss_bar.max_value = boss.max_health
+	boss_bar.value = boss.max_health
+	boss_box.show()
+	boss.health_changed.connect(func(health, _max): boss_bar.value = health)
+	boss.phase_changed.connect(func(_p): boss_label.text = boss.boss_name + "  - ENRAGED!")
+	boss.died.connect(func(_b): boss_box.hide())
 
 
 func show_message(text: String):
