@@ -16,12 +16,14 @@ const ENDING_DELAY = 3.5
 @onready var player: Shmitten = $Shmitten
 
 var queen_cage: QueenCage
+var shake_strength = 0.0
 
 
 func _ready():
 	Game.reset()
 	Game.game_over.connect(_on_game_over)
 	Game.reward.connect(_on_reward)
+	Game.shake_requested.connect(func(s): shake_strength = max(shake_strength, s))
 	level_runner.level_started.connect(_on_level_started)
 	level_runner.wave_started.connect(func(_i, _total): hud.hide_message())
 	level_runner.boss_incoming.connect(_on_boss_incoming)
@@ -29,6 +31,16 @@ func _ready():
 	level_runner.level_cleared.connect(_on_level_cleared)
 	level_runner.all_levels_cleared.connect(_on_all_levels_cleared)
 	level_runner.start_level(Game.start_level)
+
+
+# Screen shake: the whole world node jitters (HUD layers stay still), decaying quickly.
+func _process(delta):
+	if shake_strength > 0.1:
+		position = Vector2(randf_range(-1, 1), randf_range(-1, 1)) * shake_strength
+		shake_strength = lerp(shake_strength, 0.0, min(delta * 12.0, 1.0))
+	elif position != Vector2.ZERO:
+		position = Vector2.ZERO
+		shake_strength = 0.0
 
 
 func _exit_tree():
@@ -43,6 +55,7 @@ func _on_level_started(index: int):
 
 func _on_boss_incoming(boss_name: String):
 	hud.show_message("WARNING!\n%s" % boss_name)
+	Sfx.play("siren")
 
 
 func _on_boss_spawned(boss: Boss):
@@ -65,6 +78,7 @@ func _on_level_cleared(index: int):
 
 # Combo milestone rewards appear right in front of the cat.
 func _on_reward(kind: String):
+	Sfx.play("jingle")
 	var pickup = Pickup.create(REWARD_TYPES[kind], player.global_position + Vector2(70, 0))
 	add_child.call_deferred(pickup)
 

@@ -94,6 +94,7 @@ func die():
 	is_dead = true
 	Game.add_score(score_value)
 	Sfx.play("explode", -4.0)
+	_explode()
 	_drop()
 	died.emit(self)
 	set_deferred("monitorable", false)
@@ -101,6 +102,31 @@ func die():
 	tween.tween_property(sprite, "scale", sprite.scale * 1.6, 0.18)
 	tween.tween_property(sprite, "modulate", Color(1.5, 1.2, 0.6, 0.0), 0.18)
 	tween.chain().tween_callback(queue_free)
+
+
+# Debris burst; bosses raise explosion_amount.
+var explosion_amount = 14
+
+func _explode():
+	var particles = CPUParticles2D.new()
+	particles.position = global_position
+	particles.one_shot = true
+	particles.explosiveness = 1.0
+	particles.amount = explosion_amount
+	particles.lifetime = 0.5
+	particles.spread = 180.0
+	particles.gravity = Vector2.ZERO
+	particles.initial_velocity_min = 80.0
+	particles.initial_velocity_max = 260.0 + explosion_amount * 2.0
+	particles.scale_amount_min = 3.0
+	particles.scale_amount_max = 6.0
+	var ramp = Gradient.new()
+	ramp.set_color(0, Color(1, 0.85, 0.4))
+	ramp.set_color(1, Color(1, 0.3, 0.2, 0))
+	particles.color_ramp = ramp
+	particles.emitting = true
+	get_tree().current_scene.add_child.call_deferred(particles)
+	get_tree().create_timer(1.0).timeout.connect(particles.queue_free)
 
 
 func _flash(color := Color(3, 3, 3)):

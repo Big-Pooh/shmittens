@@ -10,6 +10,13 @@ const SOUNDS = {
 	"power_up": preload("res://Audio/power_up.wav"),
 	"player_hit": preload("res://Audio/player_hit.wav"),
 	"enemy_shoot": preload("res://Audio/enemy_shoot.wav"),
+	"shockwave": preload("res://Audio/shockwave.wav"),
+	"laser": preload("res://Audio/laser.wav"),
+	"lightning": preload("res://Audio/lightning.wav"),
+	"shield": preload("res://Audio/shield.wav"),
+	"siren": preload("res://Audio/siren.wav"),
+	"jingle": preload("res://Audio/jingle.wav"),
+	"perfect": preload("res://Audio/perfect.wav"),
 }
 
 const POOL_SIZE = 12

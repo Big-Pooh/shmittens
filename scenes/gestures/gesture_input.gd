@@ -151,7 +151,8 @@ func cast_skill(skill: String, empowered: bool, direction: Vector2 = Vector2.RIG
 			scene.add_child(ChainLightning.create(player.global_position, get_global_mouse_position(), empowered))
 		"shield":
 			player.add_child(Shield.create(empowered))
-	Sfx.play("power_up")
+	Sfx.play(skill)
+	Game.shake({"shockwave": 9.0, "laser": 6.0, "lightning": 5.0, "shield": 2.0}[skill] * (1.4 if empowered else 1.0))
 	var text = skill.to_upper() + "!"
 	if empowered:
 		text = "EMPOWERED " + text

@@ -76,6 +76,9 @@ func play(track_name: String, layers: int = 2):
 	track = track_name
 	bpm = TRACK_BPM.get(track_name, 120)
 	seconds_per_beat = 60.0 / bpm
+	# release the previous track's stream + playback before building the new one (avoids a leak)
+	_player.stop()
+	_player.stream = null
 	_stream = AudioStreamSynchronized.new()
 	_stream.stream_count = LAYERS.size()
 	for i in LAYERS.size():

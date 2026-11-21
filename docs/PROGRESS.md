@@ -10,8 +10,8 @@ Resume a session by reading this file and `docs/PLAN.md` only. The full history 
 | 3 | M3 gestures (playtest check-in after) | ✅ done (playtest still pending) |
 | 4 | M4a enemies + levels (+ rhythm revision 1) | ✅ done |
 | 5 | M4b bosses + screens | ✅ done |
-| 6 | M5 polish | ⏭ next |
-| 7 | Tutorial (your addition) | — |
+| 6 | M5 polish (+ beat hints, perf/memory) | ✅ done |
+| 7 | Tutorial (your addition) | ⏭ next |
 
 ## How to run
 - Godot: `~/Desktop/Godot_v4.7.2.app` (the project needs 4.7.2).
@@ -45,6 +45,7 @@ Resume a session by reading this file and `docs/PLAN.md` only. The full history 
   - `level_runner.gd`: intro → waves on bars → clear → next level;
   - `starfield.gd`.
 - **Bosses:** `scenes/enemies/bosses/` (base + tank, mothership, rat_king) and `enemy_beam.gd`.
+- **Effects:** `scenes/levels/beat_fx.gd` (beat sparkles and edge glow); screen shake via `Game.shake()`, applied in `main.gd`.
 - **Screens:** `scenes/ui/title`, `pause_menu.gd`, `ending`; `scenes/levels/queen_cage.gd`.
 - **Enemies:** `grunt`, `gunner`, `dasher`, `shield_mouse` (all extend `enemy_base.gd`; behaviour in `on_beat(n)` / `_behave(delta)`).
 - **Design rules:** see "Revision 1" in `docs/PLAN.md`. Drops and enemy attacks are deterministic and rhythm-driven.
@@ -52,18 +53,18 @@ Resume a session by reading this file and `docs/PLAN.md` only. The full history 
   - `hud.gd`: built in code;
   - `crosshair.gd`: the sprite cursor, confined to the window.
 
-## Next session (Day 6: polish)
-1. **Background beat hints (your request):** sparkles and background stars that pulse on every beat, with a bigger burst on the downbeat; a subtle screen-edge glow on the beat. They should help you feel the rhythm without looking at the beat bar.
-2. Juice:
-   - screen shake on boss hits, player death and skill casts;
-   - hit flashes and small explosion particles;
-   - a visual for the dash warning.
-3. Sound pass:
-   - distinct sounds per skill, a boss warning siren, and a combo-milestone jingle;
-   - check the music/sfx balance.
-4. Balancing, based on your playtest if available: drop amounts, boss health, wave sizes.
-5. A final full run through all 3 levels (scripted), plus a screenshot sheet.
-6. Then **Day 7, the tutorial** (see "Addition: tutorial" in `docs/PLAN.md`).
+## Next session (Day 7: tutorial)
+Follow "Addition: tutorial" in `docs/PLAN.md`: a short guided intro before Level 1, one step at a time, with each step completed by doing it:
+1. move;
+2. click on the beat (the beat bar and the background hints explained);
+3. hold to fire on the beat;
+4. pick up cheese and see the charges fill;
+5. draw each gesture.
+
+It can be skipped, is offered on the first Start, and the choice is remembered in `user://settings.cfg`.
+
+## How to check performance
+`~/Desktop/Godot_v4.7.2.app/Contents/MacOS/Godot --path . -s tests/perf_benchmark.gd` (needs a window). Last result: 8.3 ms average, 9.7 ms worst frame, 42 MB, no leftover nodes.
 
 ## Known issues / notes
 - **Playtest pending:** gesture recognition with real mouse strokes, slow-motion feel, rhythm windows and latency, skill balance.

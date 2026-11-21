@@ -23,9 +23,13 @@ func on_beat(n: int):
 	if beats_alive >= Conductor.BEATS_PER_BAR and phase == 0:
 		dashing = true
 		return
-	if beats_alive >= Conductor.BEATS_PER_BAR - 1 and phase == 3:
-		telegraph()
+	var target_y = position.y
 	var player = get_tree().get_first_node_in_group("player") as Node2D
 	if player:
 		var dy = clamp(player.global_position.y - position.y, -MAX_ALIGN_PER_BEAT, MAX_ALIGN_PER_BEAT)
-		create_tween().tween_property(self, "position:y", position.y + dy, 0.12)
+		target_y = position.y + dy
+		create_tween().tween_property(self, "position:y", target_y, 0.12)
+	if beats_alive >= Conductor.BEATS_PER_BAR - 1 and phase == 3:
+		telegraph()
+		# warning-only line along the charge path (active_time 0 = never deadly)
+		get_tree().current_scene.add_child(EnemyBeam.create(position.x - 40, target_y, Conductor.seconds_per_beat, 0.0))

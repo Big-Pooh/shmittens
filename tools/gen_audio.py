@@ -72,6 +72,17 @@ def main():
     write("power_up.wav", sum((sweep(0.07, f, f * 1.05, 0.2, tri, 0.4) for f in (523, 659, 784, 1047)), []))
     write("player_hit.wav", mix(sweep(0.6, 900, 80, 0.2), noise(0.7, 0.35, 8)))
     write("enemy_shoot.wav", sweep(0.12, 500, 250, 0.1, tri))
+    # skills, boss warning, rewards, perfect-click tick
+    write("shockwave.wav", mix(sweep(0.5, 180, 40, 0.3, tri, 1.2), noise(0.5, 0.25, 6)))
+    write("laser.wav", mix(sweep(0.45, 1600, 1200, 0.15, square, 0.8), sweep(0.45, 400, 380, 0.1, tri, 0.8)))
+    write("lightning.wav", mix(noise(0.35, 0.35, 1), sweep(0.35, 2400, 300, 0.08)))
+    write("shield.wav", sum((sweep(0.09, f, f, 0.18, tri, 0.3) for f in (392, 523, 659, 784)), []))
+    siren = []
+    for k in range(3):
+        siren += sweep(0.25, 500, 900, 0.18, tri, 0.1) + sweep(0.25, 900, 500, 0.18, tri, 0.1)
+    write("siren.wav", siren)
+    write("jingle.wav", sum((sweep(0.08, f, f, 0.2, square, 0.6) for f in (784, 988, 1175, 1568)), []))
+    write("perfect.wav", sweep(0.06, 2093, 2093, 0.15, tri, 3.0))
     print("wrote sounds to %s" % os.path.normpath(OUT))
     write_music()
 

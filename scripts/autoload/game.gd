@@ -12,6 +12,7 @@ signal combo_changed(combo: int, multiplier: int)
 signal judged(judgement: int)
 signal reward(kind: String)          # "battery" / "yarn" from combo milestones
 signal level_changed(level: int)
+signal shake_requested(strength: float)
 
 const START_LIVES = 3
 const CHEESE_PER_CHARGE = 10
@@ -147,6 +148,11 @@ func set_level(value: int, total_waves: int):
 	wave = 0
 	level_changed.emit(level)
 	wave_changed.emit(wave)
+
+
+# Screen shake (pixels); the main scene applies it.
+func shake(strength: float):
+	shake_requested.emit(strength)
 
 
 func set_wave(value: int):

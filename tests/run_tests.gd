@@ -175,6 +175,9 @@ func _run():
 	await _enemy_tests()
 	await _level_tests()
 	await _boss_tests()
+	await _polish_tests()
+	await _full_run_test()
+	await _memory_tests()
 	await _screen_tests()
 
 	print("%d passed, %d failed" % [passed, failed])
@@ -734,3 +737,120 @@ func _screen_tests():
 	for i in 3:
 		await process_frame
 	check(current_scene.name == "Ending", "ending screen loads")
+
+
+# ---------------------------------------------------------------- Day 6: polish
+
+func _polish_tests():
+	await _start_main()
+	await _clear_world()
+	var conductor = root.get_node("Conductor")
+	# beat hints: sparkles + edge glow on each beat, more on the downbeat
+	var fx = main.get_node("BeatFX")
+	conductor.stop()   # no real beats during this test
+	fx.sparkles.clear()
+	fx._on_beat(1)
+	check(fx.sparkles.size() == fx.SPARKLES_PER_BEAT and fx.edge_glow > 0.0, "sparkles + edge glow on a beat")
+	fx.sparkles.clear()
+	fx._on_beat(4)
+	check(fx.sparkles.size() == fx.SPARKLES_PER_DOWNBEAT and is_equal_approx(fx.edge_glow, 1.0), "bigger burst on the downbeat")
+	await wait(0.6)
+	check(fx.sparkles.is_empty(), "sparkles fade out")
+
+	# dasher shows a harmless warning line before charging
+	var dasher = load("res://scenes/enemies/dasher.tscn").instantiate()
+	dasher.position = Vector2(1150, 300)
+	dasher.drops = false
+	main.add_child(dasher)
+	await frames(2)
+	dasher.beats_alive = 3
+	var lines_before = main.get_children().filter(func(n): return n.get_script() == EnemyBeam).size()
+	dasher.on_beat(3)
+	var lines = main.get_children().filter(func(n): return n.get_script() == EnemyBeam)
+	check(lines.size() == lines_before + 1 and lines[-1].active_time == 0.0, "dasher shows a warning-only line")
+	dasher.queue_free()
+
+	# screen shake moves the world, then settles
+	game.shake(12.0)
+	await frames(2)
+	var moved = main.position != Vector2.ZERO
+	await wait(1.0)
+	check(moved and main.position == Vector2.ZERO, "screen shake moves the world, then settles")
+
+
+# Plays through every level, wave and boss (forcing each to clear) and reaches the ending.
+func _full_run_test():
+	await _start_main()
+	var conductor = root.get_node("Conductor")
+	var runner = main.level_runner
+	cat.is_invulnerable = true
+	var bar = [0]
+	var next_bar = func():
+		bar[0] += 1
+		conductor.time_override = bar[0] * 4 * conductor.seconds_per_beat + 0.01
+		await process_frame
+		await frames(2)
+	conductor.time_override = 0.01
+	runner.start_level(0)
+	var bosses_beaten = 0
+	var guard = 0
+	while runner.state != runner.State.DONE and guard < 300:
+		guard += 1
+		var track = conductor.track
+		match runner.state:
+			runner.State.WAVES:
+				for e in get_nodes_in_group("enemies"):
+					e.queue_free()
+				await frames(2)
+			runner.State.BOSS:
+				runner.boss.die()
+				bosses_beaten += 1
+				await frames(2)
+		await next_bar.call()
+		if conductor.track != track:
+			bar[0] = 0   # a new track restarts the clock
+	check(runner.state == runner.State.DONE and bosses_beaten == 3, "full run: 3 levels and 3 bosses completed (bosses %d)" % bosses_beaten)
+	conductor.time_override = -1.0
+	await wait(4.0)
+	check(current_scene.name == "Ending", "full run ends on the rescue screen")
+
+
+# ---------------------------------------------------------------- memory / leaks
+
+func _memory_tests():
+	await _start_main()
+	var conductor = root.get_node("Conductor")
+	main.level_runner.stop()
+	cat.is_invulnerable = true
+	await wait(0.5)
+	var nodes_before = Performance.get_monitor(Performance.OBJECT_NODE_COUNT)
+	# a busy fight: boss + two waves + skills, then clear everything
+	var boss = Levels.create_boss(2)
+	main.add_child(boss)
+	for w in [3, 4]:
+		for g in Levels.LEVELS[2].waves[w]:
+			for e in Levels.create_group(g):
+				main.add_child(e)
+	await wait(1.0)
+	var gestures = main.get_node("GestureInput")
+	for skill in ["shockwave", "laser", "lightning"]:
+		gestures.cast_skill(skill, true, Vector2.RIGHT)
+		await wait(0.2)
+	for g in ["enemies", "enemy_shots", "pickups"]:
+		for n in get_nodes_in_group(g):
+			n.queue_free()
+	await wait(2.5)   # let explosions, popups and effects finish
+	var nodes_after = Performance.get_monitor(Performance.OBJECT_NODE_COUNT)
+	check(nodes_after <= nodes_before, "no leftover nodes after a busy fight (%d -> %d)" % [nodes_before, nodes_after])
+	check(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT) == 0, "no orphan nodes")
+	# music track changes don't accumulate objects (after fades settle)
+	conductor.play("level1")
+	await wait(1.0)
+	var objects_before = Performance.get_monitor(Performance.OBJECT_COUNT)
+	for k in 12:
+		conductor.play(["level1", "boss1", "level2"][k % 3])
+		await wait(0.05)
+	await wait(1.0)
+	var growth = Performance.get_monitor(Performance.OBJECT_COUNT) - objects_before
+	check(growth <= 4, "track changes don't leak objects (growth %d)" % growth)
+	cat.is_invulnerable = false

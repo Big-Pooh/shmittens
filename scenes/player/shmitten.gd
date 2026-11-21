@@ -108,6 +108,7 @@ func hit() -> bool:
 	velocity = Vector2.ZERO
 	sprite.hide()
 	Sfx.play("player_hit")
+	Game.shake(12.0)
 	died.emit()
 	if Game.lose_life() > 0:
 		_respawn_later()

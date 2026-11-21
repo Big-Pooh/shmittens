@@ -425,3 +425,68 @@ None. All 79 tests passed on the first run after the changes.
 ### Requests noted for later
 - **Tutorial:** added to the plan, to be built after Day 6.
 - **Background beat hints** (sparkles pulsing with the beat): scheduled for Day 6 polish.
+
+---
+
+## Phase 6: Day 6, M5 polish + performance/memory (2026-11-22)
+
+### What changed
+**Background beat hints (your request)**
+- **`beat_fx.gd`:** on every beat, 7 sparkles appear across the background and a soft glow pulses in from the screen edges. On downbeats: 16 gold sparkles and a stronger gold glow.
+  - The effect runs in real time, so the hints stay in sync during slow-motion drawing.
+- **Starfield:** stars brighten and grow on each beat, more on the downbeat, using `Conductor.beat_phase()`.
+- *Why:* you asked for more visual hints. The beat can now be felt anywhere on screen, not just on the beat bar.
+
+**Feel**
+- **Screen shake:** player hit 12; shockwave 9, laser 6, lightning 5, shield 2 (×1.4 when empowered); boss phase change 10; boss death 18.
+  - The whole world node moves; the HUD stays still.
+- **Explosion particles:** 14 for enemies, 80 for bosses.
+- **Dasher warning:** a harmless line along its charge path, one beat before the charge.
+
+**Sound**
+- New generated effects: one per skill (shockwave, laser, lightning, shield), a boss warning siren, a combo-milestone jingle, and a quiet "ding" on PERFECT clicks.
+  - The ding adds sound feedback for hitting the beat.
+
+**Performance and memory (your question, measured)**
+- **Automated tests:** yes, every phase has run `tests/run_tests.gd`, now 111 checks. 3 new memory checks:
+  - no leftover nodes after a busy fight;
+  - 0 orphan nodes;
+  - music track changes don't accumulate objects.
+- **New `tests/perf_benchmark.gd`** (needs a real window). Load: enraged Rat King + 2 waves + constant skills and gunfire for 6 s. Results on this Mac:
+
+  | Measure | Result |
+  |---|---|
+  | Average frame time | 8.3 ms (~120 fps) |
+  | Worst frame | 9.7 ms |
+  | Peak nodes | ~200 |
+  | Static memory | 42 MB |
+  | Nodes after clearing | back exactly to baseline |
+
+- **Music memory:** Godot imports the WAVs with QOA compression (`compress/mode=2`), so the 7.6 MB on disk takes about 1.5 MB in memory. No change needed.
+- **Music object leak, investigated:**
+  - *Symptom:* each test run warned about leaked audio objects at exit.
+  - *Measured:* after fades finish, 40 track changes add only +2 objects (one-time caching of the other tracks), so there's no growing leak. The exit warning is Godot reporting the track that was still loaded when the test quit.
+  - *Change anyway:* `Conductor.play()` now stops and releases the old stream before creating a new one.
+- **One 78 ms frame** appeared in the first benchmark run and never again in 3 later runs. Most likely a one-time startup cost; not reproducible, so not acted on.
+- **No object pooling.** With ~120 fps and a ~10 ms worst frame under deliberate overload, measurements don't justify the added complexity.
+
+### Problems found and fixed
+- **An edit script aborted midway.**
+  - *Cause:* a text match failed on an escaped `\n`. Only the first file had been changed.
+  - *Fix:* detected from the error, re-applied with the correct match, and verified by running the tests.
+- **The sparkle-fade test failed.**
+  - *Cause:* the real music kept emitting beats during the test.
+  - *Fix:* the test stops the music first.
+
+### Verification
+- Tests: 111 passed, 0 failed. New checks cover:
+  - sparkle counts, the glow, and the fade;
+  - the dasher's warning-only line;
+  - shake moving and settling;
+  - a **full scripted run** through all 3 levels, 15 waves and 3 bosses, reaching the ending screen;
+  - the 3 memory checks.
+- A screenshot on a downbeat shows the gold edge glow, the pulsing stars and the sparkles.
+- **Not done: balancing.** There's no playtest feedback yet, and tuning drop amounts or boss health blind would just be guessing. That needs your playtest.
+
+### Next
+Day 7: the tutorial you asked for.

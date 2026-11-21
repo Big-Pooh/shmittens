@@ -32,6 +32,7 @@ func build(texture: Texture2D, sprite_scale: float, hit_radius: float, health: f
 	add_child(shape)
 	max_health = health
 	score_value = 5000
+	explosion_amount = 80
 
 
 func _ready():
@@ -54,12 +55,19 @@ func take_damage(amount: float, judgement: int = -1):
 		phase = 2
 		phase_changed.emit(phase)
 		_flash(Color(3, 1, 1))
+		Game.shake(10.0)
 		on_phase_2()
 
 
 # Override for a phase-2 entrance (summons etc.).
 func on_phase_2():
 	pass
+
+
+func die():
+	if not is_dead:
+		Game.shake(18.0)
+	super()
 
 
 func is_off_screen_left() -> bool:

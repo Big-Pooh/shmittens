@@ -45,6 +45,8 @@ func click():
 	var judgement = Conductor.judge()
 	Game.register_judgement(judgement)
 	fire(CLICK_DAMAGE * JUDGEMENT_DAMAGE[judgement], judgement)
+	if judgement == Conductor.Judgement.PERFECT:
+		Sfx.play("perfect", -10.0)
 
 
 func fire(damage: float = CLICK_DAMAGE, judgement: int = -1):
