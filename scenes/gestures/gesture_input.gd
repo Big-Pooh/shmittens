@@ -148,7 +148,7 @@ func cast_skill(skill: String, empowered: bool, direction: Vector2 = Vector2.RIG
 		"laser":
 			scene.add_child(LaserBeam.create(player, direction, empowered))
 		"lightning":
-			scene.add_child(ChainLightning.create(player.global_position, get_global_mouse_position(), empowered))
+			scene.add_child(ChainLightning.create(player.global_position, Game.aim_override if Game.aim_override != null else get_global_mouse_position(), empowered))
 		"shield":
 			player.add_child(Shield.create(empowered))
 	Sfx.play(skill)

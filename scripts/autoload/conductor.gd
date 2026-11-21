@@ -35,6 +35,8 @@ var playing = false
 var offset_ms = 0.0
 # Tests set this to drive the clock directly (seconds); -1 = use the real clock.
 var time_override = -1.0
+# Simulation (automated playthroughs): advance time_override by unscaled frame time each frame
+var sim_clock = false
 
 var _player: AudioStreamPlayer
 var _stream: AudioStreamSynchronized
@@ -174,6 +176,8 @@ func _process(_delta):
 		_start_usec += Time.get_ticks_usec() - _pause_started_usec
 		_pause_started_usec = -1
 		_player.stream_paused = false
+	if sim_clock and time_override >= 0.0:
+		time_override += _delta / max(Engine.time_scale, 0.01)
 	if not playing and time_override < 0.0:
 		return
 	var current = int(floor(beat_position()))

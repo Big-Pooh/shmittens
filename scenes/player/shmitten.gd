@@ -88,10 +88,10 @@ func has_shield() -> bool:
 
 func _on_hitbox_area_entered(area):
 	if area is EnemyShot:
-		if hit():
+		if hit("shot"):
 			area.queue_free()
 	elif area is EnemyBase:
-		if hit():
+		if hit("ram"):
 			area.die()
 
 
@@ -101,13 +101,14 @@ func _on_pickup_area_entered(area):
 
 
 # Returns true if the hit counted.
-func hit() -> bool:
+func hit(cause: String = "") -> bool:
 	if is_dead or is_invulnerable or has_shield():
 		return false
 	is_dead = true
 	velocity = Vector2.ZERO
 	sprite.hide()
 	Sfx.play("player_hit")
+	Game.player_hit.emit(cause)
 	Game.shake(12.0)
 	died.emit()
 	if Game.lose_life() > 0:

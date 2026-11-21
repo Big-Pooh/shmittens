@@ -52,7 +52,8 @@ func click():
 func fire(damage: float = CLICK_DAMAGE, judgement: int = -1):
 	if not player.can_shoot():
 		return
-	var direction = get_global_mouse_position() - global_position
+	var aim = Game.aim_override if Game.aim_override != null else get_global_mouse_position()
+	var direction = aim - global_position
 	if direction.length() < 1.0:
 		direction = Vector2.RIGHT
 	var base_angle = direction.angle()

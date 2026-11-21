@@ -13,6 +13,7 @@ signal judged(judgement: int)
 signal reward(kind: String)          # "battery" / "yarn" from combo milestones
 signal level_changed(level: int)
 signal shake_requested(strength: float)
+signal player_hit(cause: String)   # "shot", "ram", "beam" (for stats)
 
 const START_LIVES = 3
 const CHEESE_PER_CHARGE = 10
@@ -50,6 +51,8 @@ var wave_total = 0
 var start_level = 0
 # true while the tutorial runs (main.gd starts the Tutorial instead of a level)
 var tutorial_mode = false
+# Automated playthroughs aim with this instead of the mouse (null = use the mouse)
+var aim_override = null
 var is_game_over = false
 var drawing = false   # true while a skill gesture is being drawn (gun is disabled)
 

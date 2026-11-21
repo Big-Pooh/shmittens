@@ -41,7 +41,7 @@ func _process(delta):
 	if is_active():
 		var player = get_tree().get_first_node_in_group("player")
 		if player and hits(player.global_position):
-			player.hit()
+			player.hit("beam")
 	queue_redraw()
 	if time >= warn_time + active_time:
 		queue_free()
