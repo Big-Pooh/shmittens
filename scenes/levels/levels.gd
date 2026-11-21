@@ -24,6 +24,7 @@ const LEVELS = [
 		"boss_track": "boss1",
 		"boss": "tank",
 		"par_seconds": 45.0,
+		"volley_rate": 0.5,   # onboarding: grunt volleys half as often in level 1
 		"story": "The Rat King has taken the Queen!\nShmitten flies into the Mouse Factory to find her.",
 		"waves": [
 			[{"enemy": "grunt", "formation": "grid", "columns": 3, "rows": 3, "health": 2}],
@@ -122,7 +123,7 @@ static func formation_slots(group: Dictionary) -> Array:
 
 
 # Instantiates the enemies of one group (not yet added to the tree).
-static func create_group(group: Dictionary) -> Array:
+static func create_group(group: Dictionary, volley_rate: float = 1.0) -> Array:
 	var enemies = []
 	var slots = formation_slots(group)
 	for i in slots.size():
@@ -135,10 +136,10 @@ static func create_group(group: Dictionary) -> Array:
 			var columns = group.get("columns", 3)
 			if group.formation == "grid":
 				enemy.fire_slot = i / group.rows
-				enemy.fire_slots = columns
+				enemy.fire_slots = int(round(columns / volley_rate))
 			else:
 				enemy.fire_slot = i % 3
-				enemy.fire_slots = 3
+				enemy.fire_slots = int(round(3 / volley_rate))
 		enemies.append(enemy)
 	return enemies
 

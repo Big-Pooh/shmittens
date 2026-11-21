@@ -3,7 +3,7 @@ extends Boss
 class_name RatKing
 
 # Level 3 (final) boss.
-# Phase 1, every bar: 5-shot fan on the downbeat, a tight aimed triple on beat 3,
+# Phase 1, every bar: 5-shot fan on the downbeat, a tight aimed triple (360) on beat 3,
 #   warning flash on beat 4; moves every 2 bars.
 # Phase 2 (below half health): summons 2 shield mice immediately and every 2 bars,
 #   a 10-shot ring on the downbeat and a 5-shot fan on beat 3.
@@ -28,7 +28,7 @@ func on_beat(n: int):
 				if bar % 2 == 0:
 					move_to_y(200.0 if (bar / 2) % 2 == 0 else 520.0)
 			2:
-				fan(3, 4.0, 420.0)
+				fan(3, 4.0, 360.0)
 			3:
 				telegraph()
 	else:

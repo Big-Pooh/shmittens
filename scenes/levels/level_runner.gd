@@ -99,7 +99,7 @@ func _next_wave():
 		return
 	Game.set_wave(wave_index + 1)
 	for group in waves[wave_index]:
-		for enemy in Levels.create_group(group):
+		for enemy in Levels.create_group(group, level().get("volley_rate", 1.0)):
 			enemy.tree_exited.connect(_on_enemy_gone)
 			alive += 1
 			get_tree().current_scene.add_child.call_deferred(enemy)

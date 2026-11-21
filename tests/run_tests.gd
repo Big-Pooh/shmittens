@@ -184,6 +184,7 @@ func _run():
 	await _boss_assist_tests()
 	await _guardian_tests()
 	await _fever_tests()
+	_volley_rate_tests()
 	await _screen_tests()
 
 	print("%d passed, %d failed" % [passed, failed])
@@ -1073,3 +1074,12 @@ func _fever_tests():
 	var normal = PlayerShot.create(Vector2(500, 300), Vector2.RIGHT, 1.0)
 	check(not normal.pierce and normal.damage == 1.0, "normal shots again after FEVER")
 	normal.free()
+
+
+func _volley_rate_tests():
+	var group = {"enemy": "grunt", "formation": "grid", "columns": 3, "rows": 2, "health": 1}
+	var normal = Levels.create_group(group)
+	var gentle = Levels.create_group(group, 0.5)
+	check(normal[0].fire_slots == 3 and gentle[0].fire_slots == 6, "level 1 volley rate halves grunt fire frequency")
+	for e in normal + gentle:
+		e.free()
