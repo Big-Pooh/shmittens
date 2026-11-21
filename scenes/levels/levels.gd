@@ -23,6 +23,7 @@ const LEVELS = [
 		"track": "level1",
 		"boss_track": "boss1",
 		"boss": "tank",
+		"par_seconds": 45.0,
 		"story": "The Rat King has taken the Queen!\nShmitten flies into the Mouse Factory to find her.",
 		"waves": [
 			[{"enemy": "grunt", "formation": "grid", "columns": 3, "rows": 3, "health": 2}],
@@ -38,6 +39,7 @@ const LEVELS = [
 		"track": "level2",
 		"boss_track": "boss2",
 		"boss": "mothership",
+		"par_seconds": 40.0,
 		"story": "The trail leads down into the sewers,\nwhere the mouse fleet guards the way.",
 		"waves": [
 			[{"enemy": "dasher", "formation": "line", "count": 3, "health": 2}],
@@ -54,6 +56,7 @@ const LEVELS = [
 		"track": "level3",
 		"boss_track": "boss3",
 		"boss": "rat_king",
+		"par_seconds": 60.0,
 		"story": "At last, the Rat King's castle.\nThe Queen is somewhere inside...",
 		"waves": [
 			[{"enemy": "shield", "formation": "grid", "columns": 3, "rows": 3, "health": 4}],
@@ -146,3 +149,17 @@ static func create_boss(level_index: int) -> Boss:
 	boss.slot_position = BOSS_SLOT
 	boss.position = Vector2(SPAWN_X + 80, BOSS_SLOT.y)
 	return boss
+
+
+# Level-clear rank (mastery goal for skilled players):
+#   S: at or under par time, >= 60% PERFECT clicks, no game over on this level
+#   A: within 1.5x par, >= 40% PERFECT, no game over
+#   B: no game over;  C: cleared after a game over
+static func rank(seconds: float, par: float, perfect_ratio: float, had_game_over: bool) -> String:
+	if had_game_over:
+		return "C"
+	if seconds <= par and perfect_ratio >= 0.6:
+		return "S"
+	if seconds <= par * 1.5 and perfect_ratio >= 0.4:
+		return "A"
+	return "B"

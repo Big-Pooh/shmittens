@@ -60,6 +60,7 @@ var assist = 0
 # per-level rank stats (time is measured by the level runner)
 var level_judged = 0
 var level_perfects = 0
+var ranks = []   # rank letter per cleared level this run
 # true while the tutorial runs (main.gd starts the Tutorial instead of a level)
 var tutorial_mode = false
 # Automated playthroughs aim with this instead of the mouse (null = use the mouse)

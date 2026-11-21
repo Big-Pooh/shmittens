@@ -30,6 +30,8 @@ var alive = 0
 var bars_to_wait = 0
 var boss: Boss
 var from_wave = 0
+var level_seconds = 0.0   # game time spent fighting this level (waves + boss)
+var last_rank = ""
 
 
 func _ready():
@@ -48,10 +50,16 @@ func start_level(index: int, resume_wave: int = 0):
 	alive = 0
 	boss = null
 	state = State.INTRO
+	level_seconds = 0.0
 	bars_to_wait = RETRY_INTRO_BARS if from_wave > 0 else INTRO_BARS
 	Game.set_level(level_index, level().waves.size())
 	Conductor.play(level().track, Game.multiplier() + 1)
 	level_started.emit(level_index)
+
+
+func _process(delta):
+	if state == State.WAVES or state == State.BOSS_INTRO or state == State.BOSS:
+		level_seconds += delta
 
 
 func stop():
@@ -131,6 +139,9 @@ func _spawn_boss():
 
 
 func _on_boss_died(_boss):
+	var ratio = float(Game.level_perfects) / max(Game.level_judged, 1)
+	last_rank = Levels.rank(level_seconds, level().par_seconds, ratio, Game.assist > 0 or from_wave > 0)
+	Game.ranks.append(last_rank)
 	state = State.CLEARED
 	bars_to_wait = CLEARED_BARS
 	level_cleared.emit(level_index)

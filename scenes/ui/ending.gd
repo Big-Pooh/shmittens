@@ -23,6 +23,8 @@ func _ready():
 	add_child(_label("THE QUEEN IS FREE!", 72, GOLD, 120))
 	add_child(_label("Shmitten defeated the Rat King and brought the Queen home.", 26, Color(0.9, 0.9, 1), 220))
 	add_child(_label("FINAL SCORE  %06d" % Game.score, 34, GOLD, 520))
+	if not Game.ranks.is_empty():
+		add_child(_label("RANKS   " + "  ".join(Game.ranks.map(func(r): return r)), 26, Color(0.9, 0.9, 1), 570))
 	add_child(_label("Thanks for playing!  -  click to return to the title", 18, Color(0.7, 0.7, 0.8), 640))
 	cat = Sprite2D.new()
 	cat.texture = CAT_SHEET

@@ -180,6 +180,7 @@ func _run():
 	await _memory_tests()
 	await _tutorial_tests()
 	await _assist_tests()
+	_rank_tests()
 	await _screen_tests()
 
 	print("%d passed, %d failed" % [passed, failed])
@@ -989,3 +990,10 @@ func _assist_tests():
 	check(game.assist == 0 and game.level == 1, "the next level starts without assist")
 	game.start_wave = 0
 	conductor.time_override = -1.0
+
+
+func _rank_tests():
+	check(Levels.rank(40, 45, 0.7, false) == "S", "rank S: under par, 70% perfect")
+	check(Levels.rank(60, 45, 0.5, false) == "A", "rank A: within 1.5x par, 50% perfect")
+	check(Levels.rank(200, 45, 0.9, false) == "B", "rank B: slow but no game over")
+	check(Levels.rank(30, 45, 0.9, true) == "C", "rank C: cleared after a game over")

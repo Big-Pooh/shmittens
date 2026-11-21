@@ -86,7 +86,10 @@ func _on_level_cleared(index: int):
 		hud.show_message("THE QUEEN IS FREE!")
 		queen_cage.release(player.global_position)
 	else:
-		hud.show_message("LEVEL CLEAR!")
+		var level = Levels.LEVELS[index]
+		var seconds = int(level_runner.level_seconds)
+		var ratio = 100.0 * Game.level_perfects / max(Game.level_judged, 1)
+		hud.show_message("LEVEL CLEAR!   RANK %s\ntime %d:%02d (par %d:%02d)   perfect %d%%" % [level_runner.last_rank, seconds / 60, seconds % 60, int(level.par_seconds) / 60, int(level.par_seconds) % 60, int(ratio)])
 
 
 # Combo milestone rewards appear right in front of the cat.

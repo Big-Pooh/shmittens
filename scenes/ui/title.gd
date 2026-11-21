@@ -81,6 +81,7 @@ func _process(delta):
 
 # First time: the tutorial runs before Level 1 (it can be skipped with Tab).
 func start_game():
+	Game.ranks.clear()
 	Game.start_level = 0
 	Game.start_wave = 0
 	Game.clear_assist()
