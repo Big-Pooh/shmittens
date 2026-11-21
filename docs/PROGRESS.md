@@ -12,7 +12,7 @@ Resume a session by reading this file and `docs/PLAN.md` only. The full history 
 | 5 | M4b bosses + screens | ✅ done |
 | 6 | M5 polish (+ beat hints, perf/memory) | ✅ done |
 | 7 | Tutorial (your addition) | ✅ done |
-| 8 | Persona playthroughs, Monte Carlo, tuning | ✅ done on branch `tuning/personas` (awaiting your merge decision) |
+| 8 | Persona playthroughs, Monte Carlo, tuning | ✅ done, merged into `main` (2026-11-22) |
 
 ## How to run
 - Godot: `~/Desktop/Godot_v4.7.2.app` (the project needs 4.7.2).
@@ -57,8 +57,8 @@ Resume a session by reading this file and `docs/PLAN.md` only. The full history 
   - `crosshair.gd`: the sprite cursor, confined to the window.
 
 ## Current state
-- **`main`:** the Day 7 game, untuned.
-- **`tuning/personas`:** the tooling plus 10 tuning commits (see `docs/KPI.md` and the audit log). Merge with `git switch main && git merge tuning/personas`. Revert any single decision with `git revert <commit>`.
+- **`main`:** includes the tooling and the 10 tuning commits, merged from `tuning/personas` (see `docs/KPI.md` and the audit log). Revert any single decision with `git revert <commit>`.
+- **Next:** your playtest.
 - **KPIs:** `python3 tools/montecarlo.py --runs 40` (about 1.5 min); the report is in `montecarlo/report.md`.
 - **Open issues:** the beginner at the final boss (L3: 55% clear); the speedrunner L2 fun dip.
 
