@@ -15,6 +15,7 @@ signal phase_changed(phase: int)
 
 const OFFBEAT_ARMOR = 0.5
 const ASSIST_OFFBEAT_ARMOR = 0.75   # beginner care: with any assist, off-beat shots do 75%
+const ASSIST_HEALTH_CUT = 0.15      # beginner care: boss health -15% per assist level
 
 var boss_name = "BOSS"
 var phase = 1
@@ -37,6 +38,7 @@ func build(texture: Texture2D, sprite_scale: float, hit_radius: float, health: f
 
 
 func _ready():
+	max_health *= 1.0 - ASSIST_HEALTH_CUT * Game.assist
 	super()
 	add_to_group("bosses")
 	health_changed.emit(health, max_health)
@@ -118,5 +120,6 @@ func summon(scene: PackedScene, slots: Array, health: float):
 		add.max_health = health
 		if add is Grunt:
 			add.fire_slot = i
-			add.fire_slots = 4
+			# beginner care: boss-launched grunts don't shoot while assisted
+			add.fire_slots = 1_000_000 if Game.assist > 0 else 4
 		get_tree().current_scene.add_child.call_deferred(add)

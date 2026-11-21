@@ -21,7 +21,8 @@ func on_beat(n: int):
 	var beat = n % Conductor.BEATS_PER_BAR
 	var bar = n / Conductor.BEATS_PER_BAR
 	var launch_bar = phase == 2 or bar % 2 == 0
-	var beam_bar = bar % 2 == 1
+	# beam on odd bars; every 4th bar when the player is heavily assisted
+	var beam_bar = bar % 4 == 1 if Game.assist >= 2 else bar % 2 == 1
 	if beat == 0 and launch_bar:
 		var count = 2 if phase == 2 else 3
 		var slots = []
