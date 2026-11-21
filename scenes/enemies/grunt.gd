@@ -4,7 +4,7 @@ class_name Grunt
 
 # Robot mouse grunt: flies in to its formation slot, then marches left one step on every
 # music beat while bobbing. Firing is a fixed rotation (no randomness): on beat 3 of each bar,
-# the grunts whose fire_slot matches (bar % fire_slots) shoot straight ahead - in a grid that's
+# the grunts whose fire_slot matches (bar % fire_slots) shoot AT THE CAT - in a grid that's
 # one column per bar, sweeping across the formation.
 
 const STEP_DISTANCE = 14.0
@@ -31,9 +31,18 @@ func on_beat(n: int):
 	if marching:
 		step()
 	if should_fire(n):
-		fire_shot(Vector2.LEFT)
+		fire_shot(_aim_at_cat())
 	elif should_fire(n + 1):
 		telegraph()   # warning one beat before the volley
+
+
+# Aimed volleys (playtest 1: straight-left shots were trivially dodged by changing rows).
+# Never aims backwards: at worst straight left.
+func _aim_at_cat() -> Vector2:
+	var player = get_tree().get_first_node_in_group("player") as Node2D
+	if player == null or player.global_position.x >= global_position.x:
+		return Vector2.LEFT
+	return player.global_position - global_position
 
 
 func should_fire(n: int) -> bool:

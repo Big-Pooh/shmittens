@@ -509,6 +509,11 @@ func _enemy_tests():
 		if grunt.should_fire(n):
 			fires.append(n)
 	check(fires == [6, 18, 30, 42], "grunt fires in a fixed rotation (%s)" % [fires])
+	var before_volley = _count("enemy_shots")
+	grunt.on_beat(6)
+	await frames(1)
+	var volley = get_nodes_in_group("enemy_shots")
+	check(volley.size() == before_volley + 1 and volley[-1].velocity.normalized().dot((cat.global_position - grunt.global_position).normalized()) > 0.99, "grunt volleys aim at the cat")
 
 	# gunner: warning flash on beat 4, aimed shot on the downbeat
 	var gunner = load("res://scenes/enemies/gunner.tscn").instantiate()
@@ -521,9 +526,9 @@ func _enemy_tests():
 	gunner.on_beat(4)
 	await frames(1)
 	var shots = get_nodes_in_group("enemy_shots")
-	check(shots.size() == shots_before + 1, "gunner fires on the downbeat")
+	check(shots.size() == shots_before + 3, "gunner fires a 3-shot spread on the downbeat")
 	if shots.size() > 0:
-		var aim = shots[-1].velocity.normalized()
+		var aim = shots[-2].velocity.normalized()   # middle shot of the spread
 		check(aim.dot((cat.global_position - gunner.global_position).normalized()) > 0.99, "gunner shot is aimed at the cat")
 
 	# dasher: lines up with the cat, then charges on a downbeat after one bar
@@ -962,7 +967,7 @@ func _assist_tests():
 	await _start_main()
 	var conductor = root.get_node("Conductor")
 	var runner = main.level_runner
-	check(is_equal_approx(game.shot_speed_factor(), 0.8), "level 1 enemy shots are gentler (x0.8)")
+	check(is_equal_approx(game.shot_speed_factor(), 1.0), "level 1 enemy shots at x1.0")
 	# reach wave 3 of level 1, then lose all lives
 	conductor.time_override = 0.01
 	runner.start_level(0, 2)
@@ -978,7 +983,7 @@ func _assist_tests():
 		await process_frame
 	var retried = current_scene
 	check(retried.level_runner.from_wave == 2 and game.assist == 1 and game.lives == game.START_LIVES + 1, "retry resumes at that wave with assist")
-	check(is_equal_approx(game.shot_speed_factor(), 0.8 * (1.0 - game.ASSIST_SHOT_SLOWDOWN)), "assist slows enemy shots")
+	check(is_equal_approx(game.shot_speed_factor(), 1.0 * (1.0 - game.ASSIST_SHOT_SLOWDOWN)), "assist slows enemy shots")
 	for i in 5:
 		game.add_assist()
 	check(game.assist == game.MAX_ASSIST, "assist is capped")

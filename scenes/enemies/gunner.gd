@@ -2,7 +2,7 @@ extends EnemyBase
 
 class_name Gunner
 
-# Gunner mouse: hovers at its slot and fires an aimed shot at the cat on every downbeat
+# Gunner mouse: hovers at its slot and fires an aimed 3-shot spread at the cat on every downbeat
 # (every 4 beats), flashing orange on the beat before as a warning. Drifts left each bar.
 
 const SHOT_SPEED = 340.0
@@ -29,5 +29,7 @@ func on_beat(n: int):
 		0:
 			var player = get_tree().get_first_node_in_group("player") as Node2D
 			var target = player.global_position if player else global_position + Vector2.LEFT
-			fire_shot(target - global_position, SHOT_SPEED)
+			var aim = (target - global_position).angle()
+			for offset in [-0.18, 0.0, 0.18]:
+				fire_shot(Vector2.from_angle(aim + offset), SHOT_SPEED)
 			create_tween().tween_property(self, "position:x", position.x - DRIFT_PER_BAR, 0.1)
