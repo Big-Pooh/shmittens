@@ -2,7 +2,7 @@ extends CanvasLayer
 
 class_name Hud
 
-# Top: lives, score, wave. Bottom: skill charges + cheese meter, gun level.
+# Top: lives, score + combo, wave. Bottom: skill charges + cheese meter, beat bar, gun level.
 # Built in code to keep the scene file small; positions are in 1280x720 screen units.
 
 const BATTERY = preload("res://Art/Generated/battery.png")
@@ -18,6 +18,7 @@ var charge_icons: Array[TextureRect] = []
 var cheese_bar: ProgressBar
 var gun_label: Label
 var message: Label
+var combo_label: Label
 
 
 func _ready():
@@ -28,6 +29,8 @@ func _ready():
 	Game.wave_changed.connect(func(w): wave_label.text = "WAVE %d" % w)
 	Game.charges_changed.connect(_on_charges)
 	Game.gun_level_changed.connect(func(l): gun_label.text = "GUN Lv %d" % l)
+	Game.combo_changed.connect(_on_combo)
+	_on_combo(Game.combo, Game.multiplier())
 	_on_lives(Game.lives)
 	score_label.text = "SCORE  %06d" % Game.score
 	wave_label.text = "WAVE %d" % Game.wave
@@ -100,6 +103,16 @@ func _build():
 	gun_label = _label("", 24)
 	gun_box.add_child(gun_label)
 
+	combo_label = _label("", 22, Color(0.6, 1, 0.7))
+	combo_label.position = Vector2(490, 46)
+	combo_label.size = Vector2(300, 30)
+	combo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	add_child(combo_label)
+
+	var beat_bar = BeatBar.new()
+	beat_bar.position = Vector2(640 - 220, 664)
+	add_child(beat_bar)
+
 	message = _label("", 48, GOLD)
 	message.position = Vector2(0, 280)
 	message.size = Vector2(1280, 160)
@@ -122,6 +135,15 @@ func _on_charges(charges: int, cheese: int):
 	for i in charge_icons.size():
 		charge_icons[i].modulate = Color.WHITE if i < charges else Color(1, 1, 1, 0.2)
 	cheese_bar.value = cheese
+
+
+func _on_combo(combo: int, multiplier: int):
+	combo_label.visible = combo > 0
+	combo_label.text = "COMBO %d   x%d" % [combo, multiplier]
+	if combo > 0:
+		combo_label.pivot_offset = combo_label.size / 2
+		combo_label.scale = Vector2.ONE * 1.25
+		create_tween().tween_property(combo_label, "scale", Vector2.ONE, 0.12)
 
 
 func show_message(text: String):

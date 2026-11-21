@@ -109,3 +109,82 @@ One entry per phase: what changed, why, the decisions made, and how it was verif
 - 10-second headless run of the game: no errors.
 - One gameplay screenshot checked: cat animation, 3 shot streams at gun level 3, the formation, enemy shots, crosshair and HUD all render correctly.
 - **Not verified:** how it feels with a real mouse and keyboard. That waits for your playtest; the planned check-in is after Day 3.
+
+---
+
+## Phase 2: Day 2, M2 rhythm (2026-11-22)
+
+### What changed
+**Music (`tools/gen_audio.py` → `Audio/Music/`)**
+- 6 tracks (level1–3 at 110/125/140 BPM; boss1–3 at 120/135/150).
+- Each track is a 4-bar loop split into 4 layers of identical length: drums (kick on every beat, snare on 2 and 4), bass, arpeggio and lead. Total 7.6 MB.
+- Each WAV embeds loop points (a RIFF `smpl` chunk), so Godot loops it seamlessly without any import tweaks.
+- *Why:*
+  - a kick on every beat makes the beat unmistakable for timing;
+  - separate layers let the music build up with your combo;
+  - matching lengths keep the layers in sync.
+
+**`Conductor` autoload (`scripts/autoload/conductor.gd`)**
+- Plays a track's layers together with `AudioStreamSynchronized`.
+  - *Why:* this is the reason for the 4.7.2 upgrade on Day 1.
+- The beat clock uses the time since `play()`, minus the audio output latency and the time to the next audio mix.
+  - *Why:* this is Godot's documented way to sync gameplay to music. It stays accurate in slow motion, where the game clock is scaled.
+- Emits `beat(n)` and `bar(n)`.
+- `judge()` returns PERFECT (±50 ms), GOOD (±100 ms) or MISS.
+- Pausing the game pauses the music and freezes the clock; resuming continues in sync.
+- `set_layers(n)` fades the layers in or out over 0.4 s.
+- `set_muffled()` turns on a low-pass filter on a new "Music" audio bus, ready for Day 3's slow motion.
+- Beat offset setting (±200 ms) saved to `user://settings.cfg`. The pause-menu control for it comes on Day 5.
+- `time_override`: lets tests drive the clock deterministically.
+
+**Combo (`Game`)**
+- Every judged click is registered: GOOD or PERFECT adds 1 to the combo; MISS resets it to 0. Losing a life also resets it.
+- Combo tiers: ×1 from 0, ×2 from 5, ×3 from 12, ×4 from 24. The multiplier applies to score.
+- Music layers follow the tier: ×1 drums + bass, ×2 adds arpeggio, ×3/×4 add lead.
+
+**Gun**
+- A click is judged and gets a damage multiplier: PERFECT 2.0, GOOD 1.5, MISS 1.0.
+- Holding the button auto-fires unjudged shots at 0.6 damage.
+- *Why:* the approved design says "spamming still works, just weaker"; auto-fire never touches the combo.
+- On-beat shots are bigger and gold-tinted; perfect shots are slightly louder.
+- Enemy health is now a float, to allow the 1.5×/0.6× damage values.
+
+**Grunts**
+- They step left on `Conductor.beat` instead of a 0.5 s timer.
+- Firing chance per beat is 3.5%; previously 4% per step, slightly reduced because beats come a bit faster.
+
+**UI**
+- Beat bar at the bottom centre: markers slide in from both sides and meet a centre ring on each beat; downbeats are gold and taller; the ring flashes.
+- The crosshair pulses on each beat, more strongly on the downbeat.
+- A PERFECT/GOOD/MISS popup floats up from the crosshair for every click.
+- The combo counter (combo and multiplier) sits under the score.
+
+### Problems found and fixed during the phase
+- **Music generator crashed.**
+  - *Cause:* the new functions were appended after the script's `main()` call.
+  - *Fix:* the call now sits at the end of the file.
+- **Pause handling was overcomplicated.**
+  - *Cause:* my first draft had two overlapping mechanisms.
+  - *Fix:* rewritten as one: on pause, record the time and pause the stream; on resume, shift the start time by the paused duration.
+- **Rhythm tests failed to start.**
+  - *Cause:* they used a scene reference that an earlier restart test had freed.
+  - *Fix:* they now load a fresh scene first.
+
+### Verification
+- Tests: 34 passed, 0 failed. The 14 new checks cover:
+  - BPM;
+  - PERFECT/GOOD/MISS windows and the offset;
+  - combo tiers, layers and the score multiplier;
+  - a miss resets the combo;
+  - a perfect click does 2× damage;
+  - an off-beat click resets the combo;
+  - grunts step on the beat and not between beats.
+- Real (non-headless) run on CoreAudio: the music is playing, playback advanced 3.00 s in 3 s, and 5 beats were emitted in 3 s at 110 BPM, as expected.
+- Screenshot checked: beat bar, combo display, the PERFECT popup and the pulsing crosshair.
+- **Not verified:**
+  - how the music sounds and how the mix balances; I can't listen;
+  - whether the ±50/±100 ms windows feel fair with real hardware latency;
+  - the offset calibration with headphones.
+  
+  These need your playtest.
+- **Known, harmless:** the headless test runner reports "ObjectDB instances leaked at exit". It's caused by quitting mid-scene from a test script, not by the game.

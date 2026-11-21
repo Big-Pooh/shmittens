@@ -3,24 +3,27 @@ extends EnemyBase
 class_name Grunt
 
 # Robot mouse grunt: flies in from the right to its slot in the formation, then marches left
-# in steps while bobbing, and sometimes fires straight ahead.
-# Day 2: steps get driven by the music beat instead of STEP_INTERVAL.
+# one step on every music beat (Conductor.beat) while bobbing, and sometimes fires straight ahead.
 
 const ENTRY_SPEED = 420.0
-const STEP_INTERVAL = 0.5
 const STEP_DISTANCE = 14.0
 const BOB_AMPLITUDE = 8.0
-const FIRE_CHANCE_PER_STEP = 0.04
+const FIRE_CHANCE_PER_STEP = 0.035
 
 var slot_position: Vector2   # where it settles before marching
 var entering = true
-var step_timer = 0.0
 var bob_time = 0.0
 
 
 func _ready():
 	super()
 	bob_time = randf() * TAU
+	Conductor.beat.connect(_on_beat)
+
+
+func _on_beat(_n: int):
+	if not entering and not is_dead:
+		step()
 
 
 func _physics_process(delta):
@@ -33,10 +36,6 @@ func _physics_process(delta):
 			entering = false
 		return
 
-	step_timer += delta
-	if step_timer >= STEP_INTERVAL:
-		step_timer -= STEP_INTERVAL
-		step()
 	sprite.position.y = sin(bob_time * 3.0) * BOB_AMPLITUDE
 	if is_off_screen_left():
 		queue_free()

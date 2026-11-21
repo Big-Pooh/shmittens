@@ -159,5 +159,77 @@ func _run():
 	await frames(5)
 	check(get_nodes_in_group("enemies").size() > 0, "a wave spawns after restart")
 
+	await _rhythm_tests()
+
 	print("%d passed, %d failed" % [passed, failed])
 	quit(1 if failed else 0)
+
+
+# ---------------------------------------------------------------- Day 2: rhythm
+
+func _rhythm_tests():
+	var conductor = root.get_node("Conductor")
+	# the restart test reloaded the scene, so grab fresh references
+	await _start_main()
+	var spb = conductor.seconds_per_beat
+	check(is_equal_approx(spb, 60.0 / 110.0), "level1 plays at 110 BPM")
+
+	# judging windows (time_override drives the clock)
+	var saved_offset = conductor.offset_ms
+	conductor.offset_ms = 0.0
+	conductor.time_override = 4 * spb + 0.02
+	check(conductor.judge() == conductor.Judgement.PERFECT, "20 ms late = PERFECT")
+	conductor.time_override = 4 * spb - 0.08
+	check(conductor.judge() == conductor.Judgement.GOOD, "80 ms early = GOOD")
+	conductor.time_override = 4 * spb + 0.2
+	check(conductor.judge() == conductor.Judgement.MISS, "200 ms late = MISS")
+	conductor.offset_ms = 60.0
+	conductor.time_override = 4 * spb + 0.06
+	check(conductor.judge() == conductor.Judgement.PERFECT, "offset setting shifts the judgement")
+	conductor.offset_ms = 0.0
+
+	# combo + multiplier + music layers
+	game.reset()
+	for i in 5:
+		game.register_judgement(conductor.Judgement.PERFECT)
+	check(game.combo == 5 and game.multiplier() == 2, "5 on-beat clicks = x2 (combo %d, x%d)" % [game.combo, game.multiplier()])
+	check(conductor.get_layers() == 3, "x2 adds the arp layer (layers=%d)" % conductor.get_layers())
+	game.add_score(100)
+	check(game.score == 200, "score is multiplied (score=%d)" % game.score)
+	game.register_judgement(conductor.Judgement.MISS)
+	check(game.combo == 0 and game.multiplier() == 1, "an off-beat click resets the combo")
+
+	# a clicked shot on the beat does double damage
+	conductor.time_override = 8 * spb
+	var gun = cat.get_node("Gun")
+	var shots_before = main.get_children().filter(func(n): return n.get_script() == PlayerShot)
+	gun.click()
+	var new_shots = main.get_children().filter(func(n): return n.get_script() == PlayerShot and not shots_before.has(n))
+	check(new_shots.size() > 0 and is_equal_approx(new_shots[0].damage, 2.0), "PERFECT click shot does 2x damage")
+	check(game.combo == 1, "on-beat click starts a combo")
+	conductor.time_override = 8 * spb + 0.25
+	gun.click()
+	check(game.combo == 0, "off-beat click resets the combo")
+
+	# grunts step left on each beat (and not between beats)
+	var grunt = _spawn_grunt(Vector2(900, 300), 50)
+	grunt.entering = false
+	await frames(2)
+	conductor.time_override = 20 * spb + 0.1
+	conductor.reset_beats()
+	await process_frame
+	await frames(8)
+	var x0 = grunt.position.x
+	conductor.time_override = 21 * spb + 0.1
+	await process_frame
+	await frames(8)
+	var x1 = grunt.position.x
+	conductor.time_override = 21 * spb + 0.3
+	await process_frame
+	await frames(8)
+	check(x1 < x0 - 10, "grunt steps on the beat (moved %.1f)" % (x0 - x1))
+	check(is_equal_approx(grunt.position.x, x1), "grunt doesn't step between beats")
+	grunt.queue_free()
+
+	conductor.time_override = -1.0
+	conductor.offset_ms = saved_offset

@@ -6,8 +6,8 @@ Resume a session by reading this file and `docs/PLAN.md` only. The full history 
 | Day | Milestone | State |
 |---|---|---|
 | 1 | M0 setup + M1 core shooter | ✅ done |
-| 2 | M2 rhythm | ⏭ next |
-| 3 | M3 gestures (playtest check-in after) | — |
+| 2 | M2 rhythm | ✅ done |
+| 3 | M3 gestures (playtest check-in after) | ⏭ next |
 | 4 | M4a enemies + levels | — |
 | 5 | M4b bosses + screens | — |
 | 6 | M5 polish | — |
@@ -24,6 +24,8 @@ Resume a session by reading this file and `docs/PLAN.md` only. The full history 
   - physics layer constants;
   - `SCREEN` rect.
 - **`scripts/autoload/sfx.gd`** (`Sfx`): sound effects.
+- **`scripts/autoload/conductor.gd`** (`Conductor`): music layers, beat clock, `beat`/`bar` signals, `judge()`, offset, muffle.
+- **`scenes/ui/beat_bar.gd`:** the rhythm guide in the HUD.
 - **`scenes/player/`:**
   - `shmitten.gd/.tscn`: the cat; movement is unchanged from the prototype;
   - `gun.gd`: aims at the mouse; click or hold to fire; streams = gun level;
@@ -40,19 +42,21 @@ Resume a session by reading this file and `docs/PLAN.md` only. The full history 
   - `hud.gd`: built in code;
   - `crosshair.gd`: the sprite cursor, confined to the window.
 
-## Next session (Day 2: rhythm)
-1. Music:
-   - `tools/gen_audio.py`: add 4 synced layers (drums, bass, arpeggio, lead), 8-bar loops at 110/125/140 BPM plus boss variants.
-2. `Conductor` autoload:
-   - plays the layers with `AudioStreamSynchronized`;
-   - song position from the playback position, corrected for output latency;
-   - `beat`/`bar` signals;
-   - `judge()` returns PERFECT (±50 ms), GOOD (±100 ms) or MISS;
-   - a beat offset setting.
-3. Gun: judge clicks (not auto-fire). Perfect = 2× damage and a bigger shot; Good = 1.5×; Off-beat resets the combo. Add combo tiers ×1–×4 to the score multiplier, and turn music layers on by tier.
-4. Grunt: replace `STEP_INTERVAL` with `Conductor.beat`.
-5. UI: a beat bar at the bottom centre; the crosshair pulses on the beat; a combo display.
-6. Tests: the judging windows and offset with fake times; the combo resets on a miss; grunts step on the beat.
+## Next session (Day 3: gestures)
+1. `scenes/gestures/gesture_input.gd`:
+   - while the `draw` action (right mouse) is held: `Engine.time_scale = 0.3` (at most 2 real seconds), `Conductor.set_muffled(true)`, a glowing `Line2D` trail, and gun shooting disabled;
+   - on release: recognise the shape, spend 1 charge, cast. Empowered if `Conductor.judge()` isn't MISS.
+2. `gesture_recognizer.gd`: the $1 Unistroke method with circle, triangle and zigzag templates (both directions), plus a separate straightness check for lines that keeps the direction. Unrecognised shapes fizzle at no cost.
+3. Skills in `scenes/gestures/skills/`:
+   - shockwave (an expanding ring that damages once per enemy);
+   - laser (a piercing beam in the drawn direction);
+   - chain lightning (nearest to the cursor, then 4 jumps);
+   - shield (absorbs hits for 4 s).
+   
+   Empowered = +50% size, damage and duration.
+4. HUD: show the recognised skill name (or "fizzle") at the cat.
+5. Tests: synthetic strokes for each shape at several sizes and directions with noise; scribbles are rejected; charges are spent or not; each skill hits the right targets; the shield blocks; slow motion is capped at 2 s; empowered values apply.
+6. Then **stop for your playtest** (the planned check-in).
 
 ## Known issues / notes
 - Placeholder art and sounds are generated. Replace any PNG/WAV under `Art/Generated/` or `Audio/` freely.

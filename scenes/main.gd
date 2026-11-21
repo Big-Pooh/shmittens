@@ -10,10 +10,12 @@ extends Node2D
 func _ready():
 	Game.reset()
 	Game.game_over.connect(_on_game_over)
+	Conductor.play("level1")
 
 
 func _on_game_over():
 	wave_director.stop()
+	Conductor.stop()
 	crosshair.set_captured(false)
 	hud.show_message("GAME OVER\nscore %d   -   press R to retry" % Game.score)
 

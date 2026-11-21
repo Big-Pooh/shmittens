@@ -16,7 +16,7 @@ signal died(enemy: EnemyBase)
 
 @onready var sprite: Sprite2D = $Sprite2D
 
-var health: int
+var health: float
 var is_dead = false
 
 
@@ -27,7 +27,7 @@ func _ready():
 	health = max_health
 
 
-func take_damage(amount: int):
+func take_damage(amount: float):
 	if is_dead:
 		return
 	health -= amount
