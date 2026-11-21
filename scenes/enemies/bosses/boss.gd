@@ -103,6 +103,8 @@ func fan(count: int, spread_degrees: float, speed: float):
 
 
 func ring(count: int, speed: float, offset_angle: float = 0.0):
+	if Game.assist >= 2:
+		count = max(count - 4, 6)   # beginner care: thinner rings after repeated game overs
 	for i in count:
 		fire_shot(Vector2.from_angle(offset_angle + TAU * i / count), speed)
 
@@ -122,4 +124,5 @@ func summon(scene: PackedScene, slots: Array, health: float):
 			add.fire_slot = i
 			# beginner care: boss-launched grunts don't shoot while assisted
 			add.fire_slots = 1_000_000 if Game.assist > 0 else 4
+			add.marching = Game.assist == 0   # ...and don't march into the cat
 		get_tree().current_scene.add_child.call_deferred(add)

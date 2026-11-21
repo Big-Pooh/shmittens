@@ -1035,7 +1035,12 @@ func _guardian_tests():
 	main.level_runner.stop()
 	game.assist = 0
 	await wait(0.5)
-	check(not cat.guardian_ready, "no guardian without assist")
+	check(not cat.guardian_ready, "no guardian without assist or deaths")
+	game.level_deaths = 2
+	await wait(12.3)
+	check(cat.guardian_ready, "early guardian after 2 deaths in the level (12 s)")
+	cat.guardian_ready = false
+	game.level_deaths = 0
 	game.assist = 3
 	await wait(5.3)
 	check(cat.guardian_ready, "guardian charges after a game over (assist 3: 5 s)")

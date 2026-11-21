@@ -67,6 +67,7 @@ var assist = 0
 # per-level rank stats (time is measured by the level runner)
 var level_judged = 0
 var level_perfects = 0
+var level_deaths = 0   # deaths in the current level attempt (early guardian)
 var ranks = []   # rank letter per cleared level this run
 # true while the tutorial runs (main.gd starts the Tutorial instead of a level)
 var tutorial_mode = false
@@ -177,6 +178,7 @@ func set_level(value: int, total_waves: int):
 	level = value
 	level_judged = 0
 	level_perfects = 0
+	level_deaths = 0
 	wave_total = total_waves
 	wave = 0
 	level_changed.emit(level)
@@ -237,6 +239,7 @@ func set_wave(value: int):
 
 # Called when the cat is hit. Returns the lives left.
 func lose_life() -> int:
+	level_deaths += 1
 	lives = max(lives - 1, 0)
 	lives_changed.emit(lives)
 	add_gun_level(-1)

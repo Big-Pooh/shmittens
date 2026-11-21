@@ -24,9 +24,13 @@ var is_dead = false
 var is_invulnerable = false
 var anim_time = 0.0
 var blink_tween: Tween
-# Guardian (beginner care): only after a game over on this level (Game.assist > 0), a bubble
-# absorbs one hit and recharges after GUARDIAN_RECHARGE[assist] seconds. Unused by players who don't fail.
+# Guardian (beginner care): a bubble that absorbs one hit, then recharges.
+# Active after a game over on this level (recharge GUARDIAN_RECHARGE[assist] s), or - more
+# slowly (EARLY_GUARDIAN_RECHARGE) - after EARLY_GUARDIAN_DEATHS deaths in this level attempt.
+# Players who aren't dying never get it.
 const GUARDIAN_RECHARGE = [0.0, 10.0, 7.0, 5.0]
+const EARLY_GUARDIAN_DEATHS = 2
+const EARLY_GUARDIAN_RECHARGE = 12.0
 var guardian_ready = false
 var guardian_timer = 0.0
 
@@ -40,9 +44,14 @@ func _ready():
 
 func _process(delta):
 	anim_time += delta
-	if Game.assist > 0 and not guardian_ready:
+	var recharge = 0.0
+	if Game.assist > 0:
+		recharge = GUARDIAN_RECHARGE[min(Game.assist, 3)]
+	elif Game.level_deaths >= EARLY_GUARDIAN_DEATHS:
+		recharge = EARLY_GUARDIAN_RECHARGE
+	if recharge > 0.0 and not guardian_ready:
 		guardian_timer += delta
-		if guardian_timer >= GUARDIAN_RECHARGE[min(Game.assist, 3)]:
+		if guardian_timer >= recharge:
 			guardian_ready = true
 			guardian_timer = 0.0
 	queue_redraw()
