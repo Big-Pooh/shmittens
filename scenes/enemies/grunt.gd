@@ -32,6 +32,8 @@ func on_beat(n: int):
 		step()
 	if should_fire(n):
 		fire_shot(Vector2.LEFT)
+	elif should_fire(n + 1):
+		telegraph()   # warning one beat before the volley
 
 
 func should_fire(n: int) -> bool:

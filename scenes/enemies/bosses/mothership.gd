@@ -4,7 +4,7 @@ class_name Mothership
 
 # Level 2 boss.
 #   Even bars: launches 3 grunts on the downbeat.
-#   Odd bars:  beat 2 lines up with the cat, beat 3 shows the laser warning line,
+#   Odd bars:  beat 2 lines up with the cat and shows the warning line (2 beats),
 #              beat 4 fires a screen-wide beam at that height (lasts most of a beat).
 # Phase 2: launches 2 grunts AND fires the beam every bar.
 
@@ -30,8 +30,8 @@ func on_beat(n: int):
 		summon(GRUNT, slots, 3.0)
 	if beam_bar:
 		if beat == 1:
-			move_to_y(player_position().y, 0.25)
-		elif beat == 2:
+			var y = clamp(player_position().y, 120.0, 600.0)
+			move_to_y(y, 0.2)
 			telegraph()
-			var beam = EnemyBeam.create(global_position.x - 80, global_position.y, Conductor.seconds_per_beat, Conductor.seconds_per_beat * 0.8)
+			var beam = EnemyBeam.create(global_position.x - 80, y, Conductor.seconds_per_beat * 2.0, Conductor.seconds_per_beat * 0.8)
 			get_tree().current_scene.add_child(beam)

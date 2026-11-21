@@ -528,9 +528,9 @@ func _enemy_tests():
 	for n in range(1, 4):
 		dasher._on_conductor_beat(n)
 		await wait(0.15)
-	check(dasher.position.y > 300 and not dasher.dashing, "dasher slides toward the cat's height")
+	check(dasher.position.y > 300 and not dasher.dashing and dasher.locked, "dasher slides toward the cat's height, then locks its line")
 	dasher._on_conductor_beat(4)
-	check(dasher.dashing, "dasher charges on the downbeat after a bar")
+	check(dasher.dashing, "dasher charges on the downbeat after warning")
 	var x0 = dasher.position.x
 	await wait(0.2)
 	check(dasher.position.x < x0 - 100, "dasher moves fast when charging")
@@ -765,9 +765,9 @@ func _polish_tests():
 	dasher.drops = false
 	main.add_child(dasher)
 	await frames(2)
-	dasher.beats_alive = 3
+	dasher.beats_alive = 2
 	var lines_before = main.get_children().filter(func(n): return n.get_script() == EnemyBeam).size()
-	dasher.on_beat(3)
+	dasher.on_beat(2)
 	var lines = main.get_children().filter(func(n): return n.get_script() == EnemyBeam)
 	check(lines.size() == lines_before + 1 and lines[-1].active_time == 0.0, "dasher shows a warning-only line")
 	dasher.queue_free()
