@@ -44,6 +44,11 @@ func _ready():
 	start.custom_minimum_size = Vector2(200, 50)
 	start.pressed.connect(start_game)
 	buttons.add_child(start)
+	var tutorial = Button.new()
+	tutorial.text = "TUTORIAL"
+	tutorial.custom_minimum_size = Vector2(200, 44)
+	tutorial.pressed.connect(start_tutorial)
+	buttons.add_child(tutorial)
 	var quit = Button.new()
 	quit.text = "QUIT"
 	quit.custom_minimum_size = Vector2(200, 44)
@@ -74,6 +79,13 @@ func _process(delta):
 	cat.position.y = 380 + sin(time * 2.0) * 10.0
 
 
+# First time: the tutorial runs before Level 1 (it can be skipped with Tab).
 func start_game():
 	Game.start_level = 0
+	Game.tutorial_mode = not Tutorial.is_done()
+	get_tree().change_scene_to_file(MAIN_SCENE)
+
+
+func start_tutorial():
+	Game.tutorial_mode = true
 	get_tree().change_scene_to_file(MAIN_SCENE)

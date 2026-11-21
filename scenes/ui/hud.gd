@@ -142,7 +142,9 @@ func _build():
 
 
 func _update_wave_label():
-	if Game.wave < 0:
+	if Game.tutorial_mode:
+		wave_label.text = "TUTORIAL"
+	elif Game.wave < 0:
 		wave_label.text = "LEVEL %d   BOSS" % (Game.level + 1)
 	else:
 		wave_label.text = "LEVEL %d   WAVE %d/%d" % [Game.level + 1, Game.wave, Game.wave_total]

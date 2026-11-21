@@ -30,7 +30,12 @@ func _ready():
 	level_runner.boss_spawned.connect(_on_boss_spawned)
 	level_runner.level_cleared.connect(_on_level_cleared)
 	level_runner.all_levels_cleared.connect(_on_all_levels_cleared)
-	level_runner.start_level(Game.start_level)
+	if Game.tutorial_mode:
+		var tutorial = Tutorial.new()
+		tutorial.name = "Tutorial"
+		add_child(tutorial)
+	else:
+		level_runner.start_level(Game.start_level)
 
 
 # Screen shake: the whole world node jitters (HUD layers stay still), decaying quickly.

@@ -13,6 +13,7 @@ const FIRE_BEAT = 2   # 0-based beat in the bar (beat 3)
 
 var bob_time = 0.0
 var fire_slot = 0
+var marching = true   # tutorial practice mice stay put
 var fire_slots = 1
 
 
@@ -27,7 +28,8 @@ func _behave(delta):
 
 
 func on_beat(n: int):
-	step()
+	if marching:
+		step()
 	if should_fire(n):
 		fire_shot(Vector2.LEFT)
 

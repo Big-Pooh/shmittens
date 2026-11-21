@@ -48,6 +48,8 @@ var level = 0
 var wave_total = 0
 # level to (re)start at when the main scene loads; kept across reset() so retry works
 var start_level = 0
+# true while the tutorial runs (main.gd starts the Tutorial instead of a level)
+var tutorial_mode = false
 var is_game_over = false
 var drawing = false   # true while a skill gesture is being drawn (gun is disabled)
 

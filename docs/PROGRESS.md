@@ -11,7 +11,8 @@ Resume a session by reading this file and `docs/PLAN.md` only. The full history 
 | 4 | M4a enemies + levels (+ rhythm revision 1) | ✅ done |
 | 5 | M4b bosses + screens | ✅ done |
 | 6 | M5 polish (+ beat hints, perf/memory) | ✅ done |
-| 7 | Tutorial (your addition) | ⏭ next |
+| 7 | Tutorial (your addition) | ✅ done |
+| 8 | Persona playthroughs + tuning (your addition) | ⏭ next |
 
 ## How to run
 - Godot: `~/Desktop/Godot_v4.7.2.app` (the project needs 4.7.2).
@@ -46,6 +47,7 @@ Resume a session by reading this file and `docs/PLAN.md` only. The full history 
   - `starfield.gd`.
 - **Bosses:** `scenes/enemies/bosses/` (base + tank, mothership, rat_king) and `enemy_beam.gd`.
 - **Effects:** `scenes/levels/beat_fx.gd` (beat sparkles and edge glow); screen shake via `Game.shake()`, applied in `main.gd`.
+- **Tutorial:** `scenes/tutorial.gd` (runs in `main` when `Game.tutorial_mode`).
 - **Screens:** `scenes/ui/title`, `pause_menu.gd`, `ending`; `scenes/levels/queen_cage.gd`.
 - **Enemies:** `grunt`, `gunner`, `dasher`, `shield_mouse` (all extend `enemy_base.gd`; behaviour in `on_beat(n)` / `_behave(delta)`).
 - **Design rules:** see "Revision 1" in `docs/PLAN.md`. Drops and enemy attacks are deterministic and rhythm-driven.
@@ -53,15 +55,14 @@ Resume a session by reading this file and `docs/PLAN.md` only. The full history 
   - `hud.gd`: built in code;
   - `crosshair.gd`: the sprite cursor, confined to the window.
 
-## Next session (Day 7: tutorial)
-Follow "Addition: tutorial" in `docs/PLAN.md`: a short guided intro before Level 1, one step at a time, with each step completed by doing it:
-1. move;
-2. click on the beat (the beat bar and the background hints explained);
-3. hold to fire on the beat;
-4. pick up cheese and see the charges fill;
-5. draw each gesture.
+## Next session (Day 8: persona playthroughs)
+Build an automated player (bot) with 3 skill profiles: beginner, average and speedrunner. It differs in:
+- timing accuracy;
+- reaction and dodging;
+- pickup greed;
+- how often and how well it draws gestures.
 
-It can be skipped, is offered on the first Start, and the choice is remembered in `user://settings.cfg`.
+Run sped-up full playthroughs, collect per-level stats (deaths and their causes, game overs, judgement mix, combos, skills used or fizzled, time), then tune the game so each profile has fun. Take special care with the beginner.
 
 ## How to check performance
 `~/Desktop/Godot_v4.7.2.app/Contents/MacOS/Godot --path . -s tests/perf_benchmark.gd` (needs a window). Last result: 8.3 ms average, 9.7 ms worst frame, 42 MB, no leftover nodes.

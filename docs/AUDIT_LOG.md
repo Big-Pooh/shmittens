@@ -490,3 +490,46 @@ None. All 79 tests passed on the first run after the changes.
 
 ### Next
 Day 7: the tutorial you asked for.
+
+---
+
+## Phase 7: Day 7, tutorial (2026-11-22)
+
+### What changed
+- **`scenes/tutorial.gd`:** a guided intro run inside the normal game scene (`Game.tutorial_mode`). The 5 steps complete by doing them:
+  1. fly 400 px with WASD;
+  2. 3 on-beat clicks (misses don't count);
+  3. hold fire through 4 beats;
+  4. shoot practice mice on the beat until you earn a skill charge (from cheese or a streak battery);
+  5. draw circle → line → zigzag → triangle, in that order, with free charges.
+  
+  Then: "You're ready", a tip about empowered skills, and Level 1 starts after 4 s.
+- **Safe practice:** the cat is invulnerable; practice mice don't march or shoot.
+- **Tab** skips at any time.
+- **First Start** runs the tutorial; after it's finished or skipped, Start goes straight to Level 1. The setting is stored in `user://settings.cfg` under `tutorial/done`.
+- **Replay:** a TUTORIAL button on the title screen.
+- **HUD:** shows "TUTORIAL" instead of a wave count.
+- *Why:* you asked for "a small tutorial to start with". Learning by doing, one mechanic per step, matches the order in which the mechanics build on each other: shooting → rhythm → held fire → the economy → skills.
+
+### Problems found and fixed
+- **The tutorial test checked a step too early.**
+  - *Cause:* Godot's `process_frame` signal fires before nodes run their per-frame code, so the tutorial hadn't yet seen the new charge.
+  - *Fix:* the test waits two frames. The game logic was correct.
+- **The older Start test** assumed Start always means Level 1. It now just checks that the game loads, since Start may run the tutorial first.
+
+### Verification
+- Tests: 125 passed, 0 failed. The 14 new checks cover:
+  - the tutorial replaces the level; the cat is invulnerable;
+  - each step completes by its action; misses don't count;
+  - practice mice stay put;
+  - free charges in step 5; gestures in the wrong order don't advance;
+  - finishing starts Level 1 and is remembered;
+  - Tab skips;
+  - first Start → tutorial, later Starts → Level 1.
+  
+  The test restores your real "tutorial done" setting afterwards.
+- A screenshot of step 5 mid-draw shows the instruction, the slow-motion tint, the circle trail, the practice mice and the free charges.
+- **Not verified:** whether the wording is clear to a first-time player.
+
+### Next
+Your request: sped-up full playthroughs with 3 player profiles (beginner, average, speedrunner), then improvements based on what they show, with special care for the beginner.

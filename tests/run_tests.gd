@@ -178,6 +178,7 @@ func _run():
 	await _polish_tests()
 	await _full_run_test()
 	await _memory_tests()
+	await _tutorial_tests()
 	await _screen_tests()
 
 	print("%d passed, %d failed" % [passed, failed])
@@ -730,7 +731,8 @@ func _screen_tests():
 	current_scene.start_game()
 	for i in 3:
 		await process_frame
-	check(current_scene.name == "Main" and game.level == 0, "Start begins level 1")
+	check(current_scene.name == "Main" and game.level == 0, "Start loads the game at level 1")
+	game.tutorial_mode = false
 
 	# ending screen loads and shows the score
 	change_scene_to_file("res://scenes/ui/ending.tscn")
@@ -854,3 +856,93 @@ func _memory_tests():
 	var growth = Performance.get_monitor(Performance.OBJECT_COUNT) - objects_before
 	check(growth <= 4, "track changes don't leak objects (growth %d)" % growth)
 	cat.is_invulnerable = false
+
+
+# ---------------------------------------------------------------- Day 7: tutorial
+
+func _load_main_with_tutorial():
+	game.tutorial_mode = true
+	change_scene_to_file("res://scenes/main.tscn")
+	for i in 4:
+		await process_frame
+	main = current_scene
+	cat = main.get_node("Shmitten")
+
+
+func _tutorial_tests():
+	var TutorialScript = load("res://scenes/tutorial.gd")
+	var was_done = TutorialScript.is_done()   # restore the player's real setting afterwards
+	var conductor = root.get_node("Conductor")
+
+	await _load_main_with_tutorial()
+	var tutorial = main.get_node_or_null("Tutorial")
+	check(tutorial != null and tutorial.step == 0 and main.level_runner.state == main.level_runner.State.IDLE, "tutorial runs instead of a level")
+	check(cat.is_invulnerable, "the cat can't be hurt in the tutorial")
+	# 1: move
+	cat.position += Vector2(300, 0)
+	await process_frame
+	cat.position += Vector2(-300, 0)
+	await process_frame
+	check(tutorial.step == 1, "step 1 completes after moving")
+	# 2: three on-beat clicks (a miss doesn't count)
+	game.register_judgement(conductor.Judgement.MISS)
+	for i in 3:
+		game.register_judgement(conductor.Judgement.GOOD)
+	check(tutorial.step == 2, "step 2 completes after 3 on-beat clicks")
+	# 3: hold fire through 4 beats
+	Input.action_press("shoot")
+	for n in 4:
+		tutorial._on_beat(n)
+	Input.action_release("shoot")
+	check(tutorial.step == 3, "step 3 completes after holding fire for 4 beats")
+	await frames(3)
+	var practice = get_nodes_in_group("enemies")
+	check(practice.size() == 6 and practice.all(func(e): return not e.marching), "practice mice appear and stay put")
+	# 4: earn a charge
+	game.add_charge(1)
+	# process_frame fires *before* nodes' _process, so wait two frames
+	await process_frame
+	await process_frame
+	check(tutorial.step == 4 and game.charges == game.MAX_CHARGES, "step 4 completes with a charge; step 5 gives free charges")
+	# 5: cast each skill in order (wrong order doesn't count)
+	var gestures = main.get_node("GestureInput")
+	gestures.cast_skill("laser", false, Vector2.RIGHT)
+	check(tutorial.gesture_index == 0, "wrong gesture doesn't advance")
+	for skill in ["shockwave", "laser", "lightning", "shield"]:
+		gestures.cast_skill(skill, false, Vector2.RIGHT)
+	check(tutorial.step == 5, "all 4 gestures complete the tutorial")
+	await wait(4.5)
+	for i in 3:
+		await process_frame
+	check(not game.tutorial_mode and current_scene.level_runner.state == current_scene.level_runner.State.INTRO and game.level == 0, "after the tutorial, level 1 starts")
+	check(TutorialScript.is_done(), "tutorial is remembered as done")
+
+	# Tab skips straight to level 1
+	await _load_main_with_tutorial()
+	var tab = InputEventKey.new()
+	tab.physical_keycode = KEY_TAB
+	tab.pressed = true
+	root.push_input(tab)
+	for i in 4:
+		await process_frame
+	check(not game.tutorial_mode and current_scene.get_node_or_null("Tutorial") == null, "Tab skips the tutorial")
+
+	# Start offers the tutorial only the first time
+	TutorialScript.set_done(false)
+	change_scene_to_file("res://scenes/ui/title.tscn")
+	for i in 3:
+		await process_frame
+	current_scene.start_game()
+	for i in 4:
+		await process_frame
+	check(current_scene.get_node_or_null("Tutorial") != null, "first Start runs the tutorial")
+	TutorialScript.set_done(true)
+	change_scene_to_file("res://scenes/ui/title.tscn")
+	for i in 3:
+		await process_frame
+	current_scene.start_game()
+	for i in 4:
+		await process_frame
+	check(current_scene.get_node_or_null("Tutorial") == null, "later Starts go straight to level 1")
+	TutorialScript.set_done(was_done)
+	game.tutorial_mode = false
