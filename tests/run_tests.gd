@@ -987,10 +987,15 @@ func _assist_tests():
 	retried.level_runner.state = retried.level_runner.State.BOSS
 	check(retried.level_runner.checkpoint() == Levels.LEVELS[0].waves.size(), "dying at the boss resumes at the boss")
 	# a new level / new game clears the assist
+	game.assist = 1
 	retried.level_runner.state = retried.level_runner.State.CLEARED
 	retried.level_runner.bars_to_wait = 1
 	retried.level_runner._on_bar(0)
-	check(game.assist == 0 and game.level == 1, "the next level starts without assist")
+	check(game.assist == 0 and game.level == 1, "assist 1 carries over as 0 to the next level")
+	game.assist = 3
+	game.carry_assist()
+	check(game.assist == 2 and game.warning_beats(2) == 3, "heavier assist carries over reduced; assisted warnings get +1 beat")
+	game.clear_assist()
 	game.start_wave = 0
 	conductor.time_override = -1.0
 
@@ -1053,7 +1058,7 @@ func _fever_tests():
 	var shot = PlayerShot.create(Vector2(500, 300), Vector2.RIGHT, 1.0)
 	main.add_child(shot)
 	await wait(0.35)
-	check(a.health == 3.5 and b.health == 3.5, "FEVER shots pierce and do +50% (%.1f, %.1f)" % [a.health, b.health])
+	check(a.health == 3.5 and b.health == 3.5, "FEVER shots pierce and do +50 percent (%.1f, %.1f)" % [a.health, b.health])
 	for n in game.FEVER_BEATS:
 		game._on_beat(n)
 	check(not game.is_fever(), "FEVER ends after 8 beats")

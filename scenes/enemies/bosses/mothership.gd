@@ -33,5 +33,5 @@ func on_beat(n: int):
 			var y = clamp(player_position().y, 120.0, 600.0)
 			move_to_y(y, 0.2)
 			telegraph()
-			var beam = EnemyBeam.create(global_position.x - 80, y, Conductor.seconds_per_beat * 2.0, Conductor.seconds_per_beat * 0.8)
+			var beam = EnemyBeam.create(global_position.x - 80, y, Conductor.seconds_per_beat * Game.warning_beats(2), Conductor.seconds_per_beat * 0.8)
 			get_tree().current_scene.add_child(beam)

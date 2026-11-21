@@ -84,7 +84,7 @@ func _on_bar(_n: int):
 			_spawn_boss()
 		State.CLEARED:
 			if level_index + 1 < Levels.count():
-				Game.clear_assist()   # assist only lasts for the level it was earned on
+				Game.carry_assist()   # struggling players keep one level less of help
 				start_level(level_index + 1)
 			else:
 				state = State.DONE

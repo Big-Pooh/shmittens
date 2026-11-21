@@ -33,7 +33,8 @@ func on_beat(n: int):
 		target_y = position.y + dy
 		create_tween().tween_property(self, "position:y", target_y, 0.12)
 	# after at least ~a bar: warn on beat 3, lock the line, charge on the next downbeat (2 beats)
-	if beats_alive >= Conductor.BEATS_PER_BAR - 2 and phase == 2:
+	var warn = Game.warning_beats(2)
+	if beats_alive >= Conductor.BEATS_PER_BAR - 2 and phase == Conductor.BEATS_PER_BAR - warn:
 		locked = true
 		telegraph()
-		get_tree().current_scene.add_child(EnemyBeam.create(position.x - 40, target_y, Conductor.seconds_per_beat * 2.0, 0.0))
+		get_tree().current_scene.add_child(EnemyBeam.create(position.x - 40, target_y, Conductor.seconds_per_beat * warn, 0.0))

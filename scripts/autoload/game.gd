@@ -194,9 +194,19 @@ func add_assist():
 	assist = min(assist + 1, MAX_ASSIST)
 
 
-# New game or new level: no assist.
+# New game: no assist.
 func clear_assist():
 	assist = 0
+
+
+# Next level: struggling players keep a little help (one level less); others stay at 0.
+func carry_assist():
+	assist = max(assist - 1, 0)
+
+
+# Extra warning beats for beams/dashes while assisted.
+func warning_beats(base: int) -> int:
+	return base + (1 if assist > 0 else 0)
 
 
 # Screen shake (pixels); the main scene applies it.
