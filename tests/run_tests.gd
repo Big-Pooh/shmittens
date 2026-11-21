@@ -182,6 +182,7 @@ func _run():
 	await _assist_tests()
 	_rank_tests()
 	await _boss_assist_tests()
+	await _guardian_tests()
 	await _screen_tests()
 
 	print("%d passed, %d failed" % [passed, failed])
@@ -1018,3 +1019,17 @@ func _boss_assist_tests():
 	game.assist = 0
 	tank.queue_free()
 	cat.is_invulnerable = false
+
+
+func _guardian_tests():
+	await _start_main()
+	main.level_runner.stop()
+	game.assist = 0
+	await wait(0.5)
+	check(not cat.guardian_ready, "no guardian without assist")
+	game.assist = 3
+	await wait(5.3)
+	check(cat.guardian_ready, "guardian charges after a game over (assist 3: 5 s)")
+	var lives = game.lives
+	check(not cat.hit("shot") and game.lives == lives and not cat.guardian_ready, "guardian absorbs one hit")
+	game.assist = 0

@@ -3,3 +3,6 @@
 
 # macOS
 .DS_Store
+
+# Monte Carlo raw runs (regenerable; the report is kept)
+montecarlo/runs/

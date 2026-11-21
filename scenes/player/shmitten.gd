@@ -24,6 +24,11 @@ var is_dead = false
 var is_invulnerable = false
 var anim_time = 0.0
 var blink_tween: Tween
+# Guardian (beginner care): only after a game over on this level (Game.assist > 0), a bubble
+# absorbs one hit and recharges after GUARDIAN_RECHARGE[assist] seconds. Unused by players who don't fail.
+const GUARDIAN_RECHARGE = [0.0, 10.0, 7.0, 5.0]
+var guardian_ready = false
+var guardian_timer = 0.0
 
 
 func _ready():
@@ -35,6 +40,12 @@ func _ready():
 
 func _process(delta):
 	anim_time += delta
+	if Game.assist > 0 and not guardian_ready:
+		guardian_timer += delta
+		if guardian_timer >= GUARDIAN_RECHARGE[min(Game.assist, 3)]:
+			guardian_ready = true
+			guardian_timer = 0.0
+	queue_redraw()
 	sprite.frame = int(anim_time * FLY_FPS) % FLY_FRAMES
 
 
@@ -75,6 +86,11 @@ func apply_movement(accel):
 	velocity = velocity.limit_length(max_speed)
 
 
+func _draw():
+	if guardian_ready:
+		draw_arc(Vector2(4, 4), 40.0, 0, TAU, 32, Color(1, 0.9, 0.5, 0.55), 2.5)
+
+
 func can_shoot() -> bool:
 	return not is_dead and not Game.is_game_over and not Game.drawing
 
@@ -103,6 +119,12 @@ func _on_pickup_area_entered(area):
 # Returns true if the hit counted.
 func hit(cause: String = "") -> bool:
 	if is_dead or is_invulnerable or has_shield():
+		return false
+	if guardian_ready:
+		guardian_ready = false
+		Sfx.play("shield")
+		is_invulnerable = true   # brief grace so one burst doesn't pop it and hit at once
+		get_tree().create_timer(0.6, false).timeout.connect(func(): is_invulnerable = false)
 		return false
 	is_dead = true
 	velocity = Vector2.ZERO
