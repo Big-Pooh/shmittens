@@ -13,6 +13,7 @@ signal judged(judgement: int)
 signal reward(kind: String)          # "battery" / "yarn" from combo milestones
 signal level_changed(level: int)
 signal shake_requested(strength: float)
+signal fever_changed(active: bool)
 signal player_hit(cause: String)   # "shot", "ram", "beam" (for stats)
 
 const START_LIVES = 3
@@ -26,6 +27,12 @@ const BATTERY_EVERY = 5
 const YARN_EVERY = 15
 # Kills that weren't on-beat clicks drop 1 cheese every this many kills
 const PLAIN_KILLS_PER_CHEESE = 4
+# FEVER (rewards skilled players): every FEVER_EVERY on-beat hits in a row -> FEVER_BEATS beats
+# of piercing, +50% damage shots and full music.
+const FEVER_EVERY = 16
+const FEVER_BEATS = 8
+const FEVER_DAMAGE = 1.5
+var fever_beats = 0
 
 # Physics layer bits (match [layer_names] in project.godot)
 const LAYER_PLAYER = 1
@@ -78,6 +85,7 @@ func reset():
 	wave = 0
 	combo = 0
 	plain_kills = 0
+	fever_beats = 0
 	is_game_over = false
 	drawing = false
 	combo_changed.emit(combo, multiplier())
@@ -145,9 +153,12 @@ func register_judgement(judgement: int):
 			reward.emit("battery")
 		if combo % YARN_EVERY == 0:
 			reward.emit("yarn")
+		if combo % FEVER_EVERY == 0:
+			fever_beats = FEVER_BEATS
+			fever_changed.emit(true)
 	judged.emit(judgement)
 	combo_changed.emit(combo, multiplier())
-	Conductor.set_layers(multiplier() + 1)
+	Conductor.set_layers(4 if is_fever() else multiplier() + 1)
 
 
 func reset_combo():
@@ -191,6 +202,22 @@ func clear_assist():
 # Screen shake (pixels); the main scene applies it.
 func shake(strength: float):
 	shake_requested.emit(strength)
+
+
+func is_fever() -> bool:
+	return fever_beats > 0
+
+
+func _ready():
+	Conductor.beat.connect(_on_beat)
+
+
+func _on_beat(_n: int):
+	if fever_beats > 0:
+		fever_beats -= 1
+		if fever_beats == 0:
+			fever_changed.emit(false)
+			Conductor.set_layers(multiplier() + 1)
 
 
 func set_wave(value: int):

@@ -10,6 +10,8 @@ var velocity: Vector2
 var damage = 1.0
 var judgement = -1   # Conductor.Judgement for clicked shots, -1 for auto-fire
 var spent = false
+var pierce = false          # FEVER shots go through enemies (each enemy hit once)
+var already_hit = {}
 
 
 static func create(at: Vector2, direction: Vector2, dmg: float = 1.0, judged: int = -1) -> PlayerShot:
@@ -19,6 +21,9 @@ static func create(at: Vector2, direction: Vector2, dmg: float = 1.0, judged: in
 	shot.rotation = direction.angle()
 	shot.damage = dmg
 	shot.judgement = judged
+	if Game.is_fever():
+		shot.pierce = true
+		shot.damage *= Game.FEVER_DAMAGE
 	return shot
 
 
@@ -29,7 +34,10 @@ func _ready():
 	sprite.texture = TEXTURE
 	sprite.scale = Vector2.ONE * SPRITE_SCALE
 	# on-beat shots are bigger and glow gold
-	if judgement == Conductor.Judgement.PERFECT:
+	if pierce:
+		sprite.scale *= 1.5
+		sprite.modulate = Color(2.0, 1.4, 0.3)
+	elif judgement == Conductor.Judgement.PERFECT:
 		sprite.scale *= 1.7
 		sprite.modulate = Color(1.6, 1.3, 0.4)
 	elif judgement == Conductor.Judgement.GOOD:
@@ -52,6 +60,11 @@ func _physics_process(delta):
 
 func _on_area_entered(area):
 	if spent:
+		return
+	if area is EnemyBase and not area.is_dead and pierce:
+		if not already_hit.has(area):
+			already_hit[area] = true
+			area.take_hit(damage, velocity, judgement)
 		return
 	if area is EnemyBase and not area.is_dead:
 		spent = true

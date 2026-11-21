@@ -34,7 +34,7 @@ func _ready():
 
 
 func _on_beat(n: int):
-	var downbeat = n % Conductor.BEATS_PER_BAR == 0
+	var downbeat = n % Conductor.BEATS_PER_BAR == 0 or Game.is_fever()
 	var count = SPARKLES_PER_DOWNBEAT if downbeat else SPARKLES_PER_BEAT
 	var color = GOLD if downbeat else SOFT
 	for i in count:

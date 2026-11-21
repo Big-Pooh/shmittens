@@ -19,6 +19,7 @@ var cheese_bar: ProgressBar
 var gun_label: Label
 var message: Label
 var combo_label: Label
+var fever_label: Label
 var boss_box: VBoxContainer
 var boss_label: Label
 var boss_bar: ProgressBar
@@ -34,6 +35,7 @@ func _ready():
 	Game.charges_changed.connect(_on_charges)
 	Game.gun_level_changed.connect(func(l): gun_label.text = "GUN Lv %d" % l)
 	Game.combo_changed.connect(_on_combo)
+	Game.fever_changed.connect(_on_fever)
 	_on_combo(Game.combo, Game.multiplier())
 	_on_lives(Game.lives)
 	score_label.text = "SCORE  %06d" % Game.score
@@ -113,6 +115,13 @@ func _build():
 	combo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(combo_label)
 
+	fever_label = _label("FEVER!", 40, Color(1, 0.75, 0.2))
+	fever_label.position = Vector2(0, 600)
+	fever_label.size = Vector2(1280, 50)
+	fever_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	fever_label.hide()
+	add_child(fever_label)
+
 	var beat_bar = BeatBar.new()
 	beat_bar.position = Vector2(640 - 220, 664)
 	add_child(beat_bar)
@@ -183,6 +192,15 @@ func show_boss(boss: Boss):
 	boss.health_changed.connect(func(health, _max): boss_bar.value = health)
 	boss.phase_changed.connect(func(_p): boss_label.text = boss.boss_name + "  - ENRAGED!")
 	boss.died.connect(func(_b): boss_box.hide())
+
+
+func _on_fever(active: bool):
+	fever_label.visible = active
+	if active:
+		fever_label.pivot_offset = Vector2(640, 25)
+		fever_label.scale = Vector2.ONE * 1.4
+		create_tween().tween_property(fever_label, "scale", Vector2.ONE, 0.2)
+		Sfx.play("jingle")
 
 
 func show_message(text: String):

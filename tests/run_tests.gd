@@ -183,6 +183,7 @@ func _run():
 	_rank_tests()
 	await _boss_assist_tests()
 	await _guardian_tests()
+	await _fever_tests()
 	await _screen_tests()
 
 	print("%d passed, %d failed" % [passed, failed])
@@ -1033,3 +1034,29 @@ func _guardian_tests():
 	var lives = game.lives
 	check(not cat.hit("shot") and game.lives == lives and not cat.guardian_ready, "guardian absorbs one hit")
 	game.assist = 0
+
+
+func _fever_tests():
+	await _start_main()
+	await _clear_world()
+	main.level_runner.stop()
+	var conductor = root.get_node("Conductor")
+	game.reset()
+	for i in 15:
+		game.register_judgement(conductor.Judgement.GOOD)
+	check(not game.is_fever(), "no FEVER before 16 on-beat hits")
+	game.register_judgement(conductor.Judgement.GOOD)
+	check(game.is_fever() and game.fever_beats == game.FEVER_BEATS, "16 on-beat hits in a row start FEVER")
+	var a = _spawn_grunt(Vector2(600, 300), 5)
+	var b = _spawn_grunt(Vector2(700, 300), 5)
+	await frames(2)
+	var shot = PlayerShot.create(Vector2(500, 300), Vector2.RIGHT, 1.0)
+	main.add_child(shot)
+	await wait(0.35)
+	check(a.health == 3.5 and b.health == 3.5, "FEVER shots pierce and do +50% (%.1f, %.1f)" % [a.health, b.health])
+	for n in game.FEVER_BEATS:
+		game._on_beat(n)
+	check(not game.is_fever(), "FEVER ends after 8 beats")
+	var normal = PlayerShot.create(Vector2(500, 300), Vector2.RIGHT, 1.0)
+	check(not normal.pierce and normal.damage == 1.0, "normal shots again after FEVER")
+	normal.free()
