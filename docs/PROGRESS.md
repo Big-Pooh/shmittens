@@ -9,7 +9,7 @@ Resume a session by reading this file and `docs/PLAN.md` only. The full history 
 | 2 | M2 rhythm | ✅ done |
 | 3 | M3 gestures (playtest check-in after) | ✅ done (playtest still pending) |
 | 4 | M4a enemies + levels (+ rhythm revision 1) | ✅ done |
-| 5 | M4b bosses + screens | ⏭ next |
+| 5 | M4b bosses + screens | 🟡 in progress: boss scripts written, not wired in |
 | 6 | M5 polish | — |
 
 ## How to run
@@ -49,18 +49,20 @@ Resume a session by reading this file and `docs/PLAN.md` only. The full history 
   - `hud.gd`: built in code;
   - `crosshair.gd`: the sprite cursor, confined to the window.
 
-## Next session (Day 5: bosses + screens)
-1. Boss base (extends `enemy_base`):
-   - big health with a HUD health bar;
-   - **armour:** off-beat and held shots do 50%, on-beat shots and skills 100% (Revision 1);
-   - attack patterns scheduled on beats/bars, with warning flashes; phases by health.
-2. Bosses (art in `gen_art.py`; boss music `boss1-3` already exists):
-   - L1 Mecha-Mouse Tank: bullet fans on beats;
-   - L2 Mouse Mothership: launches grunts and fires a laser on downbeats;
-   - L3 Rat King: 2 phases, with the queen's cage. Defeating him → rescue ending.
-3. Level runner: after the last wave → boss intro (switch to the boss track) → boss fight → LEVEL CLEAR.
+## Next session (Day 5: bosses + screens), resume here
+**Already done (commit "WIP Day 5"; compiles, 79 tests still pass, NOT yet used by the game):**
+- `scenes/enemies/bosses/boss.gd`: base class with rhythm armour (50% off-beat), phase 2 at half health, reward drop, and the fan/ring/summon/move helpers.
+- `mecha_tank.gd` (120 HP), `mothership.gd` (160 HP; grunt launches plus the beam), `rat_king.gd` (220 HP; phase 2 summons shield mice).
+- `scenes/enemies/enemy_beam.gd`: a warning line, then a deadly horizontal beam.
+- Boss and queen art in `tools/gen_art.py`: `boss_tank.png`, `boss_mothership.png`, `boss_rat_king.png`, `queen.png`.
+
+**Still to do:**
+1. `levels.gd`: add a `"boss"` key per level (tank / mothership / rat_king) mapping to the boss scripts.
+2. Level runner: after the last wave → BOSS_INTRO ("WARNING" + boss name, switch to `boss_track`, 2 bars) → spawn the boss at slot (1050, 360) → BOSS → on boss death, CLEARED. In level 3, show the queen in a cage (drawn in code) during the fight.
+3. HUD: boss name and health bar at the top centre, fed by `health_changed`.
 4. Screens: title (start / quit), story cards from `Levels.LEVELS[i].story` before each level, pause (resume / beat offset slider / quit), game over (retry level / quit to title), victory/rescue ending.
-5. Tests: boss armour multipliers, phase change, boss → level clear, the screen flow.
+5. Tests: boss armour multipliers (50/100%, skills 100%), the phase-2 switch, the tank's 5-shot then 7-shot fans, mothership launches and beam hit/miss, Rat King phase-2 summons, runner last wave → boss → cleared, level 3 → ending, pause and offset slider, title → main.
+6. Day 5 audit entry in `docs/AUDIT_LOG.md`, then commit.
 
 ## Known issues / notes
 - **Playtest pending:** gesture recognition with real mouse strokes, slow-motion feel, rhythm windows and latency, skill balance.

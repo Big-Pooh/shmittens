@@ -350,3 +350,14 @@ None. All 79 tests passed on the first run after the changes.
   - level intro → wave 1 is a 3×3 grid → cleared after 5 waves → level 2 starts with its own track.
 - A screenshot of a mixed Level 3 wave shows the shield plates, gunners, dasher and grunt volley rendering correctly.
 - **Not verified:** difficulty and balance across the 15 waves; how readable the warning flashes are in real play.
+
+---
+
+## Session pause: Day 5 partly done (2026-11-22)
+**What:**
+- Boss base class, the 3 bosses, the enemy beam, and boss and queen art.
+- Committed as work in progress: everything compiles and all 79 existing tests pass, but the bosses aren't used by the game yet.
+
+**Why paused:** you asked to stop after Day 4 so your usage limit can reset.
+
+**Not verified yet:** the boss behaviour. No boss tests exist until Day 5 continues.
