@@ -76,7 +76,14 @@ func apply_movement(accel):
 
 
 func can_shoot() -> bool:
-	return not is_dead and not Game.is_game_over
+	return not is_dead and not Game.is_game_over and not Game.drawing
+
+
+func has_shield() -> bool:
+	for child in get_children():
+		if child is Shield and child.is_active():
+			return true
+	return false
 
 
 func _on_hitbox_area_entered(area):
@@ -95,7 +102,7 @@ func _on_pickup_area_entered(area):
 
 # Returns true if the hit counted.
 func hit() -> bool:
-	if is_dead or is_invulnerable:
+	if is_dead or is_invulnerable or has_shield():
 		return false
 	is_dead = true
 	velocity = Vector2.ZERO

@@ -7,8 +7,8 @@ Resume a session by reading this file and `docs/PLAN.md` only. The full history 
 |---|---|---|
 | 1 | M0 setup + M1 core shooter | ✅ done |
 | 2 | M2 rhythm | ✅ done |
-| 3 | M3 gestures (playtest check-in after) | ⏭ next |
-| 4 | M4a enemies + levels | — |
+| 3 | M3 gestures (playtest check-in after) | ✅ done (playtest still pending) |
+| 4 | M4a enemies + levels | ⏭ next |
 | 5 | M4b bosses + screens | — |
 | 6 | M5 polish | — |
 
@@ -26,6 +26,10 @@ Resume a session by reading this file and `docs/PLAN.md` only. The full history 
 - **`scripts/autoload/sfx.gd`** (`Sfx`): sound effects.
 - **`scripts/autoload/conductor.gd`** (`Conductor`): music layers, beat clock, `beat`/`bar` signals, `judge()`, offset, muffle.
 - **`scenes/ui/beat_bar.gd`:** the rhythm guide in the HUD.
+- **`scenes/gestures/`:**
+  - `gesture_input.gd`: right-click drawing, slow motion, casting;
+  - `gesture_recognizer.gd`: $1 for circle/triangle, straightness for lines, a structural check for zigzags;
+  - `skills/`: shockwave, laser_beam, chain_lightning, shield.
 - **`scenes/player/`:**
   - `shmitten.gd/.tscn`: the cat; movement is unchanged from the prototype;
   - `gun.gd`: aims at the mouse; click or hold to fire; streams = gun level;
@@ -42,23 +46,23 @@ Resume a session by reading this file and `docs/PLAN.md` only. The full history 
   - `hud.gd`: built in code;
   - `crosshair.gd`: the sprite cursor, confined to the window.
 
-## Next session (Day 3: gestures)
-1. `scenes/gestures/gesture_input.gd`:
-   - while the `draw` action (right mouse) is held: `Engine.time_scale = 0.3` (at most 2 real seconds), `Conductor.set_muffled(true)`, a glowing `Line2D` trail, and gun shooting disabled;
-   - on release: recognise the shape, spend 1 charge, cast. Empowered if `Conductor.judge()` isn't MISS.
-2. `gesture_recognizer.gd`: the $1 Unistroke method with circle, triangle and zigzag templates (both directions), plus a separate straightness check for lines that keeps the direction. Unrecognised shapes fizzle at no cost.
-3. Skills in `scenes/gestures/skills/`:
-   - shockwave (an expanding ring that damages once per enemy);
-   - laser (a piercing beam in the drawn direction);
-   - chain lightning (nearest to the cursor, then 4 jumps);
-   - shield (absorbs hits for 4 s).
-   
-   Empowered = +50% size, damage and duration.
-4. HUD: show the recognised skill name (or "fizzle") at the cat.
-5. Tests: synthetic strokes for each shape at several sizes and directions with noise; scribbles are rejected; charges are spent or not; each skill hits the right targets; the shield blocks; slow motion is capped at 2 s; empowered values apply.
-6. Then **stop for your playtest** (the planned check-in).
+## Next session (Day 4: enemies + levels)
+1. Enemy types, each extending `enemy_base.gd` and acting on `Conductor.beat`, with art added to `tools/gen_art.py`:
+   - **Gunner:** hovers; flashes on the beat before firing an aimed shot every 4 beats.
+   - **Dasher:** charges horizontally at the cat's height on the downbeat (bar).
+   - **Shield mouse:** a front shield blocks shots coming from the left within ±60°; skills and shots from an angle get through.
+2. `LevelData` and `WaveData` resources (`scenes/levels/`):
+   - a level holds its track, a list of waves, and a boss (Day 5);
+   - a wave holds enemy type, formation (grid/column/V), count, health and timing.
+3. Replace the endless `wave_director` with a level runner: waves start on bar boundaries; "LEVEL CLEAR" when all are done.
+4. Three levels:
+   - level1 (110 BPM): grunts and gunners;
+   - level2 (125 BPM): adds dashers;
+   - level3 (140 BPM): adds shield mice.
+5. Tests: each enemy's beat behaviour, the shield-mouse blocking angles, and level progression (forcing waves to clear).
 
 ## Known issues / notes
+- **Playtest pending:** gesture recognition with real mouse strokes, slow-motion feel, rhythm windows and latency, skill balance.
 - Placeholder art and sounds are generated. Replace any PNG/WAV under `Art/Generated/` or `Audio/` freely.
 - The cat sheet's rows 1–4 are unused (waiting for you to say what those poses are for).
 - The stale `movie_writer` path to an old "Game Prototypes" folder was dropped from `project.godot`.

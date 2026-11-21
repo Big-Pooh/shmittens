@@ -13,6 +13,11 @@ func _ready():
 	Conductor.play("level1")
 
 
+func _exit_tree():
+	Engine.time_scale = 1.0
+	Game.drawing = false
+
+
 func _on_game_over():
 	wave_director.stop()
 	Conductor.stop()

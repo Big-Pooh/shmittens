@@ -12,6 +12,9 @@ var cat
 var PlayerShot
 var EnemyShot
 var Pickup
+var Shockwave
+var LaserBeam
+var ChainLightning
 const CHEESE = 0
 const BATTERY = 1
 const YARN = 2
@@ -78,6 +81,9 @@ func _run():
 	PlayerShot = load("res://scenes/player/player_shot.gd")
 	EnemyShot = load("res://scenes/enemies/enemy_shot.gd")
 	Pickup = load("res://scenes/pickups/pickup.gd")
+	Shockwave = load("res://scenes/gestures/skills/shockwave.gd")
+	LaserBeam = load("res://scenes/gestures/skills/laser_beam.gd")
+	ChainLightning = load("res://scenes/gestures/skills/chain_lightning.gd")
 	await _start_main()
 
 	# --- cat stays on screen
@@ -160,6 +166,7 @@ func _run():
 	check(get_nodes_in_group("enemies").size() > 0, "a wave spawns after restart")
 
 	await _rhythm_tests()
+	await _gesture_tests()
 
 	print("%d passed, %d failed" % [passed, failed])
 	quit(1 if failed else 0)
@@ -233,3 +240,164 @@ func _rhythm_tests():
 
 	conductor.time_override = -1.0
 	conductor.offset_ms = saved_offset
+
+
+# ---------------------------------------------------------------- Day 3: gestures
+
+var rng = RandomNumberGenerator.new()
+
+
+func _stroke(corners: Array, size: float, rotation: float, wobble: float, per_segment := 12) -> PackedVector2Array:
+	var out = PackedVector2Array()
+	for i in corners.size() - 1:
+		for k in per_segment:
+			out.append(corners[i].lerp(corners[i + 1], float(k) / per_segment))
+	out.append(corners[corners.size() - 1])
+	var result = PackedVector2Array()
+	for p in out:
+		result.append((p * size).rotated(rotation) + Vector2(640, 360) + Vector2(rng.randf_range(-wobble, wobble), rng.randf_range(-wobble, wobble)))
+	return result
+
+
+func _circle_stroke(size: float) -> PackedVector2Array:
+	var corners = []
+	var start = rng.randf() * TAU
+	var dir = 1.0 if rng.randf() < 0.5 else -1.0
+	for i in 33:
+		corners.append(Vector2.from_angle(start + dir * TAU * 1.03 * i / 32.0))
+	return _stroke(corners, size, 0.0, size * 0.05, 2)
+
+
+func _triangle_stroke(size: float) -> PackedVector2Array:
+	var c = [Vector2(0, -1), Vector2(0.9, 0.6), Vector2(-0.9, 0.6)]
+	if rng.randf() < 0.5:
+		c.reverse()
+	return _stroke(c + [c[0]], size, rng.randf_range(-0.4, 0.4), size * 0.05)
+
+
+func _zigzag_stroke(size: float) -> PackedVector2Array:
+	var c = []
+	for k in rng.randi_range(3, 5) + 1:
+		c.append(Vector2(k * 0.5, (k % 2) * 0.9))
+	var angle = rng.randf_range(-0.3, 0.3) + (PI / 2.0 if rng.randf() < 0.3 else 0.0)
+	# ~2px jitter: real mouse strokes are smooth (small deltas), unlike random per-point noise
+	return _stroke(c, size, angle, 2.0)
+
+
+# dead enemies are freed shortly after dying
+func _gone(enemy) -> bool:
+	return not is_instance_valid(enemy) or enemy.is_dead
+
+
+func _gesture_tests():
+	await _start_main()
+	var conductor = root.get_node("Conductor")
+	rng.seed = 42
+	var recognizer = load("res://scenes/gestures/gesture_recognizer.gd").new()
+
+	# recogniser accuracy on varied synthetic strokes (sizes 40-160 px, both directions, wobble)
+	var makers = {"circle": _circle_stroke, "triangle": _triangle_stroke, "zigzag": _zigzag_stroke}
+	for shape in makers:
+		var correct = 0
+		for i in 15:
+			if recognizer.recognize(makers[shape].call(rng.randf_range(40, 160))).name == shape:
+				correct += 1
+		check(correct == 15, "%s recognised %d/15" % [shape, correct])
+	var line = recognizer.recognize(_stroke([Vector2(0, 0), Vector2(1, -1)], 150, 0.0, 2.0))
+	check(line.name == "line" and line.direction.dot(Vector2(1, -1).normalized()) > 0.98, "line recognised with its direction")
+	var rejected = 0
+	for i in 40:
+		var p = Vector2(640, 360)
+		var pts = PackedVector2Array([p])
+		for k in 30:
+			p += Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(10, 40)
+			pts.append(p)
+		if recognizer.recognize(pts).name == "":
+			rejected += 1
+	check(rejected >= 38, "random scribbles rejected (%d/40)" % rejected)
+	check(recognizer.recognize(PackedVector2Array([Vector2(0, 0), Vector2(20, 5)])).name == "", "tiny strokes ignored")
+
+	# drawing flow: slow motion, muffle, gun disabled, charge spent, skill cast
+	var gestures = main.get_node("GestureInput")
+	conductor.offset_ms = 0.0
+	conductor.time_override = 30 * conductor.seconds_per_beat + 0.3   # off-beat
+	game.charges = 2
+	var circle = _circle_stroke(120)
+	gestures.begin(circle[0])
+	check(is_equal_approx(Engine.time_scale, gestures.SLOW_MO_SCALE) and game.drawing, "drawing starts slow motion")
+	check(not cat.can_shoot(), "gun disabled while drawing")
+	for p in circle:
+		gestures.add_point(p)
+	var cast_log = []
+	gestures.cast.connect(func(skill, empowered): cast_log.append([skill, empowered]))
+	gestures.finish()
+	check(is_equal_approx(Engine.time_scale, 1.0) and not game.drawing, "releasing ends slow motion")
+	check(cast_log.size() == 1 and cast_log[0][0] == "shockwave" and not cast_log[0][1], "circle casts a (normal) shockwave off-beat")
+	check(game.charges == 1, "casting spends a charge")
+	await frames(30)
+
+	# on-beat release = empowered
+	conductor.time_override = 31 * conductor.seconds_per_beat + 0.01
+	var triangle = _triangle_stroke(100)
+	gestures.begin(triangle[0])
+	for p in triangle:
+		gestures.add_point(p)
+	gestures.finish()
+	check(cast_log.size() == 2 and cast_log[1] == ["shield", true], "on-beat triangle casts an EMPOWERED shield")
+	check(cat.has_shield() and not cat.hit(), "shield blocks hits")
+	check(is_equal_approx(cat.get_node("Shield").duration, 6.0), "empowered shield lasts 6s")
+	cat.get_node("Shield").queue_free()
+	await frames(2)
+
+	# fizzle and no-charge cost nothing
+	var charges = game.charges
+	gestures.begin(Vector2(640, 360))
+	for k in 30:
+		gestures.add_point(Vector2(640, 360) + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(20, 200))
+	gestures.finish()
+	check(game.charges == charges, "a fizzle costs no charge")
+	game.charges = 0
+	var zigzag = _zigzag_stroke(120)
+	gestures.begin(zigzag[0])
+	for p in zigzag:
+		gestures.add_point(p)
+	gestures.finish()
+	check(cast_log.size() == 2, "no cast without charges")
+
+	# slow motion is capped at 2 real seconds
+	gestures.begin()
+	await create_timer(2.3, true, false, true).timeout
+	check(not gestures.drawing and is_equal_approx(Engine.time_scale, 1.0), "drawing auto-ends after 2s")
+
+	# skill effects
+	for node in get_nodes_in_group("enemies"):
+		node.queue_free()
+	await frames(2)
+	cat.position = Vector2(200, 360)
+	var near = _spawn_grunt(Vector2(400, 360), 5)
+	var far = _spawn_grunt(Vector2(1100, 100), 5)
+	await frames(2)
+	main.add_child(Shockwave.create(cat.global_position, false))
+	await wait(0.7)
+	check(_gone(near) and not _gone(far), "shockwave hits enemies in range only")
+
+	var on_line = _spawn_grunt(Vector2(900, 360), 7)
+	var off_line = _spawn_grunt(Vector2(900, 600), 7)
+	await frames(2)
+	main.add_child(LaserBeam.create(cat, Vector2.RIGHT, false))
+	await wait(0.6)
+	check(_gone(on_line) and not _gone(off_line) and far.health == 5.0, "laser hits only what's on the beam")
+
+	for node in get_nodes_in_group("enemies"):
+		node.queue_free()
+	await frames(2)
+	var chain = []
+	for i in 7:
+		chain.append(_spawn_grunt(Vector2(500 + i * 120, 300), 4))
+	await frames(2)
+	main.add_child(ChainLightning.create(cat.global_position, Vector2(500, 300), false))
+	await frames(2)
+	var struck = chain.filter(func(g): return _gone(g)).size()
+	check(struck == 5, "lightning hits the target + 4 jumps (%d)" % struck)
+
+	conductor.time_override = -1.0

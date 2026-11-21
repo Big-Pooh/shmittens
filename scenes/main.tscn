@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://bm21wrvkabel4"]
+[gd_scene load_steps=8 format=3 uid="uid://bm21wrvkabel4"]
 
 [ext_resource type="Script" path="res://scenes/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scenes/levels/starfield.gd" id="2_stars"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://scenes/levels/wave_director.gd" id="4_waves"]
 [ext_resource type="Script" path="res://scenes/ui/hud.gd" id="5_hud"]
 [ext_resource type="Script" path="res://scenes/ui/crosshair.gd" id="6_cross"]
+[ext_resource type="Script" path="res://scenes/gestures/gesture_input.gd" id="7_gesture"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -24,3 +25,6 @@ script = ExtResource("5_hud")
 
 [node name="Crosshair" type="CanvasLayer" parent="."]
 script = ExtResource("6_cross")
+
+[node name="GestureInput" type="Node2D" parent="."]
+script = ExtResource("7_gesture")

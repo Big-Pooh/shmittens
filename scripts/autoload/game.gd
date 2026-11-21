@@ -36,6 +36,7 @@ var gun_level = 1
 var wave = 0
 var combo = 0
 var is_game_over = false
+var drawing = false   # true while a skill gesture is being drawn (gun is disabled)
 
 
 func reset():
@@ -47,6 +48,7 @@ func reset():
 	wave = 0
 	combo = 0
 	is_game_over = false
+	drawing = false
 	combo_changed.emit(combo, multiplier())
 	score_changed.emit(score)
 	lives_changed.emit(lives)
