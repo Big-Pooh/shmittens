@@ -19,6 +19,7 @@ signal all_levels_cleared
 enum State { IDLE, INTRO, WAVES, BOSS_INTRO, BOSS, CLEARED, DONE }
 
 const INTRO_BARS = 3
+const RETRY_INTRO_BARS = 1
 const BOSS_INTRO_BARS = 2
 const CLEARED_BARS = 2
 
@@ -28,6 +29,7 @@ var wave_index = -1
 var alive = 0
 var bars_to_wait = 0
 var boss: Boss
+var from_wave = 0
 
 
 func _ready():
@@ -38,13 +40,15 @@ func level() -> Dictionary:
 	return Levels.LEVELS[level_index]
 
 
-func start_level(index: int):
+# from_wave > 0 resumes at a checkpoint (waves.size() = straight to the boss).
+func start_level(index: int, resume_wave: int = 0):
 	level_index = clamp(index, 0, Levels.count() - 1)
-	wave_index = -1
+	from_wave = clamp(resume_wave, 0, level().waves.size())
+	wave_index = from_wave - 1
 	alive = 0
 	boss = null
 	state = State.INTRO
-	bars_to_wait = INTRO_BARS
+	bars_to_wait = RETRY_INTRO_BARS if from_wave > 0 else INTRO_BARS
 	Game.set_level(level_index, level().waves.size())
 	Conductor.play(level().track, Game.multiplier() + 1)
 	level_started.emit(level_index)
@@ -64,7 +68,7 @@ func _on_bar(_n: int):
 	match state:
 		State.INTRO:
 			state = State.WAVES
-			_next_wave()
+			_next_wave()   # starts at from_wave (or the boss intro if past the last wave)
 		State.WAVES:
 			if alive <= 0:
 				_next_wave()
@@ -72,6 +76,7 @@ func _on_bar(_n: int):
 			_spawn_boss()
 		State.CLEARED:
 			if level_index + 1 < Levels.count():
+				Game.clear_assist()   # assist only lasts for the level it was earned on
 				start_level(level_index + 1)
 			else:
 				state = State.DONE
@@ -91,6 +96,16 @@ func _next_wave():
 			alive += 1
 			get_tree().current_scene.add_child.call_deferred(enemy)
 	wave_started.emit(wave_index, waves.size())
+
+
+# Where a retry after game over resumes: the current wave, or the boss.
+func checkpoint() -> int:
+	match state:
+		State.WAVES:
+			return max(wave_index, 0)
+		State.BOSS_INTRO, State.BOSS, State.CLEARED, State.DONE:
+			return level().waves.size()
+	return from_wave
 
 
 func _on_enemy_gone():

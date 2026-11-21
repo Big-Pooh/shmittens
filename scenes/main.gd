@@ -17,6 +17,7 @@ const ENDING_DELAY = 3.5
 
 var queen_cage: QueenCage
 var shake_strength = 0.0
+var game_over_checkpoint = 0   # saved before the runner stops
 
 
 func _ready():
@@ -35,7 +36,7 @@ func _ready():
 		tutorial.name = "Tutorial"
 		add_child(tutorial)
 	else:
-		level_runner.start_level(Game.start_level)
+		level_runner.start_level(Game.start_level, Game.start_wave)
 
 
 # Screen shake: the whole world node jitters (HUD layers stay still), decaying quickly.
@@ -55,7 +56,14 @@ func _exit_tree():
 
 func _on_level_started(index: int):
 	var level = Levels.LEVELS[index]
-	hud.show_message("LEVEL %d - %s\n%s" % [index + 1, level.title, level.story])
+	if level_runner.from_wave > 0:
+		var where = "the boss" if level_runner.from_wave >= level.waves.size() else "wave %d" % (level_runner.from_wave + 1)
+		var help = ""
+		if Game.assist > 0:
+			help = "\nASSIST: slower enemy shots, +%d lives" % min(Game.assist, 2)
+		hud.show_message("LEVEL %d - TRY AGAIN from %s%s" % [index + 1, where, help])
+	else:
+		hud.show_message("LEVEL %d - %s\n%s" % [index + 1, level.title, level.story])
 
 
 func _on_boss_incoming(boss_name: String):
@@ -90,22 +98,33 @@ func _on_reward(kind: String):
 
 func _on_all_levels_cleared():
 	Game.start_level = 0
+	Game.start_wave = 0
+	Game.clear_assist()
 	await get_tree().create_timer(ENDING_DELAY, false).timeout
 	get_tree().change_scene_to_file(ENDING_SCENE)
 
 
 func _on_game_over():
+	game_over_checkpoint = level_runner.checkpoint()
 	level_runner.stop()
 	Conductor.stop()
 	crosshair.set_captured(false)
-	hud.show_message("GAME OVER\nscore %d\nR - retry level %d     Esc - title" % [Game.score, Game.level + 1])
+	hud.show_message("GAME OVER\nscore %d\nR - try again from here     Esc - title" % Game.score)
 
 
 func _unhandled_input(event):
 	if not Game.is_game_over:
 		return
 	if event.is_action_pressed("restart"):
-		Game.start_level = Game.level
-		get_tree().reload_current_scene()
+		retry()
 	elif event.is_action_pressed("pause"):
 		get_tree().change_scene_to_file(TITLE_SCENE)
+
+
+# Game over -> retry from the checkpoint with one more assist level (beginner care).
+func retry():
+	Game.start_level = Game.level
+	Game.start_wave = game_over_checkpoint
+	Game.add_assist()
+	get_tree().reload_current_scene()
+

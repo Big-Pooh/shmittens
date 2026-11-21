@@ -78,8 +78,7 @@ func _run():
 			if level_stats.game_overs > MAX_RETRIES:
 				break
 			conductor.time_override = 0.0
-			game.start_level = game.level
-			reload_current_scene()
+			scene.retry()   # same retry path as a player pressing R
 			bot = null
 			for i in 3:
 				await process_frame

@@ -163,7 +163,7 @@ func _run():
 	restart.pressed = true
 	root.push_input(restart)
 	await frames(4)
-	check(not game.is_game_over and game.lives == game.START_LIVES and game.score == 0, "restart resets the run")
+	check(not game.is_game_over and game.lives == game.START_LIVES + 1 and game.assist == 1 and game.score == 0, "retry restarts with +1 assist life")
 
 	# --- the level restarts (intro first, then waves)
 	await frames(5)
@@ -179,6 +179,7 @@ func _run():
 	await _full_run_test()
 	await _memory_tests()
 	await _tutorial_tests()
+	await _assist_tests()
 	await _screen_tests()
 
 	print("%d passed, %d failed" % [passed, failed])
@@ -946,3 +947,45 @@ func _tutorial_tests():
 	check(current_scene.get_node_or_null("Tutorial") == null, "later Starts go straight to level 1")
 	TutorialScript.set_done(was_done)
 	game.tutorial_mode = false
+
+
+# ---------------------------------------------------------------- tuning: checkpoints + assist
+
+func _assist_tests():
+	game.clear_assist()
+	game.start_wave = 0
+	await _start_main()
+	var conductor = root.get_node("Conductor")
+	var runner = main.level_runner
+	check(is_equal_approx(game.shot_speed_factor(), 0.8), "level 1 enemy shots are gentler (x0.8)")
+	# reach wave 3 of level 1, then lose all lives
+	conductor.time_override = 0.01
+	runner.start_level(0, 2)
+	check(runner.wave_index == 1 and runner.state == runner.State.INTRO, "starting from a checkpoint skips earlier waves")
+	runner.state = runner.State.WAVES
+	runner.wave_index = 2
+	game.lives = 1
+	cat.is_invulnerable = false
+	cat.hit("shot")
+	check(game.is_game_over and main.game_over_checkpoint == 2, "game over remembers the current wave")
+	main.retry()
+	for i in 4:
+		await process_frame
+	var retried = current_scene
+	check(retried.level_runner.from_wave == 2 and game.assist == 1 and game.lives == game.START_LIVES + 1, "retry resumes at that wave with assist")
+	check(is_equal_approx(game.shot_speed_factor(), 0.8 * (1.0 - game.ASSIST_SHOT_SLOWDOWN)), "assist slows enemy shots")
+	for i in 5:
+		game.add_assist()
+	check(game.assist == game.MAX_ASSIST, "assist is capped")
+	game.reset()
+	check(game.lives == game.START_LIVES + 2, "assist lives are capped at +2")
+	# boss checkpoint
+	retried.level_runner.state = retried.level_runner.State.BOSS
+	check(retried.level_runner.checkpoint() == Levels.LEVELS[0].waves.size(), "dying at the boss resumes at the boss")
+	# a new level / new game clears the assist
+	retried.level_runner.state = retried.level_runner.State.CLEARED
+	retried.level_runner.bars_to_wait = 1
+	retried.level_runner._on_bar(0)
+	check(game.assist == 0 and game.level == 1, "the next level starts without assist")
+	game.start_wave = 0
+	conductor.time_override = -1.0

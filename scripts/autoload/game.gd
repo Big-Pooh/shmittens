@@ -49,6 +49,17 @@ var level = 0
 var wave_total = 0
 # level to (re)start at when the main scene loads; kept across reset() so retry works
 var start_level = 0
+# Checkpoint: wave to resume from after a game over (waves.size() = the boss)
+var start_wave = 0
+# Assist (beginner care): each game over on the same level adds one, up to MAX_ASSIST.
+# Effects: enemy shots ASSIST_SHOT_SLOWDOWN slower per level, +1 life per level (up to +2).
+const MAX_ASSIST = 3
+const ASSIST_SHOT_SLOWDOWN = 0.12
+const LEVEL_SHOT_SPEED = [0.8, 0.9, 1.0]
+var assist = 0
+# per-level rank stats (time is measured by the level runner)
+var level_judged = 0
+var level_perfects = 0
 # true while the tutorial runs (main.gd starts the Tutorial instead of a level)
 var tutorial_mode = false
 # Automated playthroughs aim with this instead of the mouse (null = use the mouse)
@@ -59,7 +70,7 @@ var drawing = false   # true while a skill gesture is being drawn (gun is disabl
 
 func reset():
 	score = 0
-	lives = START_LIVES
+	lives = START_LIVES + min(assist, 2)
 	charges = 0
 	cheese = 0
 	gun_level = 1
@@ -122,6 +133,9 @@ func multiplier() -> int:
 # Called for every judged click. On-beat (GOOD/PERFECT) grows the combo, MISS resets it.
 # The music gets a layer per multiplier tier: x1 drums+bass, x2 +arp, x3/x4 +lead.
 func register_judgement(judgement: int):
+	level_judged += 1
+	if judgement == Conductor.Judgement.PERFECT:
+		level_perfects += 1
 	if judgement == Conductor.Judgement.MISS:
 		combo = 0
 	else:
@@ -149,10 +163,28 @@ func register_plain_kill() -> bool:
 
 func set_level(value: int, total_waves: int):
 	level = value
+	level_judged = 0
+	level_perfects = 0
 	wave_total = total_waves
 	wave = 0
 	level_changed.emit(level)
 	wave_changed.emit(wave)
+
+
+# Enemy shot speed multiplier: gentler early levels, slower with assist.
+func shot_speed_factor() -> float:
+	var base = LEVEL_SHOT_SPEED[clamp(level, 0, LEVEL_SHOT_SPEED.size() - 1)]
+	return base * (1.0 - ASSIST_SHOT_SLOWDOWN * assist)
+
+
+# Called on retry after a game over on the same level.
+func add_assist():
+	assist = min(assist + 1, MAX_ASSIST)
+
+
+# New game or new level: no assist.
+func clear_assist():
+	assist = 0
 
 
 # Screen shake (pixels); the main scene applies it.

@@ -190,4 +190,6 @@ func finish():
 	finished.emit()
 	Game.tutorial_mode = false
 	Game.start_level = 0
+	Game.start_wave = 0
+	Game.clear_assist()
 	get_tree().reload_current_scene()
