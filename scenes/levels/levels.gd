@@ -80,7 +80,7 @@ const BOSS_SCRIPTS = {
 }
 const BOSS_SLOT = Vector2(1060, 360)
 
-const SPACING = Vector2(78, 70)
+const SPACING = Vector2(86, 74)   # playtest 2: the cute mice are rounder
 const DEFAULT_RIGHT_X = 1180.0
 const SPAWN_X = 1380.0
 
