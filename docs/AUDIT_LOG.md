@@ -980,3 +980,41 @@ Your feedback:
 - **Boss medians on Normal:** average player 28–53 s; speedrunner 7–12 s. The mech, Overdrive and crits all stack for perfect play. Hard and Touhou give 1.6–2× longer fights.
 
 **Tests:** 284 passing. The companion test is now independent of the live music clock (one run had seen an extra real beat).
+
+## Phase 14: playtest 6 (iteration 10, branch `feedback/playtest-2`)
+**Why:** session stats from playtest 6:
+- 10 of 13 cards captured (the tutorial step worked);
+- 1 bomb (the cut worked);
+- **6 mechs in one run** (not "very rare");
+- only **5 drawn spells** (the signature mechanic was fading behind companions, mech, Overdrive and crits);
+- Spread used 2% of the time.
+
+You approved fixes 1–3.
+
+### What changed
+1. **Rarer mech:**
+   - 4 parts (was 3);
+   - combo parts every 75 hits (was 40);
+   - capture parts only for cards **you hit with a drawn spell**;
+   - **at most one mech per planet** (parts wait at 3/4 until the next planet).
+   - In playtest 6 terms: at most 4 mechs, realistically 1–2 (was 6).
+2. **Drawing back at the centre:**
+   - **SPELL BREAK:** a drawn spell on an armoured boss shatters all remaining beat armour at once and stuns it (it used to crack 2 pips);
+   - the mech part for captures requires a spell (above);
+   - a pulsing reminder appears after 6 s of sitting on full charges ("HOLD RIGHT-CLICK and draw…");
+   - the spell-card tip now explains both.
+3. **Spread's niche:** ×1.3 damage point-blank, and every 3 enemy bullets its pellets eat turn into 1 cheese (spell fuel). It's now the "go in close, eat bullets, cast more spells" weapon. The HUD hint says so.
+
+### Results
+| KPI | Panel A | Panel B | Target |
+|---|---|---|---|
+| had fun | 99% | 100% | ≥ 80% |
+| drop L1–L4 | 0 / 1 / 2 / 1% | 0 / 2 / 1 / 2% | ≤ 20% |
+| completion | 96% | 94% | ≥ 60% |
+| endorse | 91% | 92% | ≥ 80% |
+| purchase intent | 74% | 76% | ≥ 25% |
+| GTM | 60% (cap) | 60% (cap) | ≥ 24% |
+
+**Monte Carlo, beginner in Normal mode (no Relaxed):** drop 5 / 17 / 22 / 27%. Still the open beginner item; the Relaxed offer is the safety net.
+
+**Tests:** 289 passing.

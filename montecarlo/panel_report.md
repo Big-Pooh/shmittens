@@ -5,7 +5,7 @@
 | Player | had fun | 100% | ≥ 80% | ✅ |
 | Player | drop rate level 1 | 0% | ≤ 20% | ✅ |
 | Player | drop rate level 2 | 2% | ≤ 20% | ✅ |
-| Player | drop rate level 3 | 2% | ≤ 20% | ✅ |
+| Player | drop rate level 3 | 1% | ≤ 20% | ✅ |
 | Player | drop rate level 4 | 2% | ≤ 20% | ✅ |
 | Player | completion (finish the story) | 94% | ≥ 60% | ✅ |
 | Critic | likely to endorse | 92% | ≥ 80% | ✅ |

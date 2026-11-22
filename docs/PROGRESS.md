@@ -17,7 +17,8 @@ Resume a session by reading this file and `docs/PLAN.md` only. The full history 
 | 10 | Playtest 2 (iteration 6) | ✅ on branch `feedback/playtest-2` |
 | 11 | Playtest 3 (iteration 7) | ✅ on branch `feedback/playtest-2` |
 | 12 | Playtest 4 (iteration 8): story, planets, Sho, modes, companions | ✅ on branch `feedback/playtest-2` |
-| 13 | Playtest 5 (iteration 9): music-tied patterns, companion roles, bombs, card tutorial, mech, gags | ✅ on branch `feedback/playtest-2`, **not merged**: waiting for your playtest |
+| 13 | Playtest 5 (iteration 9): music-tied patterns, companion roles, bombs, card tutorial, mech, gags | ✅ on branch `feedback/playtest-2` |
+| 14 | Playtest 6 (iteration 10): rarer mech, spell break, spread niche | ✅ on branch `feedback/playtest-2`, **not merged**: waiting for your playtest |
 
 ## How to run
 - Godot: `~/Desktop/Godot_v4.7.2.app` (the project needs 4.7.2).

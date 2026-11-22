@@ -303,7 +303,7 @@ func _on_card_started(index: int, card_name: String, _seconds: float, boss: Boss
 	if card_name != "":
 		_flash_text("SPELL CARD  -  " + card_name.to_upper(), Color(1, 0.75, 0.95))
 	if index == 0 and Game.first_time("spell_cards"):
-		show_tip("BOSS SPELL CARDS\nEvery boss attacks in named SPELL CARDS. Each one owns a slice of its health bar and has a timer.\nEmpty the slice (or outlast the timer) to move on. Do it WITHOUT getting hit or bombing\nto CAPTURE the card: big bonus + a battery. Your drawn spells and the bomb (X) hit bosses hard.")
+		show_tip("BOSS SPELL CARDS\nEvery boss attacks in named SPELL CARDS. Each one owns a slice of its health bar and has a timer.\nEmpty the slice (or outlast the timer) to move on. Do it WITHOUT getting hit or bombing\nto CAPTURE the card: big bonus + a battery. Drawn spells hit bosses hard and SHATTER beat armour -\ncapture a card you hit with a spell to earn a MECH PART.")
 
 
 func _on_card_ended(_index: int, captured: bool):
