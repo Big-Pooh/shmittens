@@ -348,6 +348,27 @@ def fish_shot():
     c.save("shot_fish.png")
 
 
+def rice_shot():
+    # a small grain that points along its flight (drawn pointing right)
+    c = Canvas(9, 5)
+    c.ellipse(4.5, 2.5, 4.0, 1.6, (120, 255, 200, 255))
+    c.ellipse(5.0, 2.5, 2.0, 0.8, WHITE)
+    c.outline((30, 110, 90, 255))
+    c.save("shot_rice.png")
+
+
+def orb_shot():
+    # a big slow bubble
+    c = Canvas(12, 12)
+    c.ellipse(6, 6, 5.5, 5.5, (190, 140, 255, 255))
+    c.ellipse(6, 6, 3.6, 3.6, (235, 215, 255, 255))
+    c.set(4, 3, WHITE)
+    c.set(4, 4, WHITE)
+    c.set(3, 4, WHITE)
+    c.outline((80, 40, 130, 255))
+    c.save("shot_orb.png")
+
+
 def main():
     mouse("grunt.png", LILAC, LILAC_L, accessory=grunt_bits)
     mouse("gunner.png", PEACH, PEACH_L, accessory=gunner_bits)
@@ -364,6 +385,8 @@ def main():
     player_shot()
     laser_shot()
     fish_shot()
+    rice_shot()
+    orb_shot()
     print("wrote cute sprites to", os.path.normpath(OUT))
 
 

@@ -3,35 +3,50 @@ extends Boss
 class_name RatKing
 
 # Level 3 (final) boss, "King Ratbert". Playtest 2: "too many random bullets and hard to hit"
-# -> no shield-mouse guards (they blocked your shots), no jumping to your height, every bullet
-# is part of a fixed pattern:
-#   melody  - staff notes (height = pitch); long notes are chords of 2.
-#   drums   - downbeat: a 14-shot ring that rotates a little every bar; beat 3: a 5-shot arc.
-#             Drifts slowly in a figure of eight.
-#   phase 2 - beat armour (see Boss) + two counter-rotating spiral arms on every beat; the
-#             ring only on every other bar.
+# -> no shot-blocking guards, no jumping to your height, every bullet is part of a fixed
+# pattern. Three spell cards:
+#   0 "Royal Decree" - a 14-candy ring that rotates a little every bar + a 5-shot arc on beat 3.
+#   1 "Rat Race Rondo" - two counter-rotating rice spirals on every beat (a readable lattice)
+#     and an orb ring every other bar that freezes on the beat, then re-aims at you.
+#   2 "Long Live the King" (beat armour) - a 3-petal flower on every downbeat + the crossing
+#     spirals on beats 2 and 4. Long melody notes become chords.
+# Slow figure-of-eight drift throughout.
 
 const TEXTURE = preload("res://Art/Generated/boss_rat_king.png")
+
+var counter_angle = 0.0
 
 
 func _init():
 	build(TEXTURE, 6.0, 84.0, 350.0)
 	boss_name = "KING RATBERT"
-
-
-var counter_angle = 0.0
+	cards = [
+		{"name": "Royal Decree", "share": 0.35, "seconds": 35.0, "armored": false},
+		{"name": "Rat Race Rondo", "share": 0.35, "seconds": 35.0, "armored": false},
+		{"name": "Long Live the King", "share": 0.3, "seconds": 40.0, "armored": true},
+	]
 
 
 func on_beat(n: int):
 	var beat = n % Conductor.BEATS_PER_BAR
 	var bar = n / Conductor.BEATS_PER_BAR
-	if beat == 0 and (phase == 1 or bar % 2 == 0):
-		ring(14, 160.0, bar * 0.11)
-	if beat == 2 and phase == 1:
-		arc(5, 14.0, 190.0)
-	if phase == 2:
-		spiral(1, 150.0, 31.0)
-		_counter_spiral()
+	match card:
+		0:
+			if beat == 0:
+				ring(14, 160.0, bar * 0.11)
+			if beat == 2:
+				arc(5, 14.0, 190.0)
+		1:
+			spiral(1, 150.0, 31.0)
+			_counter_spiral()
+			if beat == 0 and bar % 2 == 0:
+				freeze_ring(12, 170.0, 210.0, EnemyShot.Kind.ORB, bar * 0.25)
+		_:
+			if beat == 0:
+				flower(3, 12, 180.0, EnemyShot.Kind.RICE, bar * 0.17)
+			if beat == 1 or beat == 3:
+				spiral(1, 150.0, 31.0)
+				_counter_spiral()
 	if beat == 0 and bar % 2 == 0:
 		drift_to(360.0 + 150.0 * sin(bar * 0.8), Conductor.seconds_per_beat * 8.0)
 	if beat == 3:
@@ -42,9 +57,9 @@ func on_beat(n: int):
 func _counter_spiral():
 	if Game.assist >= 2:
 		return
-	fire_shot(Vector2.from_angle(PI + counter_angle), 150.0)
+	fire_shot(Vector2.from_angle(PI + counter_angle), 150.0, EnemyShot.Kind.RICE)
 	counter_angle -= deg_to_rad(31.0)
 
 
 func on_lead_note(pitch: int, length: int):
-	staff_note(pitch, 205.0, 2 if length >= 2 else 1)
+	staff_note(pitch, 205.0, 2 if length >= 2 and card == 2 else 1)

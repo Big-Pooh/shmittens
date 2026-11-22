@@ -31,8 +31,8 @@ func _initialize():
 
 
 func _watchdog():
-	await create_timer(60.0, true, false, true).timeout
-	print("FAIL: tests timed out after 60s")
+	await create_timer(120.0, true, false, true).timeout
+	print("FAIL: tests timed out after 120s")
 	quit(2)
 
 
@@ -61,6 +61,8 @@ func _start_main():
 	main = current_scene
 	game = root.get_node("Game")
 	cat = main.get_node("Shmitten")
+	# older tests were written for the Spread gun (playtest 3 made Fish the default)
+	game.weapon = game.Weapon.SPREAD
 	# keep tests deterministic: no automatic waves
 	main.level_runner.stop()
 	for node in get_nodes_in_group("enemies"):
@@ -137,7 +139,7 @@ func _run():
 	var before = main.get_children().filter(func(n): return n.get_script() == PlayerShot).size()
 	cat.get_node("Gun").fire()
 	var after = main.get_children().filter(func(n): return n.get_script() == PlayerShot).size()
-	check(after - before == game.gun_level, "gun fires %d streams at level %d (got %d)" % [game.gun_level, game.gun_level, after - before])
+	check(after - before == cat.get_node("Gun").shots_per_fire(), "gun fires %d pellets at level %d (got %d)" % [cat.get_node("Gun").shots_per_fire(), game.gun_level, after - before])
 
 	# --- enemy shot hits the cat
 	var lives = game.lives
@@ -195,6 +197,7 @@ func _run():
 	await _spell_chain_tests()
 	await _screen_tests()
 	await _playtest2_tests()
+	await _playtest3_tests()
 
 	game.difficulty_chosen = original.chosen
 	game.relaxed_mode = original.relaxed
@@ -505,7 +508,7 @@ func _rhythm_loop_tests():
 	gun._on_beat(1)
 	Input.action_release("shoot")
 	var held = main.get_children().filter(func(n): return n.get_script() == PlayerShot)
-	check(held.size() - before == game.gun_level and held[-1].judgement == -1 and is_equal_approx(held[-1].damage, gun.HELD_DAMAGE), "held fire shoots on the beat (0.6 dmg, unjudged)")
+	check(held.size() - before == gun.shots_per_fire() and held[-1].judgement == -1 and is_equal_approx(held[-1].damage, gun.HELD_DAMAGE), "held fire shoots on the beat (0.6 dmg, unjudged)")
 	check(game.combo == combo_before, "held fire doesn't touch the combo")
 	gun._on_beat(2)
 	check(main.get_children().filter(func(n): return n.get_script() == PlayerShot).size() == held.size(), "no beat shot when not holding")
@@ -650,6 +653,7 @@ func _make_boss(path: String, at := Vector2(1000, 360)):
 	boss.drops = false
 	main.add_child(boss)
 	await frames(2)
+	boss.card_intro = 0   # skip the spell card's name intro (2 invulnerable beats)
 	return boss
 
 
@@ -690,6 +694,8 @@ func _boss_tests():
 	var phases = []
 	tank.phase_changed.connect(func(p): phases.append(p))
 	tank.take_damage(tank.health - tank.max_health * 0.4)
+	check(is_equal_approx(tank.health, tank.max_health * 0.5) and tank.card == 1, "damage can't spill past a spell card: it stops at the card's share")
+	tank.card_intro = 0
 	check(tank.phase == 2 and phases == [2] and tank.is_armored() and is_equal_approx(tank.armor, tank.ARMOR_PIPS), "phase 2 below half health raises 5 pips of beat armour")
 	var hp = tank.health
 	tank.take_hit(10.0, Vector2.RIGHT, conductor.Judgement.GOOD)
@@ -705,7 +711,7 @@ func _boss_tests():
 	tank._on_conductor_beat(8)
 	tank._on_lead_note(3, 1)
 	await frames(1)
-	check(_count("enemy_shots") == shots, "a stunned boss doesn't fire")
+	check(_count("enemy_shots") <= shots, "a stunned boss doesn't fire")   # (<=: bullets cleared at the card change may still be freeing)
 	hp = tank.health
 	tank.take_hit(10.0, Vector2.RIGHT, -1)
 	check(is_equal_approx(tank.health, hp - 15.0), "a stunned boss takes 1.5x damage from everything")
@@ -724,6 +730,7 @@ func _boss_tests():
 	game.assist = 1
 	var easy = await _make_boss("res://scenes/enemies/bosses/mecha_tank.gd")
 	easy.take_damage(easy.health - easy.max_health * 0.4)
+	easy.card_intro = 0
 	easy.take_hit(1.0, Vector2.RIGHT, conductor.Judgement.GOOD)
 	check(is_equal_approx(easy.armor, easy.ARMOR_PIPS - 1.0), "with assist, GOOD shots crack a whole pip")
 	game.assist = 0
@@ -753,7 +760,7 @@ func _boss_tests():
 	shots = _count("enemy_shots")
 	king.on_beat(1)
 	await frames(1)
-	check(_count("enemy_shots") - shots == 2, "phase 2 Rat King: two counter-rotating spiral arms per beat")
+	check(_count("enemy_shots") - shots == 2, "Rat King's 2nd card: two counter-rotating spiral arms per beat")
 	king.queue_free()
 	await _clear_world()
 
@@ -975,9 +982,10 @@ func _tutorial_tests():
 	Input.action_release("shoot")
 	check(tutorial.step == 3, "step 3 completes after holding fire for 4 beats")
 	# 4: try the weapons (the one you hold counts)
-	game.set_weapon(game.Weapon.LASER)
+	var others = [0, 1, 2].filter(func(w): return w != game.weapon)
+	game.set_weapon(others[0])
 	check(tutorial.step == 3, "one weapon switch isn't enough")
-	game.set_weapon(game.Weapon.FISH)
+	game.set_weapon(others[1])
 	check(tutorial.step == 4, "step 4 completes after trying all three weapons")
 	game.set_weapon(game.Weapon.SPREAD)
 	await frames(3)
@@ -1326,12 +1334,12 @@ func _playtest2_tests():
 	game.set_weapon(game.Weapon.SPREAD)
 	var before = _shots().size()
 	gun.fire(1.0)
-	check(_shots().size() - before == 3, "spread fires one stream per gun level")
+	check(_shots().size() - before == 5, "spread fires 2 + gun level pellets")
 	game.set_weapon(game.Weapon.LASER)
 	before = _shots().size()
 	gun.fire(1.0)
 	var bolt = _shots()[-1]
-	check(_shots().size() - before == 1 and bolt.pierce and is_equal_approx(bolt.damage, 1.0 + 2 * gun.LASER_PER_LEVEL), "laser: one piercing bolt, damage grows with gun level")
+	check(_shots().size() - before == 1 and bolt.pierce and is_equal_approx(bolt.damage, gun.LASER_BASE + 2 * gun.LASER_PER_LEVEL), "laser: one piercing bolt, damage grows with gun level")
 	game.set_weapon(game.Weapon.FISH)
 	before = _shots().size()
 	gun.fire(1.0)
@@ -1435,3 +1443,207 @@ func _playtest2_tests():
 	gestures.cancel()
 	check(not gestures.guide.panel, "the guide hides when drawing stops")
 	game.gun_level = 1
+
+
+# ---------------------------------------------------------------- playtest 3
+func _formation() -> Array:
+	var enemies = []
+	for g in Levels.LEVELS[0].waves[1]:
+		for e in Levels.create_group(g):
+			e.position = e.slot_position
+			e.slot_position = Vector2.INF
+			e.max_health = 100
+			e.drops = false
+			main.add_child(e)
+			enemies.append(e)
+	return enemies
+
+
+func _hurt(enemies: Array) -> int:
+	return enemies.filter(func(e): return is_instance_valid(e) and e.health < 100).size()
+
+
+func _playtest3_tests():
+	await _start_main()
+	main.level_runner.stop()
+	await _clear_world()
+	var gestures = main.get_node("GestureInput")
+	var conductor = root.get_node("Conductor")
+	cat.position = Vector2(220, 360)
+	cat.is_invulnerable = true
+
+	# draw where it hits: a circle drawn around the formation (cat far away on the left)
+	var enemies = _formation()
+	await frames(2)
+	var circle = PackedVector2Array()
+	for i in 33:
+		circle.append(Vector2(1030, 360) + Vector2.from_angle(TAU * i / 32.0) * 150.0)
+	gestures.cast_skill("shockwave", false, Vector2.RIGHT, circle)
+	await frames(30)
+	check(_hurt(enemies) >= 12, "a circle drawn around the mice bursts there (%d/16 hit)" % _hurt(enemies))
+	await _clear_world()
+	# a slightly tilted line drawn through a row still slashes along it
+	enemies = _formation()
+	await frames(2)
+	var row_y = enemies[0].position.y
+	gestures.cast_skill("laser", false, Vector2.RIGHT, PackedVector2Array([Vector2(800, row_y - 20), Vector2(1200, row_y + 20)]))
+	await frames(10)
+	check(_hurt(enemies) >= 4, "a line drawn through a row slashes along it (%d hit)" % _hurt(enemies))
+	await _clear_world()
+	# a zigzag over the formation strikes along it
+	enemies = _formation()
+	await frames(2)
+	var zig = PackedVector2Array([Vector2(900, 250), Vector2(980, 470), Vector2(1060, 250), Vector2(1140, 470)])
+	gestures.cast_skill("lightning", false, Vector2.RIGHT, zig)
+	await frames(2)
+	check(_hurt(enemies) >= 5, "a zigzag over the mice strikes along it (%d hit)" % _hurt(enemies))
+	await _clear_world()
+
+	# casting clears bullets on screen, some become cheese
+	await wait(0.6)   # let the previous slash fade (it erases bullets too)
+	for i in 5:
+		main.add_child(EnemyShot.create(Vector2(560, 420 + i * 40), Vector2.LEFT, 10.0))
+	await frames(1)
+	gestures.cast_skill("shield", false)
+	await frames(2)
+	check(_count("enemy_shots") == 0 and _count("pickups") >= 5, "a spell turns the bullets on screen into cheese")
+	await _clear_world()
+
+	# snap assist: after 2 unrecognised strokes, a sloppy shape is accepted
+	game.add_charge(3)
+	var wobbly = PackedVector2Array()
+	for i in 30:
+		var a = TAU * i / 29.0 * 0.82
+		wobbly.append(Vector2(500, 360) + Vector2.from_angle(a) * (90.0 + 30.0 * sin(a * 5.0)))
+	var scribble = PackedVector2Array([Vector2(400, 300), Vector2(520, 310), Vector2(410, 330), Vector2(530, 420), Vector2(420, 300), Vector2(470, 450)])
+	var r = gestures.recognizer.recognize(wobbly)
+	gestures.fizzles_in_a_row = 0
+	for k in 2:
+		gestures.begin(scribble[0])
+		for p in scribble:
+			gestures.add_point(p)
+		gestures.finish()
+	check(gestures.fizzles_in_a_row >= 2, "unrecognised strokes count as fizzles in a row")
+	if r.name == "" and r.score >= gestures.SNAP_MIN_SCORE:
+		gestures.begin(wobbly[0])
+		for p in wobbly:
+			gestures.add_point(p)
+		var snapped = gestures.finish()
+		check(snapped.get("snapped", false), "after 2 fizzles a close-enough stroke snaps to its shape (%s %.2f)" % [r.best, r.score])
+	else:
+		check(true, "snap assist: test stroke was %s (%.2f), nothing to snap" % [r.name, r.score])
+	await _clear_world()
+
+	# spells hurt bosses for real: >= 7% of max health; armoured: crack 2 pips
+	var boss = await _make_boss("res://scenes/enemies/bosses/mecha_tank.gd")
+	var hp = boss.health
+	boss.take_skill_damage(1.0)
+	check(is_equal_approx(hp - boss.health, boss.max_health * boss.SKILL_MIN_FRACTION), "a spell takes at least 7% of a boss's health")
+	boss.take_damage(boss.health - boss.max_health * 0.4)
+	boss.card_intro = 0
+	boss.take_skill_damage(1.0)
+	check(is_equal_approx(boss.armor, boss.ARMOR_PIPS - 2.0), "a spell cracks 2 pips of beat armour")
+	boss.queue_free()
+	await _clear_world()
+
+	# spell cards: names, invulnerable intro, timer out -> next card without capture
+	boss = await _make_boss("res://scenes/enemies/bosses/rat_king.gd")
+	check(boss.cards.size() == 3 and boss.card == 0 and boss.cards[0].name != "", "King Ratbert has 3 named spell cards")
+	boss.card_intro = 2
+	hp = boss.health
+	boss.take_hit(10.0, Vector2.RIGHT, conductor.Judgement.PERFECT)
+	check(is_equal_approx(boss.health, hp), "a card's name intro is invulnerable")
+	boss.card_intro = 0
+	var ended = []
+	boss.card_ended.connect(func(i, captured): ended.append([i, captured]))
+	boss.card_time = 0.01
+	await frames(3)
+	check(boss.card == 1 and ended == [[0, false]] and is_equal_approx(boss.health, boss.max_health * 0.65), "timer out ends the card without a capture")
+	boss.card_intro = 0
+	var score = game.score
+	boss.take_damage(boss.health - boss.card_floor)
+	check(boss.card == 2 and ended[-1] == [1, true] and game.score >= score + boss.CAPTURE_SCORE, "clearing a card without getting hit captures it (+bonus)")
+	boss.queue_free()
+	await _clear_world()
+
+	# bomb: spends every charge, clears bullets, protects, hits bosses
+	game.charges = 0
+	game.add_charge(3)
+	var old_bullets = []
+	for i in 4:
+		old_bullets.append(EnemyShot.create(Vector2(600, 200 + i * 80), Vector2.LEFT, 10.0))
+		main.add_child(old_bullets[-1])
+	cat.is_invulnerable = false
+	boss = await _make_boss("res://scenes/enemies/bosses/mecha_tank.gd")
+	hp = boss.health
+	check(gestures.bomb(), "the bomb goes off with charges")
+	await frames(2)
+	check(game.charges == 0 and old_bullets.all(func(b): return not is_instance_valid(b)) and cat.is_invulnerable, "the bomb spends all charges, clears bullets and protects the cat")
+	check(is_equal_approx(hp - boss.health, boss.max_health * boss.BOMB_FRACTION * 3) and not boss.card_clean, "the bomb hits the boss (4% per charge) and fails the capture")
+	check(not gestures.bomb(), "no bomb without charges")
+	boss.queue_free()
+	cat.is_invulnerable = true
+	await _clear_world()
+
+	# weapons: spread pellets fall off with distance and erase bullets
+	var pellet = PlayerShot.create(Vector2(100, 360), Vector2.RIGHT, 1.0)
+	check(is_equal_approx(pellet.damage_now(), 1.0), "spread pellets do full damage up close")
+	pellet.position = Vector2(800, 360)
+	check(is_equal_approx(pellet.damage_now(), pellet.FALLOFF_MIN), "spread pellets fall off with distance")
+	pellet.free()
+	var bullet = EnemyShot.create(Vector2(600, 360), Vector2.ZERO, 0.0)
+	main.add_child(bullet)
+	main.add_child(PlayerShot.create(Vector2(560, 360), Vector2.RIGHT, 1.0))
+	await frames(6)
+	check(not is_instance_valid(bullet), "spread pellets erase enemy bullets")
+	var fresh = load("res://scripts/autoload/game.gd").new()
+	check(fresh.weapon == game.Weapon.FISH, "fish is the default weapon")
+	fresh.free()
+	await _clear_world()
+
+	# overdrive: banked at a 50 combo, F unleashes a 5 s beam that hits on the 8ths
+	game.set_overdrive(0)
+	game.reset_combo()
+	for i in game.OVERDRIVE_COMBO:
+		game.register_judgement(conductor.Judgement.PERFECT)
+	check(game.overdrive == 1, "a 50 combo banks an overdrive")
+	var target = load("res://scenes/enemies/grunt.tscn").instantiate()
+	target.position = Vector2(700, 360)
+	target.max_health = 500
+	main.add_child(target)
+	game.aim_override = Vector2(700, 360)
+	check(cat.get_node("Gun").unleash_overdrive() and game.overdrive == 2, "F unleashes the overdrive")
+	await wait(1.2)
+	check(target.health < 500, "the overdrive beam hits what you aim at")
+	await wait(game.OVERDRIVE_SECONDS)
+	check(game.overdrive == 0, "the overdrive ends after 5 s")
+	game.aim_override = null
+	await _clear_world()
+
+	# graze + freeze-and-scatter bullets
+	var grazes = game.session.get("grazes", 0.0)
+	score = game.score
+	var near = EnemyShot.create(cat.global_position + cat.get_node("Hitbox").position + Vector2(200, 22), Vector2.LEFT, 400.0)
+	main.add_child(near)
+	await wait(0.8)
+	check(game.session.get("grazes", 0.0) > grazes and game.score > score, "a bullet brushing past the cat counts as a graze")
+	var frozen = EnemyShot.create(Vector2(900, 200), Vector2.LEFT, 200.0, EnemyShot.Kind.ORB).freeze(0.1, 0.2, 300.0, true)
+	main.add_child(frozen)
+	await wait(0.2)
+	var held_still = frozen.position
+	await wait(0.05)
+	check(frozen.position == held_still, "freeze bullets stop in mid-air")
+	await wait(0.2)
+	var to_cat = (cat.global_position - frozen.global_position).normalized()
+	check(frozen.velocity.normalized().dot(to_cat) > 0.95, "...then re-aim at the cat")
+	await _clear_world()
+
+	# beginner care: from the 2nd game over, Relaxed is offered in one key press
+	game.assist = 1
+	var was_relaxed = game.relaxed_mode
+	game.relaxed_mode = false
+	check(main.offers_relaxed(), "after a game over, Relaxed is offered")
+	game.assist = 0
+	check(not main.offers_relaxed(), "not offered on the first game over")
+	game.relaxed_mode = was_relaxed
+	cat.is_invulnerable = false

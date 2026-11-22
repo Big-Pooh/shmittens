@@ -15,10 +15,10 @@ const BEAT_CLICKS_NEEDED = 3
 const HELD_BEATS_NEEDED = 4
 const GESTURE_ORDER = ["shockwave", "laser", "lightning", "shield"]
 const GESTURE_HINTS = {
-	"shockwave": "Draw a CIRCLE  ->  SHOCKWAVE",
-	"laser": "Draw a straight LINE (its direction aims the beam)  ->  LASER",
-	"lightning": "Draw a ZIGZAG  ->  CHAIN LIGHTNING",
-	"shield": "Draw a TRIANGLE  ->  SHIELD",
+	"shockwave": "Draw a CIRCLE around the mice  ->  it bursts right there",
+	"laser": "Draw a LINE through the mice  ->  CLAW SLASH along your line",
+	"lightning": "Draw a ZIGZAG over the mice  ->  LIGHTNING strikes along it",
+	"shield": "Draw a TRIANGLE anywhere  ->  a SHIELD around you",
 }
 const SHAPE_FOR_SKILL = {"shockwave": "circle", "laser": "line", "lightning": "zigzag", "shield": "triangle"}
 const GRUNT = preload("res://scenes/enemies/grunt.tscn")
@@ -117,7 +117,7 @@ func _show_step():
 			var names = []
 			for w in Game.WEAPON_NAMES.size():
 				names.append(("[%s]" if weapons_tried.has(w) else "%s") % Game.WEAPON_NAMES[w])
-			panel_label.text = "STEP 4/6   Try all three weapons: press 1, 2, 3 (or Q / E, or the mouse wheel)\n%s" % "   ".join(names)
+			panel_label.text = "STEP 4/6   Try all three weapons: press 1, 2, 3 (or Q / E, or the mouse wheel)\nFISH home in by themselves, the LASER hits hardest if you aim, SPREAD is a close-range blast\n%s" % "   ".join(names)
 		STEP_MICE:
 			panel_label.text = "STEP 5/6   Shoot the practice mice ON THE BEAT.\nOn-beat kills drop cheese; streaks give batteries. Earn a skill charge!"
 			_spawn_practice_mice()
@@ -129,7 +129,7 @@ func _show_step():
 			if get_tree().get_nodes_in_group("enemies").size() < 3:
 				_spawn_practice_mice()
 		STEP_READY:
-			panel_label.text = "YOU'RE READY!\nTip: release a gesture ON THE BEAT for an EMPOWERED skill.\nBetween waves: DANCE! Tap SPACE on the beat for cheese.\nNow go save the Queen!"
+			panel_label.text = "YOU'RE READY!\nRelease a spell ON THE BEAT to empower it.  X = emergency CATNIP BOMB (uses all charges).\n50 on-beat hits in a row = OVERDRIVE (press F).  Between waves: DANCE on the beat!\nNow go save the Queen!"
 
 
 func _spawn_practice_mice():

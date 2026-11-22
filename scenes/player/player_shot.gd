@@ -16,6 +16,13 @@ const FISH_TURN_RATE = 7.0     # radians per second
 const FISH_SEEK_RANGE = 900.0
 
 var kind = Kind.BOLT
+# Spread pellets (BOLT): full damage within FALLOFF_START px of where they were fired, down to
+# FALLOFF_MIN at FALLOFF_END; they vanish at BOLT_RANGE and erase enemy bullets they touch.
+const FALLOFF_START = 200.0
+const FALLOFF_END = 700.0
+const FALLOFF_MIN = 0.3
+const BOLT_RANGE = 760.0
+var origin: Vector2
 
 var velocity: Vector2
 var damage = 1.0
@@ -29,6 +36,7 @@ static func create(at: Vector2, direction: Vector2, dmg: float = 1.0, judged: in
 	var shot = PlayerShot.new()
 	shot.kind = shot_kind
 	shot.position = at
+	shot.origin = at
 	shot.velocity = direction.normalized() * SPEEDS[shot_kind]
 	shot.pierce = shot_kind == Kind.LASER
 	shot.rotation = direction.angle()
@@ -42,7 +50,7 @@ static func create(at: Vector2, direction: Vector2, dmg: float = 1.0, judged: in
 
 func _ready():
 	collision_layer = Game.LAYER_PLAYER_SHOT
-	collision_mask = Game.LAYER_ENEMY
+	collision_mask = Game.LAYER_ENEMY | (Game.LAYER_ENEMY_SHOT if kind == Kind.BOLT else 0)
 	var sprite = Sprite2D.new()
 	sprite.texture = TEXTURES[kind]
 	sprite.scale = Vector2.ONE * SPRITE_SCALE
@@ -69,21 +77,35 @@ func _physics_process(delta):
 	if kind == Kind.FISH:
 		_home(delta)
 	position += velocity * delta
+	if kind == Kind.BOLT and position.distance_to(origin) > BOLT_RANGE:
+		queue_free()
 	if not Game.SCREEN.grow(60).has_point(position):
 		queue_free()
 
 
+# Damage after distance falloff (spread pellets only).
+func damage_now() -> float:
+	if kind != Kind.BOLT:
+		return damage
+	var d = position.distance_to(origin)
+	var t = clamp((d - FALLOFF_START) / (FALLOFF_END - FALLOFF_START), 0.0, 1.0)
+	return damage * lerp(1.0, FALLOFF_MIN, t)
+
+
 func _on_area_entered(area):
+	if area is EnemyShot:
+		area.queue_free()   # spread pellets erase bullets and keep going
+		return
 	if spent:
 		return
 	if area is EnemyBase and not area.is_dead and pierce:
 		if not already_hit.has(area):
 			already_hit[area] = true
-			area.take_hit(damage, velocity, judgement)
+			area.take_hit(damage_now(), velocity, judgement)
 		return
 	if area is EnemyBase and not area.is_dead:
 		spent = true
-		area.take_hit(damage, velocity, judgement)
+		area.take_hit(damage_now(), velocity, judgement)
 		queue_free()
 
 

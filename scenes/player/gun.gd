@@ -7,17 +7,22 @@ extends Node2D
 #   judged, no combo - an easy fallback that keeps the groove (playtest 2: once per beat felt
 #   "chunky").
 # Three weapons (Game.Weapon), switched with 1/2/3, Q/E or the mouse wheel. Gun level 1-5
-# (yarn) powers the equipped weapon:
-#   SPREAD - level = number of streams fanned out by SPREAD_DEGREES. Best against waves.
-#   LASER  - one fast piercing bolt, damage x(1 + LASER_PER_LEVEL per level above 1). Bosses.
-#   FISH   - FISH_COUNT[level] homing fish at FISH_DAMAGE each. Hits while you dodge.
+# (yarn) powers the equipped weapon. Playtest 3: Fish made aiming pointless and Spread was a
+# trap, so each weapon now has its own job:
+#   FISH   (default) - FISH_COUNT[level] homing fish at FISH_DAMAGE. Effortless; lowest damage.
+#   LASER  - one fast piercing bolt, LASER_BASE + LASER_PER_LEVEL per level (~1.2-1.6x Fish).
+#            The reward for aiming while you dodge.
+#   SPREAD - a close-range shotgun: 2 + level pellets, full damage up close, falling off with
+#            distance (see PlayerShot), short range, and pellets ERASE enemy bullets they touch.
+# F unleashes a banked CATNIP OVERDRIVE (see OverdriveBeam).
 
-const SPREAD_DEGREES = 9.0
+const SPREAD_DEGREES = 11.0
 const CLICK_DAMAGE = 1.0
 const HELD_DAMAGE = 0.6
-const LASER_PER_LEVEL = 0.45
+const LASER_BASE = 0.8
+const LASER_PER_LEVEL = 0.4
 const FISH_COUNT = [0, 1, 2, 2, 3, 3]
-const FISH_DAMAGE = 0.75
+const FISH_DAMAGE = 0.5
 const JUDGEMENT_DAMAGE = {
 	Conductor.Judgement.MISS: 1.0,
 	Conductor.Judgement.GOOD: 1.5,
@@ -49,6 +54,8 @@ func _unhandled_input(event):
 		Game.set_weapon(Game.Weapon.LASER)
 	elif event.is_action_pressed("weapon_3"):
 		Game.set_weapon(Game.Weapon.FISH)
+	elif event.is_action_pressed("overdrive"):
+		unleash_overdrive()
 	elif event is InputEventMouseButton and event.pressed and not Game.drawing:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
 			Game.cycle_weapon(-1)
@@ -57,9 +64,11 @@ func _unhandled_input(event):
 
 
 # The off-beat 8th notes (the on-beat ones come from the Conductor's beat signal).
-func _process(_delta):
+func _process(delta):
 	if not Conductor.playing:
 		return
+	if player.can_shoot():
+		Game.track("seconds_" + ["spread", "laser", "fish"][Game.weapon], delta)
 	var half = int(floor(Conductor.beat_position() * 2.0))
 	if half != last_half:
 		last_half = half
@@ -77,6 +86,13 @@ func _on_beat(_n: int):
 func pulse():
 	if Input.is_action_pressed("shoot") and Time.get_ticks_msec() - last_click_msec > CLICK_SUPPRESS_MSEC:
 		fire(HELD_DAMAGE)
+
+
+func unleash_overdrive() -> bool:
+	if Game.overdrive != 1 or not player.can_shoot():
+		return false
+	get_tree().current_scene.add_child(OverdriveBeam.create(player))
+	return true
 
 
 # A deliberate click: judged on the beat.
@@ -102,7 +118,7 @@ func fire(damage: float = CLICK_DAMAGE, judgement: int = -1):
 	var scene = get_tree().current_scene
 	match Game.weapon:
 		Game.Weapon.LASER:
-			var power = 1.0 + LASER_PER_LEVEL * (Game.gun_level - 1)
+			var power = LASER_BASE + LASER_PER_LEVEL * (Game.gun_level - 1)
 			scene.add_child(PlayerShot.create(global_position, direction, damage * power, judgement, PlayerShot.Kind.LASER))
 		Game.Weapon.FISH:
 			var count = FISH_COUNT[clamp(Game.gun_level, 1, 5)]
@@ -110,7 +126,7 @@ func fire(damage: float = CLICK_DAMAGE, judgement: int = -1):
 				var offset = deg_to_rad((i - (count - 1) / 2.0) * 25.0)
 				scene.add_child(PlayerShot.create(global_position, Vector2.from_angle(base_angle + offset), damage * FISH_DAMAGE, judgement, PlayerShot.Kind.FISH))
 		_:
-			var streams = Game.gun_level
+			var streams = 2 + Game.gun_level
 			for i in streams:
 				var offset = deg_to_rad((i - (streams - 1) / 2.0) * SPREAD_DEGREES)
 				scene.add_child(PlayerShot.create(global_position, Vector2.from_angle(base_angle + offset), damage, judgement))
@@ -124,4 +140,4 @@ static func shots_per_fire() -> int:
 			return 1
 		Game.Weapon.FISH:
 			return FISH_COUNT[clamp(Game.gun_level, 1, 5)]
-	return Game.gun_level
+	return 2 + Game.gun_level

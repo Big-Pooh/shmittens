@@ -79,6 +79,7 @@ func recognize(points: PackedVector2Array) -> Dictionary:
 			best = d
 			result.name = template[0]
 	result.score = 1.0 - best / HALF_DIAGONAL
+	result["best"] = result.name   # closest shape even when below the threshold (snap assist)
 	if result.score < MIN_SCORE:
 		result.name = ""
 	return result

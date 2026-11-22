@@ -24,6 +24,9 @@ var weapon_icons: Array[Label] = []
 var weapon_hint: Label
 var dance_label: Label
 var armor_label: Label
+var card_label: Label
+var overdrive_label: Label
+var current_boss: Boss
 var combo_label: Label
 var fever_label: Label
 var wind_label: Label
@@ -53,7 +56,10 @@ func _ready():
 	_on_weapon(Game.weapon)
 	Game.weapon_changed.connect(_on_weapon)
 	Game.dance_changed.connect(_on_dance)
+	boss_box.add_child(card_label)
 	boss_box.add_child(armor_label)
+	Game.overdrive_changed.connect(func(state): overdrive_label.visible = state == 1)
+	overdrive_label.visible = Game.overdrive == 1
 
 
 func _label(text: String, size: int, color := Color.WHITE) -> Label:
@@ -197,6 +203,15 @@ func _build():
 
 	armor_label = _label("", 18, Color(1, 0.85, 0.3))
 	armor_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	card_label = _label("", 20, Color(1, 0.75, 0.95))
+	card_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+
+	overdrive_label = _label("OVERDRIVE READY - press F!", 22, Color(1, 0.6, 0.9))
+	overdrive_label.position = Vector2(0, 600)
+	overdrive_label.size = Vector2(1280, 30)
+	overdrive_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	overdrive_label.hide()
+	add_child(overdrive_label)
 
 
 func _update_wave_label():
@@ -242,9 +257,43 @@ func show_boss(boss: Boss):
 	boss_box.show()
 	boss.health_changed.connect(func(health, _max): boss_bar.value = health)
 	armor_label.text = ""
-	boss.phase_changed.connect(func(_p): boss_label.text = boss.boss_name + "  - BEAT ARMOUR!")
+	card_label.text = ""
+	current_boss = boss
 	boss.armor_changed.connect(_on_armor)
-	boss.died.connect(func(_b): boss_box.hide())
+	boss.card_started.connect(_on_card_started.bind(boss))
+	boss.card_ended.connect(_on_card_ended)
+	boss.died.connect(func(_b): boss_box.hide(); current_boss = null)
+
+
+func _on_card_started(index: int, card_name: String, _seconds: float, boss: Boss):
+	if not boss.cards[index].armored:
+		armor_label.text = ""
+	if card_name != "":
+		_flash_text("SPELL CARD  -  " + card_name.to_upper(), Color(1, 0.75, 0.95))
+
+
+func _on_card_ended(_index: int, captured: bool):
+	_flash_text("SPELL CARD CAPTURED!  +BONUS" if captured else "CARD FAILED", GOLD if captured else Color(0.7, 0.7, 0.8))
+
+
+# A big line across the middle that fades (spell card names, captures).
+func _flash_text(text: String, color: Color):
+	var label = _label(text, 32, color)
+	label.position = Vector2(0, 230)
+	label.size = Vector2(1280, 50)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	add_child(label)
+	var tween = label.create_tween()
+	tween.tween_interval(1.2)
+	tween.tween_property(label, "modulate:a", 0.0, 0.5)
+	tween.tween_callback(label.queue_free)
+
+
+func _process(_delta):
+	if current_boss and is_instance_valid(current_boss) and current_boss.card >= 0:
+		var c = current_boss.cards[current_boss.card]
+		var name_part = ("~ " + c.name + " ~   ") if c.name != "" else ""
+		card_label.text = "%s%ds   card %d/%d" % [name_part, int(ceil(max(current_boss.card_time, 0.0))), current_boss.card + 1, current_boss.cards.size()]
 
 
 func _on_armor(pips: float, stunned: bool):

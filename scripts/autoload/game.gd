@@ -7,7 +7,9 @@ signal lives_changed(lives: int)
 signal charges_changed(charges: int, cheese: int)
 signal gun_level_changed(level: int)
 signal weapon_changed(weapon: int)
-signal dance_changed(active: bool)   # dance break between waves (see LevelRunner)
+signal dance_changed(active: bool)
+signal overdrive_changed(state: int)   # 0 none, 1 ready (banked), 2 active
+signal grazed(at: Vector2, on_beat: bool)   # dance break between waves (see LevelRunner)
 signal wave_changed(wave: int)
 signal game_over
 signal combo_changed(combo: int, multiplier: int)
@@ -57,10 +59,21 @@ var gun_level = 1
 # (yarn) powers whichever weapon is equipped. Kept across deaths and levels.
 enum Weapon { SPREAD, LASER, FISH }
 const WEAPON_NAMES = ["YARN SPREAD", "LASER POINTER", "FISH SEEKERS"]
-const WEAPON_HINTS = ["wide - for waves", "focused - for bosses", "homing - for dodging"]
-var weapon = Weapon.SPREAD
+const WEAPON_HINTS = ["close range - erases bullets", "aim it - strongest, pierces", "homing - easy, weaker"]
+var weapon = Weapon.FISH   # playtest 3: Fish is the default; the others reward skill
 var focus_override = false   # automated playthroughs hold "focus" with this
 var dancing = false          # true during a dance break between waves
+var player_ref: Node2D = null   # the cat (set by Shmitten; bullets use it for graze/aim)
+# GRAZE (playtest 3, Touhou): a bullet passing very close counts once: GRAZE_SCORE points; on
+# the beat it also builds toward cheese (1 per GRAZES_PER_CHEESE on-beat grazes).
+const GRAZE_SCORE = 20
+const GRAZES_PER_CHEESE = 3
+var beat_grazes = 0
+# CATNIP OVERDRIVE (playtest 3 idea): every OVERDRIVE_COMBO on-beat hits in a row banks one
+# overdrive (max 1). Press F to unleash OVERDRIVE_SECONDS of a giant rainbow beam.
+const OVERDRIVE_COMBO = 50
+const OVERDRIVE_SECONDS = 5.0
+var overdrive = 0   # 0 none, 1 ready, 2 active
 var wave = 0
 var combo = 0
 var plain_kills = 0
@@ -127,6 +140,9 @@ func reset():
 	is_game_over = false
 	drawing = false
 	dancing = false
+	beat_grazes = 0
+	if overdrive == 2:
+		overdrive = 1   # an overdrive cut short by a restart stays banked
 	combo_changed.emit(combo, multiplier())
 	score_changed.emit(score)
 	lives_changed.emit(lives)
@@ -164,6 +180,48 @@ func use_charge() -> bool:
 	charges -= 1
 	charges_changed.emit(charges, cheese)
 	return true
+
+
+# ---- session stats (playtest 3): what actually happened in a real play session, saved on
+# your machine only (user://sessions/<start time>.json) so playtests can be analysed.
+var session = {}
+var session_file = ""
+
+func track(key: String, amount: float = 1.0):
+	session[key] = session.get(key, 0.0) + amount
+
+
+func save_session(reason: String):
+	if not persist or session.is_empty():
+		return
+	if session_file == "":
+		DirAccess.make_dir_recursive_absolute("user://sessions")
+		session_file = "user://sessions/%s.json" % Time.get_datetime_string_from_system().replace(":", "-")
+	var data = session.duplicate()
+	data["last_event"] = reason
+	data["level"] = level + 1
+	data["score"] = score
+	data["relaxed_mode"] = relaxed_mode
+	var f = FileAccess.open(session_file, FileAccess.WRITE)
+	if f:
+		f.store_string(JSON.stringify(data, "  "))
+
+
+func set_overdrive(state: int):
+	overdrive = state
+	overdrive_changed.emit(state)
+
+
+func graze(at: Vector2):
+	var on_beat = Conductor.judge() != Conductor.Judgement.MISS
+	add_score(GRAZE_SCORE)
+	track("grazes")
+	if on_beat:
+		beat_grazes += 1
+		track("beat_grazes")
+		if beat_grazes % GRAZES_PER_CHEESE == 0:
+			add_cheese(1)
+	grazed.emit(at, on_beat)
 
 
 func set_dancing(on: bool):
@@ -216,6 +274,9 @@ func register_judgement(judgement: int):
 		if combo % FEVER_EVERY == 0:
 			fever_beats = FEVER_BEATS
 			fever_changed.emit(true)
+		if combo % OVERDRIVE_COMBO == 0 and overdrive == 0:
+			set_overdrive(1)
+			track("overdrives_earned")
 	judged.emit(judgement)
 	combo_changed.emit(combo, multiplier())
 	Conductor.set_layers(4 if is_fever() else multiplier() + 1)

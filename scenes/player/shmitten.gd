@@ -46,6 +46,7 @@ var focus_marker: Node2D   # drawn ABOVE the cat sprite (playtest 3: the dot was
 
 func _ready():
 	add_to_group("player")
+	Game.player_ref = self
 	sprite_base = sprite.position
 	focus_marker = Node2D.new()
 	focus_marker.name = "FocusMarker"
@@ -79,6 +80,7 @@ func _process(delta):
 	sprite.self_modulate.a = 0.6 if show_focus else 1.0   # see-through cat while focusing
 	if show_focus:
 		focus_marker.queue_redraw()
+		Game.track("focus_seconds", delta)
 
 
 # Dance break: hop on every beat, sway left/right on alternate beats, spin on the bar.
@@ -162,6 +164,11 @@ func _draw():
 		draw_arc(Vector2(4, 4), 40.0, 0, TAU, 32, Color(1, 0.9, 0.5, 0.55), 2.5)
 
 
+func grant_invulnerability(seconds: float):
+	is_invulnerable = true
+	get_tree().create_timer(seconds, false).timeout.connect(func(): if not blink_tween or not blink_tween.is_running(): is_invulnerable = false)
+
+
 func can_shoot() -> bool:
 	return not is_dead and not Game.is_game_over and not Game.drawing
 
@@ -202,6 +209,7 @@ func hit(cause: String = "") -> bool:
 	sprite.hide()
 	Sfx.play("player_hit")
 	Game.player_hit.emit(cause)
+	Game.track("deaths_" + (cause if cause != "" else "other"))
 	Game.shake(12.0)
 	died.emit()
 	if Game.lose_life() > 0:

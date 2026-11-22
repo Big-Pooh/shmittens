@@ -30,6 +30,7 @@ func _ready():
 	Game.game_over.connect(_on_game_over)
 	Game.reward.connect(_on_reward)
 	Game.judged.connect(_on_judged)
+	Game.grazed.connect(_on_grazed)
 	Game.dance_changed.connect(func(on): if on: dance_hits = 0)
 	Game.shake_requested.connect(func(s): shake_strength = max(shake_strength, s))
 	level_runner.level_started.connect(_on_level_started)
@@ -59,6 +60,7 @@ func _process(delta):
 
 
 func _exit_tree():
+	Game.save_session("left_game")
 	Engine.time_scale = 1.0
 	Game.drawing = false
 
@@ -98,6 +100,8 @@ func _on_boss_spawned(boss: Boss):
 
 
 func _on_level_cleared(index: int):
+	Game.track("levels_cleared")
+	Game.save_session("level_%d_cleared" % (index + 1))
 	if index == Levels.count() - 1 and queen_cage:
 		hud.show_message("THE QUEEN IS FREE!")
 		queen_cage.release(player.global_position)
@@ -106,6 +110,24 @@ func _on_level_cleared(index: int):
 		transition_card = TransitionCard.create(index, level_runner.last_rank, int(level_runner.level_seconds), int(ratio))
 		transition_card.dismissed.connect(level_runner.skip_transition)
 		add_child(transition_card)
+
+
+var _last_graze_msec = 0
+
+func _on_grazed(at: Vector2, on_beat: bool):
+	if Time.get_ticks_msec() - _last_graze_msec < 80:
+		return
+	_last_graze_msec = Time.get_ticks_msec()
+	var spark = Label.new()
+	spark.text = "✦" if on_beat else "·"
+	spark.add_theme_font_size_override("font_size", 22 if on_beat else 18)
+	spark.add_theme_color_override("font_color", Color(1, 0.95, 0.5) if on_beat else Color(1, 1, 1, 0.8))
+	spark.position = at - Vector2(6, 14)
+	spark.z_index = 40
+	add_child(spark)
+	var tween = spark.create_tween()
+	tween.tween_property(spark, "modulate:a", 0.0, 0.3)
+	tween.tween_callback(spark.queue_free)
 
 
 func _on_judged(judgement: int):
@@ -145,7 +167,24 @@ func _on_game_over():
 	level_runner.stop()
 	Conductor.stop()
 	crosshair.set_captured(false)
-	hud.show_message("GAME OVER\nscore %d\nR - try again from here     Esc - title" % Game.score)
+	Game.track("game_overs")
+	Game.save_session("game_over")
+	var relax = ""
+	if offers_relaxed():
+		relax = "\nT - switch to RELAXED and try again (slower shots, +1 life, a guardian bubble)"
+	hud.show_message("GAME OVER\nscore %d\nR - try again from here     Esc - title%s" % [Game.score, relax])
+
+
+# Beginner care (playtest 3): from the 2nd game over on, offer Relaxed in one key press.
+func offers_relaxed() -> bool:
+	return Game.assist >= 1 and not Game.relaxed_mode and not Game.endless_mode
+
+
+func switch_to_relaxed():
+	Game.relaxed_mode = true
+	Game.save_settings()
+	Game.track("switched_to_relaxed")
+	retry()
 
 
 func _unhandled_input(event):
@@ -153,6 +192,8 @@ func _unhandled_input(event):
 		return
 	if event.is_action_pressed("restart"):
 		retry()
+	elif event.is_action_pressed("relax") and offers_relaxed():
+		switch_to_relaxed()
 	elif event.is_action_pressed("pause"):
 		get_tree().change_scene_to_file(TITLE_SCENE)
 
