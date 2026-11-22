@@ -67,8 +67,9 @@ func _start_main():
 	cat = main.get_node("Shmitten")
 	# older tests were written for the Spread gun (playtest 3 made Fish the default)
 	game.weapon = game.Weapon.SPREAD
-	# keep tests deterministic: no automatic waves
+	# keep tests deterministic: no automatic waves, no interludes (tested on their own)
 	main.level_runner.stop()
+	main.level_runner.interludes_enabled = false
 	for node in get_nodes_in_group("enemies"):
 		node.queue_free()
 	await frames(2)
@@ -213,6 +214,7 @@ func _run():
 	await _story_tests()
 	await _playtest5_tests()
 	await _designer7_tests()
+	await _v012_tests()
 
 	game.difficulty_chosen = original.chosen
 	game.relaxed_mode = original.relaxed
@@ -1149,6 +1151,7 @@ func _assist_tests():
 	check(retried.level_runner.checkpoint() == Levels.LEVELS[0].waves.size(), "dying at the boss resumes at the boss")
 	# a new level / new game clears the assist
 	game.assist = 1
+	retried.level_runner.interludes_enabled = false
 	retried.level_runner.state = retried.level_runner.State.CLEARED
 	retried.level_runner.bars_to_wait = 1
 	retried.level_runner._on_bar(0)
@@ -2181,7 +2184,8 @@ func _designer7_tests():
 	check(tex_b != tex_a and g.sprite.texture == tex_a, "mice swap to their blink/bob frame on every other beat")
 	g.queue_free()
 	# sprint 4: lifetime stats -> achievements + hats
-	var saved_meta = [game.lifetime.duplicate(), game.achievements.duplicate(), game.hats_unlocked.duplicate(), game.hat]
+	var saved_meta = [game.lifetime.duplicate(), game.achievements.duplicate(), game.hats_unlocked.duplicate(), game.hat, game.card_album.duplicate()]
+	game.card_album = {}   # (an earlier test fills the album, which would unlock the Halo)
 	game.lifetime = {}
 	game.achievements = {}
 	game.hats_unlocked = {}
@@ -2199,6 +2203,7 @@ func _designer7_tests():
 	game.lifetime = saved_meta[0]
 	game.achievements = saved_meta[1]
 	game.hats_unlocked = saved_meta[2]
+	game.card_album = saved_meta[4]
 	game.hat = saved_meta[3]
 	# sprint 5: key rebinding + high contrast
 	var saved_bind = game.bindings.duplicate()
@@ -2219,6 +2224,64 @@ func _designer7_tests():
 	check(hc.sprite.self_modulate.b < 0.5, "high-contrast mode recolours enemy bullets")
 	hc.queue_free()
 	game.high_contrast = false
+
+func _v012_tests():
+	await _start_main()
+	var conductor = root.get_node("Conductor")
+	var runner = main.level_runner
+	# combo survives a spell cast (+ grace), and misses still break it afterwards
+	game.combo = 9
+	game.drawing = true
+	game.register_judgement(conductor.Judgement.MISS)
+	game.drawing = false
+	check(game.combo == 9, "a miss while drawing doesn't break the combo")
+	game.freeze_combo(5.0)
+	game.register_judgement(conductor.Judgement.MISS)
+	check(game.combo == 9, "a miss right after a cast doesn't break the combo")
+	game.combo_frozen_until = 0.0
+	game.register_judgement(conductor.Judgement.MISS)
+	check(game.combo == 0, "later misses break the combo again")
+	# safe phase between levels: no hits, bullets cleared
+	runner._set_safe(true)
+	check(not cat.hit("shot"), "the cat can't be hit between levels")
+	runner._set_safe(false)
+	# interlude: starts after a cleared planet, spawns harmless targets, then the next planet
+	runner.interludes_enabled = true
+	runner.level_index = 0
+	runner.state = runner.State.CLEARED
+	runner.bars_to_wait = 1
+	runner._on_bar(0)
+	check(runner.state == runner.State.INTERLUDE and game.safe_phase and runner.interlude != null, "a cleared planet leads into an interlude (safe)")
+	for i in 6:
+		runner.interlude._on_beat(i)
+	await frames(2)
+	var targets = get_nodes_in_group("interlude")
+	check(targets.size() >= 6 and _count("enemy_shots") == 0, "the interlude spawns harmless targets")
+	for t in targets:
+		t.take_damage(5.0)
+	await frames(2)
+	check(runner.interlude.popped >= 6, "interlude targets pop")
+	runner.bars_to_wait = 1
+	runner._on_bar(0)
+	await frames(2)
+	check(runner.level_index == 1 and runner.state == runner.State.INTRO and not game.safe_phase and get_nodes_in_group("interlude").is_empty(), "after the interlude the next planet starts")
+	var il = load("res://scenes/levels/interlude.gd")
+	check(il.KINDS.size() == 3 and il.KINDS[0] != il.KINDS[1] and il.KINDS[1] != il.KINDS[2], "interludes rotate between three scenes")
+	runner.stop()
+	# elites: none on planet 1, every Nth mouse from planet 2 on
+	game.level = 0
+	check(game.elite_every() == 0, "no elite mice on planet 1")
+	game.level = 7
+	check(game.elite_every() == 3, "elite mice get more common on later planets")
+	game.elite_counter = 2
+	var g = _spawn_grunt(Vector2(900, 300), 2)
+	await frames(1)
+	check(g.is_elite and g.max_health >= 4.0, "every Nth mouse spawns as a crowned elite with double health")
+	g.queue_free()
+	game.level = 0
+	# smaller bullets
+	check(load("res://scenes/enemies/enemy_shot.gd").SPRITE_SCALE < 3.0, "enemy bullets are drawn smaller")
+
 
 func Boss_names_ok() -> bool:
 	var names = load("res://scenes/enemies/bosses/boss.gd").SPELL_NAMES

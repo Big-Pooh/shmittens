@@ -18,7 +18,7 @@ var buttons = {}
 func _ready():
 	layer = 97
 	var bg = ColorRect.new()
-	bg.color = Color(0.04, 0.03, 0.1, 1.0)
+	bg.color = UiTheme.BG
 	bg.size = Game.SCREEN.size
 	add_child(bg)
 	var title = Label.new()

@@ -38,6 +38,12 @@ func _ready():
 		max_health *= Game.rank_health(self is Boss)
 		if not self is Boss:
 			max_health *= 1.0 - 0.15 * min(Game.assist, 2)   # beginner care after a game over
+	if not tutorial_exempt() and not self is Boss and Game.elite_every() > 0:
+		Game.elite_counter += 1
+		if Game.elite_counter % Game.elite_every() == 0:
+			_make_elite()
+	if (self is ShieldMouse or self is Turret) and not tutorial_exempt():
+		Game.suggest_spread()
 	health = max_health
 	entering = slot_position != Vector2.INF
 	Conductor.beat.connect(_on_conductor_beat)
@@ -59,10 +65,23 @@ func _load_anim_frames():
 		_frame_b = load(alt)
 
 
+var _base_scale = Vector2.ZERO
+
 func _anim_beat(n: int):
-	if _frame_b == null or is_dead or not is_inside_tree():
+	if is_dead or not is_inside_tree() or sprite == null:
 		return
-	sprite.texture = _frame_b if n % 2 == 1 else _frame_a
+	if _frame_b != null:
+		sprite.texture = _frame_b if n % 2 == 1 else _frame_a
+	# v0.12 playtest: "it didn't look like they're dancing" -> squash & stretch + a side-to-side
+	# sway on every beat (bosses get a gentler version)
+	if _base_scale == Vector2.ZERO:
+		_base_scale = sprite.scale
+	var k = 0.06 if self is Boss else 0.16
+	sprite.scale = _base_scale * Vector2(1.0 + k, 1.0 - k)
+	sprite.rotation = (0.05 if self is Boss else 0.16) * (1 if n % 2 == 0 else -1)
+	var tw = create_tween().set_parallel()
+	tw.tween_property(sprite, "scale", _base_scale, Conductor.seconds_per_beat * 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(sprite, "rotation", 0.0, Conductor.seconds_per_beat * 0.9).set_trans(Tween.TRANS_SINE)
 
 
 func tutorial_exempt() -> bool:
@@ -130,14 +149,40 @@ func die():
 	is_dead = true
 	Game.add_score(score_value)
 	Sfx.play("explode", -4.0)
+	if is_elite:
+		Game.track("elites")
+		_elite_burst.call_deferred()
 	_explode()
 	_drop()
 	died.emit(self)
 	set_deferred("monitorable", false)
 	var tween = create_tween().set_parallel()
 	tween.tween_property(sprite, "scale", sprite.scale * 1.6, 0.18)
-	tween.tween_property(sprite, "modulate", Color(1.5, 1.2, 0.6, 0.0), 0.18)
+	tween.tween_property(sprite, "modulate", Color(1.6, 0.9, 1.4, 0.0), 0.18)
 	tween.chain().tween_callback(queue_free)
+
+
+var is_elite = false
+const CROWN = preload("res://Art/Generated/hat_crown.png")
+
+func _make_elite():
+	is_elite = true
+	max_health *= 2.0
+	score_value *= 3
+	if sprite:
+		sprite.self_modulate = Color(1.25, 0.92, 1.2)
+		var crown = Sprite2D.new()
+		crown.texture = CROWN
+		crown.position = Vector2(0, -sprite.texture.get_height() / 2.0 - 2)
+		sprite.add_child(crown)
+
+
+func _elite_burst():
+	if not is_inside_tree() or Game.assist >= 2 or Game.safe_phase:
+		return
+	for i in 6:
+		var shot = EnemyShot.create(global_position, Vector2.from_angle(TAU * i / 6.0 + 0.3), 120.0 * Game.shot_speed_factor(), EnemyShot.Kind.RICE)
+		get_tree().current_scene.add_child(shot)
 
 
 # Debris burst; bosses raise explosion_amount.
@@ -156,14 +201,15 @@ func _explode():
 	particles.initial_velocity_max = 260.0 + explosion_amount * 2.0
 	particles.scale_amount_min = 3.0
 	particles.scale_amount_max = 6.0
-	# sprint 2: a cute pastel "poof" (pink -> mint) instead of fiery debris
+	# v0.12 playtest: a big PINK POOF cloud (puffs + sparkles) instead of debris
 	var ramp = Gradient.new()
-	ramp.set_color(0, Color(1, 0.8, 0.92))
-	ramp.add_point(0.5, Color(1, 0.7, 0.85, 0.9))
-	ramp.set_color(1, Color(0.65, 1, 0.9, 0))
+	ramp.set_color(0, Color(1, 0.85, 0.95))
+	ramp.add_point(0.5, Color(1, 0.55, 0.8, 0.9))
+	ramp.set_color(1, Color(1, 0.7, 0.9, 0))
 	particles.color_ramp = ramp
 	particles.emitting = true
 	get_tree().current_scene.add_child.call_deferred(particles)
+	get_tree().current_scene.add_child.call_deferred(PinkPoof.create(global_position, 1.0 + explosion_amount / 40.0))
 	get_tree().create_timer(1.0).timeout.connect(particles.queue_free)
 
 

@@ -16,6 +16,7 @@ signal mech_changed(active: bool)   # dance break between waves (see LevelRunner
 signal wave_changed(wave: int)
 signal game_over
 signal combo_changed(combo: int, multiplier: int)
+signal hint(text: String)   # short gameplay suggestions shown as a banner
 signal judged(judgement: int)
 signal reward(kind: String)          # "battery" / "yarn" from combo milestones
 signal level_changed(level: int)
@@ -123,6 +124,12 @@ var level_cards_captured = 0
 var level_spells = {}   # CIRCLE spell: every pickup flies to the cat until play_time > this
 var wave = 0
 var combo = 0
+# v0.12 playtest: "I lose my combo after a spell" -> misses can't break the combo while drawing,
+# for COMBO_CAST_GRACE s after a cast, or in a SAFE PHASE (level intro, cleared card, interlude),
+# where the cat is also invulnerable.
+const COMBO_CAST_GRACE = 1.2
+var combo_frozen_until = 0.0
+var safe_phase = false
 var plain_kills = 0
 var level = 0
 var wave_total = 0
@@ -290,6 +297,9 @@ var drawing = false   # true while a skill gesture is being drawn (gun is disabl
 
 
 func reset():
+	elite_counter = 0
+	safe_phase = false
+	combo_frozen_until = 0.0
 	score = 0
 	lives = START_LIVES + min(assist, 2)
 	charges = 0
@@ -540,6 +550,9 @@ func register_judgement(judgement: int):
 	if judgement == Conductor.Judgement.PERFECT:
 		track("perfects")
 	if judgement == Conductor.Judgement.MISS:
+		if drawing or safe_phase or Time.get_ticks_msec() / 1000.0 < combo_frozen_until:
+			judged.emit(judgement)
+			return   # combo frozen (spell cast / safe phase)
 		combo = 0
 	else:
 		combo += 1
@@ -558,6 +571,34 @@ func register_judgement(judgement: int):
 	judged.emit(judgement)
 	combo_changed.emit(combo, multiplier())
 	Conductor.set_layers(4 if is_fever() else multiplier() + 1)
+
+
+# v0.12 playtest: "I never used the spread gun" -> when armoured mice / turrets show up and
+# Spread isn't equipped, suggest it (at most every SPREAD_HINT_EVERY s, while it hasn't been used).
+const SPREAD_HINT_EVERY = 25.0
+var _last_spread_hint = -100.0
+
+func suggest_spread():
+	if weapon == Weapon.SPREAD or tutorial_mode or lifetime.get("seconds_spread", 0.0) > 120.0:
+		return
+	var now = Time.get_ticks_msec() / 1000.0
+	if now - _last_spread_hint < SPREAD_HINT_EVERY:
+		return
+	_last_spread_hint = now
+	hint.emit("ARMOURED MICE!  press %s for SPREAD - it cracks shields & turrets" % btn("1", "LB"))
+
+
+# ELITE MICE (v0.12 playtest: "mobs are not getting stronger"): from planet 2 on, every Nth
+# mouse spawns as a crowned ELITE (x2 health, x3 points, pops into a little bullet ring).
+# N shrinks every planet: planet 2 every 8th ... planet 8 every 3rd. Deterministic.
+var elite_counter = 0
+
+func elite_every() -> int:
+	return max(3, 9 - level) if level >= 1 else 0
+
+
+func freeze_combo(seconds: float = COMBO_CAST_GRACE):
+	combo_frozen_until = Time.get_ticks_msec() / 1000.0 + seconds
 
 
 func reset_combo():
