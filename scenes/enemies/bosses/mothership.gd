@@ -16,12 +16,13 @@ const GRUNT = preload("res://scenes/enemies/grunt.tscn")
 
 
 func _init():
-	build(TEXTURE, 5.0, 82.0, 160.0)
+	build(TEXTURE, 5.0, 82.0, 260.0)
 	boss_name = "THE CHEESE SAUCER"
 
 
 func on_lead_note(pitch: int, length: int):
-	staff_note(pitch, 200.0 if phase == 1 else 215.0, 2 if length >= 3 else 1)
+	# single notes (pairs made level 2 harder than level 3 for beginners)
+	staff_note(pitch, 200.0 if phase == 1 else 215.0)
 
 
 # Where the wall's gap is on a given bar: a slow wave over the screen height.
@@ -33,8 +34,10 @@ func on_beat(n: int):
 	var beat = n % Conductor.BEATS_PER_BAR
 	var bar = n / Conductor.BEATS_PER_BAR
 	var wall_bar = phase == 2 or bar % 2 == 0
+	if Game.assist >= 1:
+		wall_bar = bar % (2 if phase == 2 else 4) == 0   # beginner care: half as many walls
 	if beat == 0 and wall_bar:
-		wall(gap_for_bar(bar), 170.0, 170.0)
+		wall(gap_for_bar(bar), 200.0, 170.0)
 	if beat == 0 and phase == 1 and bar % 4 == 2:
 		summon(GRUNT, [Vector2(position.x - 170, 180), Vector2(position.x - 170, 540)], 3.0)
 	if phase == 2 and beat == 2:

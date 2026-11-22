@@ -34,8 +34,8 @@ var blink_tween: Tween
 # slowly (EARLY_GUARDIAN_RECHARGE) - after EARLY_GUARDIAN_DEATHS deaths in this level attempt.
 # Players who aren't dying never get it.
 const GUARDIAN_RECHARGE = [0.0, 10.0, 7.0, 5.0]
-const EARLY_GUARDIAN_DEATHS = 2
-const EARLY_GUARDIAN_RECHARGE = 12.0
+const EARLY_GUARDIAN_DEATHS = 1   # playtest 2: after the first death (was 2)
+const EARLY_GUARDIAN_RECHARGE = 10.0
 var guardian_ready = false
 var guardian_timer = 0.0
 

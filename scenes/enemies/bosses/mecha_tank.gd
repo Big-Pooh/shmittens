@@ -12,7 +12,7 @@ const TEXTURE = preload("res://Art/Generated/boss_tank.png")
 
 
 func _init():
-	build(TEXTURE, 5.0, 78.0, 120.0)
+	build(TEXTURE, 5.0, 78.0, 190.0)   # playtest 2: x1.6 (laser + beat armour made bosses melt)
 	boss_name = "TANKY THE MECHA-MOUSE"
 
 

@@ -15,7 +15,7 @@ extends Node2D
 const SPREAD_DEGREES = 9.0
 const CLICK_DAMAGE = 1.0
 const HELD_DAMAGE = 0.6
-const LASER_PER_LEVEL = 0.6
+const LASER_PER_LEVEL = 0.45
 const FISH_COUNT = [0, 1, 2, 2, 3, 3]
 const FISH_DAMAGE = 0.75
 const JUDGEMENT_DAMAGE = {

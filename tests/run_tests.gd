@@ -1123,7 +1123,7 @@ func _boss_assist_tests():
 	await frames(1)
 	check(_count("enemy_shots") - shots == 3, "assist 2 thins boss fans (5 -> 3)")
 	var assisted_tank = await _make_boss("res://scenes/enemies/bosses/mecha_tank.gd")
-	check(is_equal_approx(assisted_tank.max_health, 120.0 * 0.7), "assist 2 cuts boss health by 30%")
+	check(is_equal_approx(assisted_tank.max_health, 190.0 * 0.7), "assist 2 cuts boss health by 30%")
 	assisted_tank.queue_free()
 	game.assist = 0
 	tank.queue_free()

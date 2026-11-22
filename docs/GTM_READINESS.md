@@ -7,7 +7,12 @@
 - **Purchase intent:** Next Fest's median demo-to-wishlist conversion is ~19%, so the target is 25%.
 - **Completion:** under 40% signals a problem, so the target is 60%.
 
-## Final KPIs (two independent panels of 100 testers, after iteration 5)
+## Latest KPIs (after iteration 6, playtest 2)
+Panel A: fun 98, drop 0/2/1, completion 96, endorse 92, intent 76, GTM 60 (model cap).
+Panel B: fun 99, drop 1/2/1, completion 96, endorse 92, intent 77, GTM 60 (cap).
+Details and caveats: `docs/AUDIT_LOG.md` Phase 10.
+
+## KPIs after iteration 5 (kept for comparison)
 
 | View | KPI | Panel A | Panel B | Target |
 |---|---|---|---|---|
@@ -28,6 +33,7 @@
 | 3 | 79% | 84% | 51% | 42% | forgiving hitboxes, wider assisted timing, boss lives top-up |
 | 4 | 87% | 85% | 54% | 47% | Second Wind, first-start Relaxed/Normal choice |
 | 5 | 91% | 85% | 55% | 48% | Spell Chains (signature mechanic, see `docs/DIFFERENTIATION.md`) |
+| 6 | 98% | 92% | 76% | 60% (cap) | playtest 2: weapons, focus, bullet-hell bosses + beat armour, slower BPM, dance breaks, story cards, spell guides, cute art |
 
 ## Caveats you should weigh
 - **Model-driven, not observed:**

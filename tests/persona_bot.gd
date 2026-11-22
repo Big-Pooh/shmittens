@@ -4,6 +4,9 @@ extends Node
 # WASD via Input actions, aim via Game.aim_override, clicks via Gun.click() at planned times
 # around the beat, held fire via the "shoot" action, gestures via GestureInput begin/add/finish.
 # Personas differ in timing accuracy, reaction, dodging, pickup greed and gesture skill.
+# Playtest 2: picks a weapon for the situation (LASER on bosses, SPREAD on waves) with
+# probability weapon_sense per check, and uses FOCUS (slow precise movement) when its look-ahead
+# says that's safer, if it "knows" to (focus_skill per decision).
 # Dodging calibrated to playtest 1 (a human "could dodge everything easily" where the old average
 # bot died ~2x per minute): dodge chance noob 0.7 / average 0.95 / speedrunner 0.99.
 
@@ -13,18 +16,21 @@ const PERSONAS = {
 		"hold_prob": 0.55, "reaction": 0.40, "dodge_chance": 0.7, "pickup_radius": 150.0,
 		"aim_error": 45.0, "home_x": 220.0, "gesture_min_charges": 2, "gesture_noise": 0.16,
 		"gesture_mess_chance": 0.25, "draw_time": 1.3, "release_on_beat": false, "release_sigma": 0.2,
+		"weapon_sense": 0.35, "focus_skill": 0.15,
 	},
 	"average": {
 		"timing_sigma": 0.06, "timing_bias": 0.02, "click_prob": 0.75, "spam_per_sec": 0.3,
 		"hold_prob": 0.25, "reaction": 0.22, "dodge_chance": 0.95, "pickup_radius": 320.0,
 		"aim_error": 15.0, "home_x": 260.0, "gesture_min_charges": 1, "gesture_noise": 0.07,
 		"gesture_mess_chance": 0.05, "draw_time": 0.8, "release_on_beat": true, "release_sigma": 0.07,
+		"weapon_sense": 0.85, "focus_skill": 0.6,
 	},
 	"speedrunner": {
 		"timing_sigma": 0.025, "timing_bias": 0.0, "click_prob": 0.98, "spam_per_sec": 0.0,
 		"hold_prob": 0.05, "reaction": 0.12, "dodge_chance": 0.99, "pickup_radius": 450.0,
 		"aim_error": 5.0, "home_x": 420.0, "gesture_min_charges": 1, "gesture_noise": 0.04,
 		"gesture_mess_chance": 0.0, "draw_time": 0.5, "release_on_beat": true, "release_sigma": 0.03,
+		"weapon_sense": 1.0, "focus_skill": 0.95,
 	},
 }
 const DANGER_RADIUS = 46.0
@@ -92,6 +98,7 @@ func _exit_tree():
 	for action in ["move_up", "move_down", "move_left", "move_right", "shoot"]:
 		Input.action_release(action)
 	Game.aim_override = null
+	Game.focus_override = false
 
 
 func _stat(key: String, amount: int):
@@ -119,6 +126,22 @@ func _physics_process(delta):
 	_move(target)
 	_shoot(real_delta)
 	_gesture(target)
+	_choose_weapon(target, real_delta)
+
+
+var weapon_timer = 0.0
+
+func _choose_weapon(target, delta):
+	weapon_timer -= delta
+	if weapon_timer > 0.0:
+		return
+	weapon_timer = 1.5
+	var want = Game.Weapon.LASER if target is Boss else Game.Weapon.SPREAD
+	# the boss warning tells you to press 2 for the laser: assume at least 60% follow the tip
+	var sense = max(p.weapon_sense, 0.6) if target is Boss else p.weapon_sense
+	if want != Game.weapon and rng.randf() < sense:
+		Game.set_weapon(want)
+		_stat("weapon_switches", 1)
 
 
 func _release_all():
@@ -175,8 +198,14 @@ func _threats() -> Array:
 	return out
 
 
+# A volley (shots fired together: a wall, fan, ring) is noticed - or missed - as one pattern,
+# the way people read bullet patterns (playtest 2 modelling fix: per-bullet rolls made walls
+# of 12 bullets near-impossible for the beginner bot).
+# Sensitivity check: SMITTENS_PER_BULLET=1 restores the old, harsher per-bullet model.
+var PER_BULLET = OS.get_environment("SMITTENS_PER_BULLET") == "1"
+
 func _noticed(node: Node, now: float) -> bool:
-	var id = node.get_instance_id()
+	var id = node.volley if node is EnemyShot and node.volley != "" and not PER_BULLET else node.get_instance_id()
 	if not seen_threats.has(id):
 		seen_threats[id] = [now, rng.randf() < p.dodge_chance]
 	var info = seen_threats[id]
@@ -192,6 +221,7 @@ func _move(target):
 	var pickup = _nearest_pickup()
 	if pickup:
 		goal = pickup.global_position
+	Game.focus_override = false
 	if threats.is_empty():
 		var to_goal = goal - cat.global_position
 		if to_goal.length() > 20.0:
@@ -207,7 +237,7 @@ func _move(target):
 # Look-ahead dodging (like a human scanning the screen): try 8 directions + staying put,
 # simulate noticed bullets/beams/enemies 0.6 s ahead, pick the move with the most clearance
 # (ties broken toward the goal). Only threats this persona has noticed are considered.
-const MOVE_SPEED = 430.0
+const MOVE_SPEED = 560.0   # playtest 2: snappier controls (was ~430 effective)
 const LOOKAHEAD = [0.1, 0.2, 0.3, 0.45, 0.6]
 
 func _safest_direction(goal: Vector2) -> Vector2:
@@ -226,13 +256,21 @@ func _safest_direction(goal: Vector2) -> Vector2:
 			bodies.append(e.global_position)
 	var best_dir = Vector2.ZERO
 	var best_score = -INF
+	var best_focus = false
 	var lo = Game.SCREEN.position + Vector2(40, 36)
 	var hi = Game.SCREEN.end - Vector2(40, 36)
-	for i in 9:
+	var speeds = [MOVE_SPEED]
+	if rng.randf() < p.focus_skill:
+		speeds.append(MOVE_SPEED * Shmitten.FOCUS_SPEED)
+	for k in 9 * speeds.size():
+		var i = k % 9
+		var speed = speeds[k / 9]
 		var dir = Vector2.ZERO if i == 8 else Vector2.from_angle(TAU * i / 8.0)
+		if i == 8 and k >= 9:
+			continue
 		var clearance = 200.0
 		for t in LOOKAHEAD:
-			var pos = (cat.global_position + dir * MOVE_SPEED * t).clamp(lo, hi)
+			var pos = (cat.global_position + dir * speed * t).clamp(lo, hi)
 			for s in shots:
 				clearance = min(clearance, pos.distance_to(s[0] + s[1] * t))
 			for b in beams:
@@ -245,6 +283,10 @@ func _safest_direction(goal: Vector2) -> Vector2:
 		if score > best_score:
 			best_score = score
 			best_dir = dir
+			best_focus = speed < MOVE_SPEED
+	Game.focus_override = best_focus
+	if best_focus:
+		_stat("focus_frames", 1)
 	return best_dir
 
 

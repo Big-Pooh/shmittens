@@ -82,7 +82,8 @@ func _on_level_started(index: int):
 
 
 func _on_boss_incoming(boss_name: String):
-	hud.show_message("WARNING!\n%s" % boss_name)
+	var tip = "" if Game.weapon == Game.Weapon.LASER else "\nTip: press 2 for the LASER POINTER - made for bosses"
+	hud.show_message("WARNING!\n%s%s" % [boss_name, tip])
 	Sfx.play("siren")
 
 

@@ -6,6 +6,7 @@ const TEXTURE = preload("res://Art/Generated/enemy_shot.png")
 const SPRITE_SCALE = 3.0
 
 var velocity: Vector2
+var volley = ""   # shots fired together share this (simulated players read a volley as one pattern)
 
 
 static func create(at: Vector2, direction: Vector2, speed: float) -> EnemyShot:

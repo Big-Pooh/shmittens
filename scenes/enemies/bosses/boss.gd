@@ -91,9 +91,11 @@ func is_stunned() -> bool:
 
 
 func _crack_for(judgement: int) -> float:
-	if judgement == Conductor.Judgement.GOOD and Game.assist > 0:
-		return 1.0
-	return CRACK.get(judgement, 0.1)
+	var crack = CRACK.get(judgement, 0.1)
+	if Game.assist > 0:
+		# beginner care: GOOD cracks a whole pip, off-beat/held shots crack twice as fast
+		crack = 1.0 if judgement == Conductor.Judgement.GOOD else crack * 2.0
+	return crack
 
 
 func take_hit(amount: float, _direction: Vector2, judgement: int = -1):
@@ -175,8 +177,8 @@ func _on_lead_note(pitch: int, length: int):
 	if entering or is_dead or stunned_beats > 0 or not is_inside_tree():
 		return
 	_note_count += 1
-	if Game.assist >= 2 and _note_count % 2 == 0:
-		return   # beginner care: only every other note when heavily assisted
+	if Game.assist >= 1 and _note_count % 2 == 0:
+		return   # beginner care: only every other melody note after a game over
 	on_lead_note(pitch, length)
 
 
@@ -196,8 +198,9 @@ func staff_note(pitch: int, speed: float, count: int = 1):
 
 # Evenly spaced fan around `center_degrees` (180 = straight left). Not aimed.
 func arc(count: int, spread_degrees: float, speed: float, center_degrees: float = 180.0):
-	if Game.assist >= 2:
-		count = max(count - 2, 3)
+	if Game.assist >= 1:
+		count = max(count - Game.assist, 3)
+		spread_degrees *= 1.2
 	for i in count:
 		var angle = deg_to_rad(center_degrees + (i - (count - 1) / 2.0) * spread_degrees)
 		fire_shot(Vector2.from_angle(angle), speed)
@@ -244,6 +247,7 @@ func ring(count: int, speed: float, offset_angle: float = 0.0):
 
 func _spawn_shot(at: Vector2, direction: Vector2, speed: float):
 	var shot = EnemyShot.create(at, direction, speed * Game.shot_speed_factor())
+	shot.volley = "%d:%d" % [get_instance_id(), Engine.get_physics_frames()]
 	get_tree().current_scene.add_child(shot)
 
 

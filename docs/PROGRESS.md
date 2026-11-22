@@ -13,6 +13,8 @@ Resume a session by reading this file and `docs/PLAN.md` only. The full history 
 | 6 | M5 polish (+ beat hints, perf/memory) | ✅ done |
 | 7 | Tutorial (your addition) | ✅ done |
 | 8 | Persona playthroughs, Monte Carlo, tuning | ✅ done, merged into `main` (2026-11-22) |
+| 9 | Playtest 1 + GTM iterations 0-5 | ✅ merged into `main` (2026-11-22) |
+| 10 | Playtest 2 (iteration 6) | ✅ on branch `feedback/playtest-2`, **not merged**: waiting for your playtest |
 
 ## How to run
 - Godot: `~/Desktop/Godot_v4.7.2.app` (the project needs 4.7.2).

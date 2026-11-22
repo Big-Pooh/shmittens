@@ -43,7 +43,7 @@ LEVELS = 3
 
 QUIT_BASE = {"noob": 0.22, "average": 0.12, "speedrunner": 0.06}
 BOREDOM_QUIT = {"noob": 0.0, "average": 0.02, "speedrunner": 0.05}
-PAR = [45.0, 40.0, 60.0]
+PAR = [55.0, 48.0, 50.0]
 DEATHS_PER_MIN_SWEET = {"noob": 0.8, "average": 0.6, "speedrunner": 0.35}
 PACE_RANGE = {"noob": (60, 240), "average": (45, 180), "speedrunner": (25, 90)}
 

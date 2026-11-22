@@ -164,6 +164,7 @@ func _drop():
 
 func fire_shot(direction: Vector2, speed: float = 320.0):
 	var shot = EnemyShot.create(global_position + direction.normalized() * 24, direction, speed * Game.shot_speed_factor())
+	shot.volley = "%d:%d" % [get_instance_id(), Engine.get_physics_frames()]
 	get_tree().current_scene.add_child(shot)
 	Sfx.play("enemy_shoot", -10.0)
 

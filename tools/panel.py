@@ -35,12 +35,14 @@ GODOT = os.environ.get("GODOT", os.path.expanduser("~/Desktop/Godot_v4.7.2.app/C
 OUT = os.path.join(ROOT, "montecarlo")
 RUNS = os.path.join(OUT, "panel_runs")
 LEVELS = 3
-PAR = [45.0, 40.0, 60.0]
+PAR = [55.0, 48.0, 50.0]
 
 # Presentation quality of the current assets (0-1). Fixed judgement, NOT computable from code:
 # generated placeholder pixel art (the cat is hand-made) and generated chiptune loops/sfx.
 # Raise these only when real art / music replace the placeholders.
-ART_QUALITY = 0.5
+# Playtest 2: one cohesive cute (chibi) style for every enemy, boss, pickup and shot, replacing
+# mismatched robot sprites -> 0.55. Still generated placeholders; real art is the big lever.
+ART_QUALITY = 0.55
 AUDIO_QUALITY = 0.5
 ORIGINALITY = 0.85   # rhythm + drawn-gesture skills + shmup is an unusual combination
 
@@ -62,6 +64,12 @@ CHECKLIST = [
     ("mastery: ranks / FEVER", 0.5, lambda: 1.0 if _grep("scripts/autoload/game.gd", "FEVER_EVERY") else 0.0),
     ("replay mode after the story", 1.0, lambda: 1.0 if _exists("scenes", "levels", "endless.gd") else 0.0),
     ("high scores saved", 0.5, lambda: 1.0 if _grep("scripts/autoload/game.gd", "best_scores") else 0.0),
+    # playtest 2
+    ("weapon variety + switching", 1.0, lambda: 1.0 if _grep("scripts/autoload/game.gd", "WEAPON_NAMES") else 0.0),
+    ("boss design: readable patterns + beat-armour phase", 1.0, lambda: 1.0 if _grep("scenes/enemies/bosses/boss.gd", "ARMOR_PIPS") else 0.0),
+    ("story cards between levels", 0.5, lambda: 1.0 if _exists("scenes", "ui", "transition_card.gd") else 0.0),
+    ("spell-shape guides", 0.5, lambda: 1.0 if _exists("scenes", "gestures", "gesture_guide.gd") else 0.0),
+    ("no dead time between waves (dance breaks)", 0.5, lambda: 1.0 if _grep("scenes/levels/level_runner.gd", "set_dancing") else 0.0),
 ]
 
 

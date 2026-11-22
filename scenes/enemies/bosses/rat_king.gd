@@ -15,7 +15,7 @@ const TEXTURE = preload("res://Art/Generated/boss_rat_king.png")
 
 
 func _init():
-	build(TEXTURE, 6.0, 84.0, 220.0)
+	build(TEXTURE, 6.0, 84.0, 350.0)
 	boss_name = "KING RATBERT"
 
 
