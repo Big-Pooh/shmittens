@@ -97,16 +97,16 @@ Designer v0.11 scores: core loop 7, feel 7, onboarding 6, content 4, presentatio
   - ✅ average-persona story ≥ 10 min (9.8–10.0 after the refit to human data; 10 waves per planet; rank system)
   - 👤 3 cold testers ≥ 15 min
 - **Presentation**
-  - ⬜ parallax backdrop per planet (2 layers + ambient effect)
-  - ⬜ a distinct lead melody per planet, with the boss sharing its motif
-  - ⬜ hit-pause 40–60 ms on phase breaks and Spell Break
-  - ⬜ animated portraits in speech bubbles
-  - ⬜ HUD overlap check at 1080p; web performance
+  - ✅ parallax backdrop per planet (2 layers + ambient effect)
+  - ✅ a distinct lead melody per planet, with the boss sharing its motif
+  - ✅ hit-pause 40–60 ms on phase breaks and Spell Break
+  - ✅ animated portraits in speech bubbles
+  - ◐ HUD overlap check (wave label fixed, at 720p capture); web performance not measured on a 2020 laptop
 - **GTM**
-  - ⬜ capsule set + 5 screenshots + trailer capture (generated)
-  - ⬜ in-game feedback link + bug-report path
-  - ⬜ demo-scope freeze flag
-  - ⬜ gamepad support (or "mouse required")
+  - ✅ capsule set + 6 screenshots + raw trailer footage (AVI)
+  - ✅ in-game feedback link + bug-report path
+  - ✅ demo-scope freeze flag
+  - ✅ gamepad support (or "mouse required")
   - 👤 Steam page live
   - 👤 10+ cold playtests and survey
   - 👤 devlog + GIFs posted

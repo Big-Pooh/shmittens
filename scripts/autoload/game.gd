@@ -568,7 +568,6 @@ func apply_settings():
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen else DisplayServer.WINDOW_MODE_WINDOWED)
 
 
-# A story level was cleared: unlock the next one and keep the best score.
 # This attempt's challenge results.
 func challenge_results() -> Dictionary:
 	return {
@@ -597,6 +596,7 @@ func stars(level_index: int) -> int:
 	return PLANET_CHALLENGES.filter(func(c): return rec.get(c, false)).size()
 
 
+# A story level was cleared: unlock the next one and keep the best score.
 func record_level_clear(level_index: int):
 	unlocked_level = max(unlocked_level, min(level_index + 1, LEVEL_COUNT - 1))
 	record_score("level%d" % (level_index + 1))

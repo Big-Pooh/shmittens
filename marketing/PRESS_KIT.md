@@ -21,7 +21,9 @@ them, and dodge boss spell cards whose bullets pulse with the music.
 - All art, music and sound are generated in code: a distinctive pastel chiptune style.
 
 ## Assets
-Logo, capsules, screenshots and GIFs: `marketing/capsules/` and `marketing/screenshots/` (added in week 3).
+- **Logo and capsules** (rendered in-engine by `tools/capsules.gd`): `marketing/capsules/`. Header, small, main, vertical, library, library hero, transparent logo.
+- **Screenshots** (gameplay captured by `tools/capture.gd`): `marketing/screenshots/01–06`.
+- **Raw trailer footage:** `build/trailer/*.avi` (MJPEG, 1280×720, 30 fps; convert to MP4 before uploading to Steam). GIFs come in the next pass.
 
 ## Contact
 Press and creators: **press@<project domain>**, a dedicated alias the owner creates (never a personal address). Steam page link goes here once live.
