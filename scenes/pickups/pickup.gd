@@ -56,7 +56,7 @@ func _ready():
 func _physics_process(delta):
 	time += delta
 	var player = get_tree().get_first_node_in_group("player") as Shmitten
-	if player and not player.is_dead and (Game.dancing or player.global_position.distance_to(global_position) < MAGNET_RADIUS):
+	if player and not player.is_dead and (Game.dancing or Game.play_time < Game.magnet_until or player.global_position.distance_to(global_position) < MAGNET_RADIUS):
 		# accelerate in, so pickups near the edge of the magnet don't overshoot or orbit
 		var want = global_position.direction_to(player.global_position) * MAGNET_SPEED
 		velocity = velocity.lerp(want, min(10.0 * delta, 1.0))

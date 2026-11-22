@@ -76,7 +76,8 @@ func take_hit(amount: float, _direction: Vector2, judgement: int = -1):
 
 
 # Skills call this (bosses override it for beat armour).
-func take_skill_damage(amount: float):
+# spell: "shockwave" (circle), "laser" (line), "lightning" (zigzag), "" (bomb / other)
+func take_skill_damage(amount: float, _spell: String = ""):
 	Game.track("spell_hits")
 	take_damage(amount)
 

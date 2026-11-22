@@ -83,7 +83,7 @@ func _strike_along():
 	for enemy in targets:
 		var from = _closest_on_stroke(enemy.global_position)
 		bolts.append([from, enemy.global_position])
-		enemy.take_skill_damage(damage)
+		enemy.take_skill_damage(damage, "lightning")
 
 
 func _closest_on_stroke(p: Vector2) -> Vector2:
@@ -108,7 +108,7 @@ func _strike_chain():
 		path.append(current.global_position)
 		current = _nearest(candidates, current.global_position, JUMP_RANGE)
 	for enemy in targets:
-		enemy.take_skill_damage(damage)
+		enemy.take_skill_damage(damage, "lightning")
 
 
 func _nearest(candidates: Array, to: Vector2, max_distance: float):

@@ -20,6 +20,11 @@ func take_hit(amount: float, direction: Vector2, judgement: int = -1):
 	take_damage(amount, judgement)
 
 
+# ZIGZAG lightning is the armour breaker (playtest 7): x3 against shield mice.
+func take_skill_damage(amount: float, spell: String = ""):
+	super(amount * (3.0 if spell == "lightning" else 1.0), spell)
+
+
 func is_blocking(direction: Vector2, judgement: int = -1) -> bool:
 	if judgement == Conductor.Judgement.GOOD or judgement == Conductor.Judgement.PERFECT:
 		return false

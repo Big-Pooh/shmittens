@@ -355,7 +355,9 @@ func _process(delta):
 	if current_boss and is_instance_valid(current_boss) and current_boss.card >= 0:
 		var c = current_boss.cards[current_boss.card]
 		var name_part = ("~ " + c.name + " ~   ") if c.name != "" else ""
-		card_label.text = "%s%ds   card %d/%d" % [name_part, int(ceil(max(current_boss.card_time, 0.0))), current_boss.card + 1, current_boss.cards.size()]
+		var weak = current_boss.weak_spell()
+		var weak_part = ("   weak to: " + Boss.SPELL_NAMES.get(weak, "")) if weak != "" else ""
+		card_label.text = "%s%ds   card %d/%d%s" % [name_part, int(ceil(max(current_boss.card_time, 0.0))), current_boss.card + 1, current_boss.cards.size(), weak_part]
 
 
 func _on_armor(pips: float, stunned: bool):

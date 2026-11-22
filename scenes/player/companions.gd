@@ -46,6 +46,8 @@ func _player() -> Node2D:
 func _on_combo(combo: int, _multiplier: int):
 	if not is_inside_tree():
 		return
+	if Game.level < 1 and not Game.endless_mode:
+		return   # playtest 7: companions arrive from planet 2 (one new system at a time)
 	var want = min(combo / JOIN_EVERY, CREW.size())
 	while members.size() < want:
 		_join(members.size())

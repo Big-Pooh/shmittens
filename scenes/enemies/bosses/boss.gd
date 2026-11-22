@@ -228,17 +228,31 @@ func take_hit(amount: float, _direction: Vector2, judgement: int = -1):
 # Spells (playtest 3: they barely scratched bosses): at least SKILL_MIN_FRACTION of the boss's
 # health per cast; against beat armour they crack SKILL_ARMOR_CRACK pips (and do half damage);
 # STUN_DAMAGE x while stunned.
-func take_skill_damage(amount: float):
+const WEAK_MULTIPLIER = 2.0
+const SPELL_NAMES = {"shockwave": "CIRCLE", "laser": "LINE", "lightning": "ZIGZAG"}
+
+
+# The spell this card is weak to ("shockwave" / "laser" / "lightning"), or "".
+func weak_spell() -> String:
+	return cards[card].get("weak", "") if card >= 0 and card < cards.size() else ""
+
+
+func take_skill_damage(amount: float, spell: String = ""):
 	if card_intro > 0:
 		return
 	Game.track("spell_hits_boss")
 	spell_this_card = true
 	amount = max(amount, max_health * SKILL_MIN_FRACTION)
+	if spell != "" and spell == weak_spell():
+		amount *= WEAK_MULTIPLIER   # each card shows which spell it's weak to
+		Game.track("weak_hits")
 	if is_armored():
-		# SPELL BREAK (playtest 6: drawing must stay central): a drawn spell shatters ALL the
-		# remaining beat armour at once and stuns the boss.
-		Game.track("spell_breaks")
-		_crack(armor)
+		if spell == "lightning":
+			# SPELL BREAK: ZIGZAG lightning shatters ALL the remaining beat armour and stuns
+			Game.track("spell_breaks")
+			_crack(armor)
+		else:
+			_crack(SKILL_ARMOR_CRACK)
 		take_damage(amount * 0.5)
 		return
 	take_damage(amount * (STUN_DAMAGE if is_stunned() else 1.0))

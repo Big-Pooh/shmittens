@@ -88,6 +88,7 @@ const MECH_PARTS_NEEDED = 4
 const MECH_COMBO = 75
 var mech_parts = 0
 var mech_used_this_level = false
+var magnet_until = -1.0   # CIRCLE spell: every pickup flies to the cat until play_time > this
 var wave = 0
 var combo = 0
 var plain_kills = 0
@@ -254,6 +255,8 @@ func save_session(reason: String):
 
 
 func add_mech_part(reason: String):
+	if level < 2 and not endless_mode:
+		return   # playtest 7: the mech is a planet-3+ reward (one new system at a time)
 	if mech_used_this_level and mech_parts >= MECH_PARTS_NEEDED - 1:
 		return   # one mech per planet: the last part waits for the next planet
 	mech_parts += 1

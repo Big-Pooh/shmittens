@@ -17,8 +17,8 @@ func _init():
 	build(TEXTURE, 5.0, 82.0, 520.0)
 	boss_name = "THE CHEESE SAUCER"
 	cards = [
-		{"name": "Cheese Rain", "share": 0.5, "seconds": 35.0, "armored": false},
-		{"name": "Holey Lattice", "share": 0.5, "seconds": 40.0, "armored": true},
+		{"name": "Cheese Rain", "share": 0.5, "seconds": 35.0, "armored": false, "weak": "shockwave"},
+		{"name": "Holey Lattice", "share": 0.5, "seconds": 40.0, "armored": true, "weak": "lightning"},
 	]
 
 

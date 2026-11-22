@@ -16,6 +16,9 @@ const COLOR = Color(1.0, 0.4, 0.9)
 
 var source: Node2D
 var both_ways = false   # slash: the line runs through the drawn stroke in both directions
+# playtest 7 (design review): the full-screen slash beat every other spell -> a drawn slash is
+# SLASH_HALF_LENGTH px each way from the middle of your line (600 px total).
+const SLASH_HALF_LENGTH = 300.0
 var direction = Vector2.RIGHT
 var width = WIDTH
 var damage = DAMAGE
@@ -59,7 +62,8 @@ func _ready():
 func distance_to_beam(p: Vector2) -> float:
 	var local = p - global_position
 	var along = local.dot(direction)
-	if along < (-LENGTH if both_ways else 0.0) or along > LENGTH:
+	var reach = SLASH_HALF_LENGTH if both_ways else LENGTH
+	if along < (-reach if both_ways else 0.0) or along > reach:
 		return INF
 	return absf(local.dot(direction.orthogonal()))
 
@@ -73,7 +77,7 @@ func _process(delta):
 			continue
 		if distance_to_beam(enemy.global_position) <= width / 2.0 + ENEMY_RADIUS:
 			already_hit[enemy] = true
-			enemy.take_skill_damage(damage)
+			enemy.take_skill_damage(damage, "laser")
 	for shot in get_tree().get_nodes_in_group("enemy_shots"):
 		if distance_to_beam(shot.global_position) <= width / 2.0:
 			shot.queue_free()
@@ -85,7 +89,7 @@ func _process(delta):
 func _draw():
 	var fade = 1.0 - clamp(time / duration, 0.0, 1.0)
 	var flicker = 0.85 + 0.15 * sin(time * 80.0)
-	var start = -LENGTH if both_ways else 0.0
-	var length = LENGTH * (2.0 if both_ways else 1.0)
+	var start = -SLASH_HALF_LENGTH if both_ways else 0.0
+	var length = SLASH_HALF_LENGTH * 2.0 if both_ways else LENGTH
 	draw_rect(Rect2(start, -width / 2.0, length, width), Color(COLOR, 0.5 * fade))
 	draw_rect(Rect2(start, -width * 0.22 * flicker, length, width * 0.44 * flicker), Color(1, 1, 1, fade))

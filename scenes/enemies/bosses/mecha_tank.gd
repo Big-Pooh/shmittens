@@ -16,8 +16,8 @@ func _init():
 	build(TEXTURE, 5.0, 78.0, 380.0)   # playtest 3: x2 again - card timers now cap the fight for beginners
 	boss_name = "TANKY THE MECHA-MOUSE"
 	cards = [
-		{"name": "Toy Cannon Parade", "share": 0.5, "seconds": 30.0, "armored": false},
-		{"name": "Clockwork Waltz", "share": 0.5, "seconds": 35.0, "armored": true},
+		{"name": "Toy Cannon Parade", "share": 0.5, "seconds": 30.0, "armored": false, "weak": "laser"},
+		{"name": "Clockwork Waltz", "share": 0.5, "seconds": 35.0, "armored": true, "weak": "lightning"},
 	]
 
 

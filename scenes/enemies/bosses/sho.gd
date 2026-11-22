@@ -22,10 +22,10 @@ func _init():
 	build(TEXTURE, 5.0, 90.0, 1000.0)
 	boss_name = "SHOCIREL, DEMON LORD OF THE MICE"
 	cards = [
-		{"name": "Flex Parade", "share": 0.25, "seconds": 35.0, "armored": false},
-		{"name": "Protein Rain", "share": 0.25, "seconds": 35.0, "armored": false},
-		{"name": "Demon Lord's Waltz", "share": 0.25, "seconds": 35.0, "armored": false},
-		{"name": "Muscle Supernova", "share": 0.25, "seconds": 40.0, "armored": true},
+		{"name": "Flex Parade", "share": 0.25, "seconds": 35.0, "armored": false, "weak": "shockwave"},
+		{"name": "Protein Rain", "share": 0.25, "seconds": 35.0, "armored": false, "weak": "laser"},
+		{"name": "Demon Lord's Waltz", "share": 0.25, "seconds": 35.0, "armored": false, "weak": "shockwave"},
+		{"name": "Muscle Supernova", "share": 0.25, "seconds": 40.0, "armored": true, "weak": "lightning"},
 	]
 
 

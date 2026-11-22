@@ -21,9 +21,9 @@ func _init():
 	build(TEXTURE, 6.0, 84.0, 700.0)
 	boss_name = "KING RATBERT"
 	cards = [
-		{"name": "Royal Decree", "share": 0.35, "seconds": 35.0, "armored": false},
-		{"name": "Rat Race Rondo", "share": 0.35, "seconds": 35.0, "armored": false},
-		{"name": "Long Live the King", "share": 0.3, "seconds": 40.0, "armored": true},
+		{"name": "Royal Decree", "share": 0.35, "seconds": 35.0, "armored": false, "weak": "laser"},
+		{"name": "Rat Race Rondo", "share": 0.35, "seconds": 35.0, "armored": false, "weak": "shockwave"},
+		{"name": "Long Live the King", "share": 0.3, "seconds": 40.0, "armored": true, "weak": "lightning"},
 	]
 
 

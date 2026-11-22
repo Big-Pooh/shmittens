@@ -1576,8 +1576,10 @@ func _playtest3_tests():
 	check(is_equal_approx(hp - boss.health, boss.max_health * boss.SKILL_MIN_FRACTION), "a spell takes at least 5% of a boss health")
 	boss.take_damage(boss.health - boss.max_health * 0.4)
 	boss.card_intro = 0
-	boss.take_skill_damage(1.0)
-	check(boss.is_stunned() and boss.armor == 0.0, "SPELL BREAK: a drawn spell shatters all the beat armour")
+	boss.take_skill_damage(1.0, "shockwave")
+	check(is_equal_approx(boss.armor, boss.ARMOR_PIPS - 2.0), "a circle or line cracks 2 pips of beat armour")
+	boss.take_skill_damage(1.0, "lightning")
+	check(boss.is_stunned() and boss.armor == 0.0, "SPELL BREAK: zigzag lightning shatters all the beat armour")
 	boss.queue_free()
 	await _clear_world()
 
@@ -1688,6 +1690,7 @@ func _playtest3_tests():
 func _playtest4_tests():
 	await _start_main()
 	main.level_runner.stop()
+	game.level = 2   # companions join from planet 2, mech parts from planet 3
 	await _clear_world()
 	var conductor = root.get_node("Conductor")
 	cat.position = Vector2(220, 360)
@@ -1832,6 +1835,7 @@ func _story_tests():
 func _playtest5_tests():
 	await _start_main()
 	main.level_runner.stop()
+	game.level = 2   # companions join from planet 2, mech parts from planet 3
 	await _clear_world()
 	var conductor = root.get_node("Conductor")
 	var gestures = main.get_node("GestureInput")
@@ -1872,6 +1876,7 @@ func _playtest5_tests():
 	await _clear_world()
 
 	# mech parts -> mech core -> mech suit
+	game.level = 2
 	game.mech_parts = 0
 	game.mech_used_this_level = false
 	var cores = [0]
@@ -1952,6 +1957,37 @@ func _playtest5_tests():
 	for i in game.BULLETS_PER_CHEESE:
 		game.eat_bullet()
 	check(game.cheese == 1, "spread pellets eat bullets: every 3 = 1 cheese")
+	# playtest 7 spell roles: weak-to spell x2, short slash, zigzag x3 on shield mice
+	var weak_boss = await _make_boss("res://scenes/enemies/bosses/mecha_tank.gd")
+	var hp0 = weak_boss.health
+	weak_boss.take_skill_damage(1.0, "shockwave")
+	var plain_hit = hp0 - weak_boss.health
+	hp0 = weak_boss.health
+	weak_boss.take_skill_damage(1.0, weak_boss.weak_spell())
+	check(weak_boss.weak_spell() == "laser" and is_equal_approx(hp0 - weak_boss.health, plain_hit * 2.0), "each card is weak to one spell (x2)")
+	weak_boss.queue_free()
+	var slash = load("res://scenes/gestures/skills/laser_beam.gd").slash(Vector2(600, 300), Vector2(700, 300), false)
+	check(slash.distance_to_beam(Vector2(950, 300)) < INF and slash.distance_to_beam(Vector2(1100, 300)) == INF, "a drawn slash reaches 300 px each way, not the whole screen")
+	slash.free()
+	var shielded = load("res://scenes/enemies/shield_mouse.tscn").instantiate()
+	shielded.position = Vector2(900, 200)
+	shielded.max_health = 100
+	main.add_child(shielded)
+	await frames(1)
+	shielded.take_skill_damage(5.0, "lightning")
+	check(is_equal_approx(shielded.health, 85.0), "zigzag lightning does x3 to shield mice")
+	shielded.queue_free()
+	game.level = 0
+	game.reset_combo()
+	for i in 10:
+		game.register_judgement(conductor.Judgement.PERFECT)
+	check(main.companions.count() == 0, "no companions on planet 1 (one new system at a time)")
+	game.mech_parts = 0
+	game.add_mech_part("test")
+	check(game.mech_parts == 0, "no mech parts before planet 3")
+	game.reset_combo()
+	game.level = 2
+	await _clear_world()
 
 func Banter_lines_has(text: String) -> bool:
 	return load("res://scenes/ui/banter.gd").CAT_COMBO.has(text)

@@ -193,6 +193,7 @@ func cast_skill(skill: String, empowered: bool, direction: Vector2 = Vector2.RIG
 	var scene = get_tree().current_scene
 	match skill:
 		"shockwave":
+			Game.magnet_until = Game.play_time + 3.0   # the circle also magnets cheese for 3 s
 			if drawn:
 				var center = Vector2.ZERO
 				for p in stroke:
