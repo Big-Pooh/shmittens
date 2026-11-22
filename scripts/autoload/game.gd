@@ -128,6 +128,11 @@ var hard_cleared = false     # unlocks TOUHOU
 var bomb_stock = 0           # TOUHOU: free bombs (1 per life)
 # One-time tips (playtest 4: "I didn't know until the end how spell cards work")
 var tips_seen = {}
+var skip_intro = false   # tests and simulations start games without the story
+# BOMB (playtest 5: 11 bombs in one run crowded out drawing -> cut to about a quarter): one bomb
+# per planet, and it needs at least BOMB_MIN_CHARGES charges. TOUHOU keeps its free bomb per life.
+const BOMB_MIN_CHARGES = 2
+var bomb_used_this_level = false
 
 
 # Returns true the first time a tip is requested (and remembers it).
@@ -325,6 +330,7 @@ func set_level(value: int, total_waves: int):
 	level_deaths = 0
 	wave_total = total_waves
 	wave = 0
+	bomb_used_this_level = false
 	level_changed.emit(level)
 	wave_changed.emit(wave)
 

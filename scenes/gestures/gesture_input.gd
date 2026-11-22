@@ -252,7 +252,8 @@ func bomb() -> bool:
 		# TOUHOU: the free bomb of this life (strength of 3 charges), charges are kept
 		Game.bomb_stock -= 1
 		spent = 3
-	elif Game.charges > 0:
+	elif Game.charges >= Game.BOMB_MIN_CHARGES and not Game.bomb_used_this_level:
+		Game.bomb_used_this_level = true
 		spent = Game.charges
 		Game.charges = 0
 		Game.charges_changed.emit(Game.charges, Game.cheese)

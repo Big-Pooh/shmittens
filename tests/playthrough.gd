@@ -53,7 +53,7 @@ func _run():
 	game.start_level = 0
 	game.hard_cleared = false
 	game.set_difficulty(mode)
-	game.tips_seen["intro_story"] = true
+	game.skip_intro = true
 	game.clear_assist()
 	game.judged.connect(_on_judged)
 	game.player_hit.connect(_on_hit)

@@ -9,10 +9,10 @@ const TEXTURES = {
 	Kind.LASER: preload("res://Art/Generated/shot_laser.png"),
 	Kind.FISH: preload("res://Art/Generated/shot_fish.png"),
 }
-const SPEEDS = {Kind.BOLT: 900.0, Kind.LASER: 1500.0, Kind.FISH: 640.0}
+const SPEEDS = {Kind.BOLT: 900.0, Kind.LASER: 1500.0, Kind.FISH: 560.0}
 const SPEED = 900.0
 const SPRITE_SCALE = 3.0
-const FISH_TURN_RATE = 7.0     # radians per second
+const FISH_TURN_RATE = 4.5     # radians per second (playtest 5: was 7)
 const FISH_SEEK_RANGE = 900.0
 
 var kind = Kind.BOLT

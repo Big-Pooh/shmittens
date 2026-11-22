@@ -21,8 +21,10 @@ const CLICK_DAMAGE = 1.0
 const HELD_DAMAGE = 0.6
 const LASER_BASE = 0.8
 const LASER_PER_LEVEL = 0.4
-const FISH_COUNT = [0, 1, 2, 2, 3, 3]
-const FISH_DAMAGE = 0.5
+# playtest 5: "obliterating playthroughs with fish" -> weaker (0.5 -> 0.35), fewer at Lv2/4,
+# and they turn slower (PlayerShot.FISH_TURN_RATE), so aiming the laser clearly pays more.
+const FISH_COUNT = [0, 1, 1, 2, 2, 3]
+const FISH_DAMAGE = 0.35
 const LASER_CRIT = 1.5   # playtest 4: a PERFECT laser shot is a critical hit
 const JUDGEMENT_DAMAGE = {
 	Conductor.Judgement.MISS: 1.0,

@@ -91,7 +91,7 @@ func _run():
 	var settings_snapshot = FileAccess.get_file_as_string("user://settings.cfg") if FileAccess.file_exists("user://settings.cfg") else ""
 	Levels = load("res://scenes/levels/levels.gd")
 	# the opening story plays before the very first game; tests start games directly
-	root.get_node("Game").tips_seen["intro_story"] = true
+	root.get_node("Game").skip_intro = true
 	# restore the player's real settings after the run (some tests change and save them)
 	var original = {"chosen": root.get_node("Game").difficulty_chosen, "relaxed": root.get_node("Game").relaxed_mode}
 	# tests must never write the player's real save (the persistence test enables it briefly)
@@ -826,7 +826,6 @@ func _screen_tests():
 		await process_frame
 	check(current_scene.name == "Title", "title screen loads")
 	game.difficulty_chosen = true
-	game.tips_seen["intro_story"] = true   # (the settings reload above restored the real tips)
 	current_scene.start_game()
 	for i in 3:
 		await process_frame
@@ -1685,8 +1684,21 @@ func _playtest4_tests():
 	target.max_health = 50
 	main.add_child(target)
 	await frames(2)
+	crew._on_beat(0)
+	check(is_equal_approx(target.health, 50 - crew.ZAP_DAMAGE), "Pip zaps the nearest mouse on beat 1 (only Pip acts) (%.2f)" % target.health)
+	cat.is_invulnerable = false
+	cat.companion_bubble = false
 	crew._on_beat(1)
-	check(is_equal_approx(target.health, 50 - 3 * crew.ZAP_DAMAGE * 0.5) or target.health < 50, "companions zap the nearest mouse on the beat (%.2f)" % target.health)
+	check(cat.companion_bubble and is_equal_approx(target.health, 50 - crew.ZAP_DAMAGE), "Nori gives the cat a one-hit bubble on beat 2")
+	check(not cat.hit("shot") and not cat.companion_bubble and not cat.is_dead, "Nori's bubble absorbs one hit")
+	var kiwi_at = crew.members[2].sprite.position
+	var near_shot = EnemyShot.create(kiwi_at + Vector2(60, 0), Vector2.LEFT, 1.0)
+	main.add_child(near_shot)
+	await frames(1)
+	crew._on_beat(3)
+	await frames(1)
+	check(not is_instance_valid(near_shot) and is_equal_approx(target.health, 50 - crew.ZAP_DAMAGE), "Kiwi's mini shockwave on beat 4 erases nearby bullets")
+	cat.is_invulnerable = true
 	game.register_judgement(conductor.Judgement.MISS)
 	check(crew.count() == 0, "companions leave when the combo breaks")
 	await _clear_world()
@@ -1744,8 +1756,8 @@ func _playtest4_tests():
 
 
 func _story_tests():
-	# the opening story plays before the first game, then the game starts
-	game.tips_seen.erase("intro_story")
+	# every NEW GAME opens with the story, then the game starts
+	game.skip_intro = false
 	game.difficulty_chosen = true
 	change_scene_to_file("res://scenes/ui/title.tscn")
 	for i in 3:
@@ -1759,7 +1771,7 @@ func _story_tests():
 	for i in 4:
 		await process_frame
 	check(current_scene.name == "Main", "after the story, the game starts")
-	check(game.tips_seen.has("intro_story"), "the story plays only once (STORY on the title replays it)")
+	game.skip_intro = true
 	main = current_scene
 	cat = main.get_node("Shmitten")
 	main.level_runner.stop()

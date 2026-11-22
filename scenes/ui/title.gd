@@ -69,11 +69,6 @@ func _ready():
 		endless.custom_minimum_size = Vector2(200, 44)
 		endless.pressed.connect(start_endless)
 		buttons.add_child(endless)
-	var story = Button.new()
-	story.text = "STORY"
-	story.custom_minimum_size = Vector2(200, 40)
-	story.pressed.connect(play_story)
-	buttons.add_child(story)
 	var settings_button = Button.new()
 	settings_button.text = "SETTINGS"
 	settings_button.custom_minimum_size = Vector2(200, 44)
@@ -170,8 +165,8 @@ func _begin_new_game():
 	Game.start_wave = 0
 	Game.clear_assist()
 	Game.tutorial_mode = not Tutorial.is_done()
-	# the opening story plays before the very first game (STORY on the title replays it)
-	get_tree().change_scene_to_file(INTRO_SCENE if Game.first_time("intro_story") else MAIN_SCENE)
+	# playtest 5: every NEW GAME opens with the story (Esc skips it)
+	get_tree().change_scene_to_file(INTRO_SCENE if not Game.skip_intro else MAIN_SCENE)
 
 
 func play_story():

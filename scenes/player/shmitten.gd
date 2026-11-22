@@ -37,6 +37,7 @@ const GUARDIAN_RECHARGE = [0.0, 10.0, 7.0, 5.0]
 const EARLY_GUARDIAN_DEATHS = 1   # playtest 2: after the first death (was 2)
 const EARLY_GUARDIAN_RECHARGE = 10.0
 var guardian_ready = false
+var companion_bubble = false   # Nori's one-hit shield (see Companions)
 var guardian_timer = 0.0
 
 
@@ -162,6 +163,8 @@ func apply_movement(accel):
 
 
 func _draw():
+	if companion_bubble:
+		draw_arc(Vector2(4, 4), 32.0, 0, TAU, 32, Color(0.7, 0.8, 1, 0.75), 3.0)
 	if guardian_ready:
 		draw_arc(Vector2(4, 4), 40.0, 0, TAU, 32, Color(1, 0.9, 0.5, 0.55), 2.5)
 
@@ -199,6 +202,13 @@ func _on_pickup_area_entered(area):
 # Returns true if the hit counted.
 func hit(cause: String = "") -> bool:
 	if is_dead or is_invulnerable or has_shield():
+		return false
+	if companion_bubble:
+		companion_bubble = false
+		Sfx.play("shield")
+		is_invulnerable = true
+		get_tree().create_timer(0.6, false).timeout.connect(func(): is_invulnerable = false)
+		Game.track("nori_saves")
 		return false
 	if guardian_ready:
 		guardian_ready = false

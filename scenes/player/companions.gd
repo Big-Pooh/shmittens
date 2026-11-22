@@ -3,16 +3,21 @@ extends Node2D
 class_name Companions
 
 # Shmitten's travelling companions (playtest 4). They join as your combo grows - one every
-# JOIN_EVERY on-beat hits in a row (max 3) - and fly in formation around the cat. On every
-# beat each one zaps the nearest mouse with a small laser (ZAP_DAMAGE, a "mediocre laser").
-# When the combo breaks they wave goodbye and fly off until you build it up again.
-#   Pip  - a hamster pilot in a tiny saucer      (joins at 10)
-#   Nori - an engineer kitten with a jetpack     (joins at 20)
-#   Kiwi - a round little bird                   (joins at 30)
+# JOIN_EVERY on-beat hits in a row (max 3) - and fly in formation around the cat. When the
+# combo breaks they wave goodbye and fly off until you build it up again.
+# Playtest 5: each has its own job on its own beat, so they never all act at once:
+#   Pip  (joins at 10) - LASER: zaps the nearest mouse on beats 1 and 3 (ZAP_DAMAGE).
+#   Nori (joins at 20) - SHIELD: on beat 2 of every other bar, gives the cat a one-hit bubble
+#                        (if she doesn't already have one).
+#   Kiwi (joins at 30) - SHOCKWAVE: on beat 4 of every bar, a small ring around Kiwi that hits
+#                        mice for KIWI_DAMAGE and erases bullets within KIWI_RADIUS.
 
 const JOIN_EVERY = 10
 const ZAP_DAMAGE = 0.6
 const ZAP_RANGE = 900.0
+const KIWI_DAMAGE = 2.0
+const KIWI_RADIUS = 150.0
+var rings: Array = []     # [center, time_left] Kiwi's mini shockwaves (drawn)
 const CREW = [
 	{"name": "PIP", "texture": preload("res://Art/Generated/companion_pip.png"), "offset": Vector2(-20, -70), "color": Color(1, 0.85, 0.4)},
 	{"name": "NORI", "texture": preload("res://Art/Generated/companion_nori.png"), "offset": Vector2(-20, 70), "color": Color(0.7, 0.8, 1)},
@@ -83,20 +88,59 @@ func _physics_process(delta):
 	for z in zaps:
 		z[2] -= delta
 	zaps = zaps.filter(func(z): return z[2] > 0.0)
+	for r in rings:
+		r[1] -= delta
+	rings = rings.filter(func(r): return r[1] > 0.0)
 	queue_redraw()
 
 
-func _on_beat(_n: int):
+func _on_beat(n: int):
 	if not is_inside_tree() or members.is_empty() or Game.is_game_over:
 		return
+	var beat = n % Conductor.BEATS_PER_BAR
+	var bar = n / Conductor.BEATS_PER_BAR
 	for m in members:
-		var from = m.sprite.position
-		var target = _nearest(from)
-		if target == null:
-			continue
-		target.take_hit(ZAP_DAMAGE, (target.global_position - from).normalized(), -1)
-		zaps.append([from, target.global_position, 0.12, CREW[m.index].color])
-		Game.track("companion_zaps")
+		match m.index:
+			0:
+				if beat == 0 or beat == 2:
+					_zap(m)
+			1:
+				if beat == 1 and bar % 2 == 0:
+					_shield()
+			2:
+				if beat == 3:
+					_mini_wave(m)
+
+
+func _zap(m):
+	var from = m.sprite.position
+	var target = _nearest(from)
+	if target == null:
+		return
+	target.take_hit(ZAP_DAMAGE, (target.global_position - from).normalized(), -1)
+	zaps.append([from, target.global_position, 0.12, CREW[m.index].color])
+	Game.track("companion_zaps")
+
+
+func _shield():
+	var player = _player()
+	if player == null or player.is_dead or player.companion_bubble:
+		return
+	player.companion_bubble = true
+	Sfx.play("shield", -10.0)
+	Game.track("companion_shields")
+
+
+func _mini_wave(m):
+	var at = m.sprite.position
+	rings.append([at, 0.3])
+	for e in get_tree().get_nodes_in_group("enemies"):
+		if not e.is_dead and e.global_position.distance_to(at) <= KIWI_RADIUS + 24.0:
+			e.take_hit(KIWI_DAMAGE, (e.global_position - at).normalized(), -1)
+	for shot in get_tree().get_nodes_in_group("enemy_shots"):
+		if shot.global_position.distance_to(at) <= KIWI_RADIUS:
+			shot.queue_free()
+	Game.track("companion_waves")
 
 
 func _nearest(from: Vector2):
@@ -129,6 +173,9 @@ func _say(at: Vector2, text: String, color: Color):
 
 
 func _draw():
+	for r in rings:
+		var t = 1.0 - r[1] / 0.3
+		draw_arc(r[0], KIWI_RADIUS * t, 0, TAU, 40, Color(0.6, 1, 0.6, 1.0 - t), 5.0)
 	for z in zaps:
 		var a = clamp(z[2] / 0.12, 0.0, 1.0)
 		draw_line(z[0], z[1], Color(z[3], 0.8 * a), 3.0)
