@@ -1129,3 +1129,8 @@ You approved fixes 1–3.
   - web performance measured on a 2020-class laptop.
 
 **Tests:** 323 passing. CI runs on every push.
+
+### Playtest 7 (owner): rhythm check removed
+- **Bug:** the RHYTHM CHECK screen "blocked". The title button kept keyboard focus, so SPACE re-pressed the button and stacked new check screens instead of counting taps.
+- **Your decision:** remove the rhythm check. It's gone from the title screen and from the first web launch, and `scenes/ui/calibration.gd` is deleted.
+- **Unchanged:** the beat-offset slider in the pause menu remains as the manual fallback, and the web PERFECT window stays 15 ms wider.
