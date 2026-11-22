@@ -229,6 +229,7 @@ func cast_skill(skill: String, empowered: bool, direction: Vector2 = Vector2.RIG
 	_banner(SPELL_NAMES[skill], SKILL_COLORS[skill])
 	cancel_bullets(CANCEL_TO_CHEESE)
 	Game.track("cast_" + skill)
+	Game.level_spells[skill] = true
 	Sfx.meow("cast")
 	cast.emit(skill, empowered)
 

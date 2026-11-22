@@ -88,7 +88,17 @@ const MECH_PARTS_NEEDED = 4
 const MECH_COMBO = 75
 var mech_parts = 0
 var mech_used_this_level = false
-var magnet_until = -1.0   # CIRCLE spell: every pickup flies to the cat until play_time > this
+var magnet_until = -1.0
+# PLANET CHALLENGES (replay goals, design review): per planet attempt we track hits taken, spell
+# cards captured vs met, and which spell shapes were cast. Best results are saved per planet:
+# planet_records["level1"] = {"rank": "A", "no_hit": true, "all_cards": false, "all_spells": true}
+const PLANET_CHALLENGES = ["no_hit", "all_cards", "all_spells"]
+const PLANET_CHALLENGE_NAMES = {"no_hit": "No hits", "all_cards": "Capture every card", "all_spells": "Use all 4 spells"}
+var planet_records = {}
+var level_hits = 0
+var level_cards_met = 0
+var level_cards_captured = 0
+var level_spells = {}   # CIRCLE spell: every pickup flies to the cat until play_time > this
 var wave = 0
 var combo = 0
 var plain_kills = 0
@@ -377,6 +387,10 @@ func set_level(value: int, total_waves: int):
 	level_deaths = 0
 	wave_total = total_waves
 	wave = 0
+	level_hits = 0
+	level_cards_met = 0
+	level_cards_captured = 0
+	level_spells = {}
 	bomb_used_this_level = false
 	mech_used_this_level = false
 	level_changed.emit(level)
@@ -476,6 +490,7 @@ func load_settings():
 	meows_enabled = c.get_value("audio", "meows", meows_enabled)
 	challenge = c.get_value("access", "challenge", challenge)
 	hard_cleared = c.get_value("progress", "hard_cleared", hard_cleared)
+	planet_records = c.get_value("progress", "planet_records", planet_records)
 	tips_seen = c.get_value("progress", "tips_seen", tips_seen)
 	difficulty_chosen = c.get_value("access", "difficulty_chosen", difficulty_chosen)
 	unlocked_level = c.get_value("progress", "unlocked_level", unlocked_level)
@@ -496,6 +511,7 @@ func save_settings():
 	c.set_value("audio", "meows", meows_enabled)
 	c.set_value("access", "challenge", challenge)
 	c.set_value("progress", "hard_cleared", hard_cleared)
+	c.set_value("progress", "planet_records", planet_records)
 	c.set_value("progress", "tips_seen", tips_seen)
 	c.set_value("access", "difficulty_chosen", difficulty_chosen)
 	c.set_value("progress", "unlocked_level", unlocked_level)
@@ -515,6 +531,34 @@ func apply_settings():
 
 
 # A story level was cleared: unlock the next one and keep the best score.
+# This attempt's challenge results.
+func challenge_results() -> Dictionary:
+	return {
+		"no_hit": level_hits == 0,
+		"all_cards": level_cards_met > 0 and level_cards_captured >= level_cards_met,
+		"all_spells": level_spells.size() >= 4,
+	}
+
+
+# Merges this attempt into the planet's saved record (best rank, any challenge ever completed).
+func record_planet(level_index: int, rank: String):
+	var key = "level%d" % (level_index + 1)
+	var rec = planet_records.get(key, {"rank": "", "no_hit": false, "all_cards": false, "all_spells": false})
+	var order = ["", "C", "B", "A", "S"]
+	if order.find(rank) > order.find(rec.rank):
+		rec.rank = rank
+	var now = challenge_results()
+	for c in PLANET_CHALLENGES:
+		rec[c] = rec[c] or now[c]
+	planet_records[key] = rec
+	track("challenges_done", float(now.values().count(true)))
+
+
+func stars(level_index: int) -> int:
+	var rec = planet_records.get("level%d" % (level_index + 1), {})
+	return PLANET_CHALLENGES.filter(func(c): return rec.get(c, false)).size()
+
+
 func record_level_clear(level_index: int):
 	unlocked_level = max(unlocked_level, min(level_index + 1, LEVEL_COUNT - 1))
 	record_score("level%d" % (level_index + 1))

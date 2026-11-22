@@ -286,6 +286,7 @@ func hit(cause: String = "") -> bool:
 	Sfx.play("player_hit")
 	Sfx.meow("hit")
 	Game.player_hit.emit(cause)
+	Game.level_hits += 1
 	Game.track("deaths_" + (cause if cause != "" else "other"))
 	Game.shake(12.0)
 	died.emit()

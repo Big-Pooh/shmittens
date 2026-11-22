@@ -59,7 +59,9 @@ func _ready():
 		for i in Game.unlocked_level + 1:
 			var b = Button.new()
 			b.text = Levels.LEVELS[i].title.substr(0, 5)
-			b.tooltip_text = "%s - best %d" % [Levels.LEVELS[i].planet, Game.best_scores.get("level%d" % (i + 1), 0)]
+			var st = Game.stars(i)
+			b.text += " " + "★".repeat(st) + "☆".repeat(3 - st)
+			b.tooltip_text = "%s - best %d, rank %s" % [Levels.LEVELS[i].planet, Game.best_scores.get("level%d" % (i + 1), 0), Game.planet_records.get("level%d" % (i + 1), {}).get("rank", "-")]
 			b.pressed.connect(start_level.bind(i))
 			row.add_child(b)
 		buttons.add_child(row)

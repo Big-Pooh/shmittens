@@ -17,6 +17,8 @@ const ENEMY_SCENES = {
 	"shield": preload("res://scenes/enemies/shield_mouse.tscn"),
 	"weaver": preload("res://scenes/enemies/weaver.tscn"),
 	"turret": preload("res://scenes/enemies/turret.tscn"),
+	"splitter": preload("res://scenes/enemies/splitter.tscn"),
+	"bomber": preload("res://scenes/enemies/bomber.tscn"),
 }
 
 const LEVELS = [
@@ -56,10 +58,11 @@ const LEVELS = [
 		"waves": [
 			[{"enemy": "dasher", "formation": "line", "count": 3, "health": 2}],
 			[{"enemy": "grunt", "formation": "grid", "columns": 4, "rows": 4, "health": 3}],
-			[{"enemy": "weaver", "formation": "line", "count": 4, "health": 3, "x": 1100}],
+			[{"enemy": "weaver", "formation": "line", "count": 4, "health": 3, "x": 1100},
+			 {"enemy": "splitter", "formation": "column", "count": 2, "health": 3, "x": 900}],
 			[{"enemy": "gunner", "formation": "column", "count": 3, "health": 5},
 			 {"enemy": "dasher", "formation": "line", "count": 2, "health": 2}],
-			[{"enemy": "midboss", "boss": "tank", "name": "TANKY JR.", "health": 140, "card": "Junior Parade", "seconds": 25.0, "weak": "laser"}],
+			[{"enemy": "midboss", "boss": "tanky_jr"}],
 			[{"enemy": "grunt", "formation": "v", "count": 7, "health": 3},
 			 {"enemy": "dasher", "formation": "line", "count": 3, "health": 3}],
 			[{"enemy": "gunner", "formation": "grid", "columns": 2, "rows": 4, "health": 5}],
@@ -84,13 +87,14 @@ const LEVELS = [
 			 {"enemy": "gunner", "formation": "column", "count": 3, "health": 5}],
 			[{"enemy": "dasher", "formation": "line", "count": 4, "health": 3},
 			 {"enemy": "grunt", "formation": "grid", "columns": 3, "rows": 4, "health": 4}],
-			[{"enemy": "midboss", "boss": "mothership", "name": "SAUCER SCOUT", "health": 180, "card": "Scout Drizzle", "seconds": 25.0, "weak": "shockwave"}],
+			[{"enemy": "midboss", "boss": "saucer_scout"}],
 			[{"enemy": "shield", "formation": "v", "count": 7, "health": 4}],
 			[{"enemy": "shield", "formation": "grid", "columns": 2, "rows": 4, "health": 4, "x": 1020},
 			 {"enemy": "gunner", "formation": "column", "count": 3, "health": 6},
 			 {"enemy": "dasher", "formation": "line", "count": 2, "health": 3}],
 			[{"enemy": "weaver", "formation": "line", "count": 5, "health": 4, "x": 1100},
-			 {"enemy": "shield", "formation": "column", "count": 3, "health": 4, "x": 950}],
+			 {"enemy": "shield", "formation": "column", "count": 3, "health": 4, "x": 950},
+			 {"enemy": "bomber", "formation": "column", "count": 2, "health": 4, "x": 1180}],
 		],
 	},
 	{
@@ -106,25 +110,30 @@ const LEVELS = [
 			[{"enemy": "grunt", "formation": "grid", "columns": 4, "rows": 4, "health": 4},
 			 {"enemy": "dasher", "formation": "line", "count": 2, "health": 2}],
 			[{"enemy": "turret", "formation": "line", "count": 3, "health": 12, "x": 1190},
-			 {"enemy": "weaver", "formation": "line", "count": 3, "health": 4, "x": 1000}],
+			 {"enemy": "weaver", "formation": "line", "count": 3, "health": 4, "x": 1000},
+			 {"enemy": "bomber", "formation": "column", "count": 2, "health": 5, "x": 880}],
 			[{"enemy": "shield", "formation": "column", "count": 4, "health": 5, "x": 1000},
 			 {"enemy": "gunner", "formation": "v", "count": 5, "health": 5}],
 			[{"enemy": "dasher", "formation": "line", "count": 5, "health": 3},
 			 {"enemy": "gunner", "formation": "column", "count": 3, "health": 6}],
-			[{"enemy": "midboss", "boss": "rat_king", "name": "ROYAL GUARD", "health": 220, "card": "Halt! Who Goes There?", "seconds": 28.0, "weak": "laser"}],
+			[{"enemy": "midboss", "boss": "royal_guard"}],
 			[{"enemy": "shield", "formation": "grid", "columns": 3, "rows": 4, "health": 5, "x": 1040},
 			 {"enemy": "grunt", "formation": "v", "count": 7, "health": 4}],
 			[{"enemy": "gunner", "formation": "grid", "columns": 2, "rows": 4, "health": 6},
 			 {"enemy": "dasher", "formation": "line", "count": 3, "health": 3},
 			 {"enemy": "shield", "formation": "column", "count": 3, "health": 5, "x": 960}],
 			[{"enemy": "grunt", "formation": "grid", "columns": 4, "rows": 4, "health": 5},
-			 {"enemy": "turret", "formation": "line", "count": 2, "health": 12, "x": 1190}],
+			 {"enemy": "turret", "formation": "line", "count": 2, "health": 12, "x": 1190},
+			 {"enemy": "splitter", "formation": "column", "count": 3, "health": 4, "x": 760}],
 		],
 	},
 ]
 
 const BOSS_SCRIPTS = {
 	"sho": preload("res://scenes/enemies/bosses/sho.gd"),
+	"tanky_jr": preload("res://scenes/enemies/bosses/tanky_jr.gd"),
+	"saucer_scout": preload("res://scenes/enemies/bosses/saucer_scout.gd"),
+	"royal_guard": preload("res://scenes/enemies/bosses/royal_guard.gd"),
 	"tank": preload("res://scenes/enemies/bosses/mecha_tank.gd"),
 	"mothership": preload("res://scenes/enemies/bosses/mothership.gd"),
 	"rat_king": preload("res://scenes/enemies/bosses/rat_king.gd"),
@@ -181,9 +190,13 @@ static func formation_slots(group: Dictionary) -> Array:
 static func create_midboss(group: Dictionary) -> Boss:
 	var boss = BOSS_SCRIPTS[group.boss].new()
 	boss.is_midboss = true
-	boss.boss_name = group.name
-	boss.max_health = group.health
-	boss.cards = [{"name": group.card, "share": 1.0, "seconds": group.get("seconds", 25.0), "armored": false, "weak": group.get("weak", "")}]
+	# dedicated mid-boss scripts bring their own name, health and 2 cards; a group may override
+	if group.has("name"):
+		boss.boss_name = group.name
+	if group.has("health"):
+		boss.max_health = group.health
+	if group.has("card"):
+		boss.cards = [{"name": group.card, "share": 1.0, "seconds": group.get("seconds", 25.0), "armored": false, "weak": group.get("weak", "")}]
 	boss.slot_position = BOSS_SLOT
 	boss.position = Vector2(SPAWN_X + 80, BOSS_SLOT.y)
 	return boss

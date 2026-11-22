@@ -215,6 +215,7 @@ func _on_boss_died(_boss):
 	var ratio = float(Game.level_perfects) / max(Game.level_judged, 1)
 	last_rank = Levels.rank(level_seconds, level().par_seconds, ratio, Game.assist > 0 or from_wave > 0)
 	Game.ranks.append(last_rank)
+	Game.record_planet(level_index, last_rank)
 	Game.record_level_clear(level_index)
 	state = State.CLEARED
 	bars_to_wait = CLEARED_BARS

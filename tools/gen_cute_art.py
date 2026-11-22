@@ -562,6 +562,83 @@ def turret():
     c.save("turret.png")
 
 
+def tanky_jr():
+    # a mini toy tank driven by a baby mouse with a pacifier (faces left)
+    c = Canvas(24, 16)
+    c.rect(0, 9, 5, 10, STEEL)
+    c.ellipse(13, 13, 10, 2.6, (120, 110, 150, 255))
+    for x in (6, 11, 16, 20):
+        c.ellipse(x, 13, 1.4, 1.4, GREY_L)
+    c.ellipse(13, 10, 8, 3.2, (255, 200, 170, 255))
+    c.ellipse(14, 5.5, 4.5, 3.8, GREY)
+    c.ellipse(11.5, 2.2, 2.0, 2.0, GREY)
+    c.ellipse(11.5, 2.2, 1.0, 1.0, PINK)
+    c.ellipse(17, 2.2, 2.0, 2.0, GREY)
+    c.ellipse(17, 2.2, 1.0, 1.0, PINK)
+    c.set(12, 5, EYE)
+    c.ellipse(10.2, 7.2, 1.3, 1.1, (120, 200, 255, 255))      # pacifier
+    c.set(15, 7, BLUSH)
+    c.outline()
+    c.save("boss_tanky_jr.png")
+
+
+def saucer_scout():
+    # a small scouting dish with a periscope and a searchlight
+    c = Canvas(26, 16)
+    c.rect(15, 0, 16, 5, STEEL)                                 # periscope
+    c.rect(12, 0, 15, 1, STEEL)
+    c.set(12, 1, CYAN)
+    c.ellipse(13, 7, 5.5, 4, GLASS)
+    c.ellipse(13, 8.2, 3.0, 2.5, GREY)
+    c.set(12, 8, EYE)
+    c.ellipse(13, 11, 12.5, 3.3, (150, 230, 200, 255))
+    c.ellipse(13, 10.4, 9, 1.4, (210, 250, 235, 255))
+    c.poly([(1, 11), (-2, 9), (-2, 13)], (255, 250, 180, 255))  # searchlight lens
+    for x in (5, 13, 21):
+        c.set(x, 14, PINK)
+    c.outline()
+    c.save("boss_saucer_scout.png")
+
+
+def royal_guard():
+    # a knight mouse with a plumed helmet, a round shield and a spear (faces left)
+    c = Canvas(24, 26)
+    c.line(0, 6, 9, 15, (200, 170, 120, 255))                   # spear shaft
+    c.poly([(0, 6), (-1, 2), (3, 5)], STEEL)                     # spear tip
+    c.ellipse(14, 17, 7, 7, (190, 200, 230, 255))                # armour body
+    c.ellipse(13, 19, 4, 3.5, (220, 228, 245, 255))
+    c.ellipse(19, 17, 4, 5.5, (230, 90, 120, 255))               # round shield (back)
+    c.set(19, 17, GOLD)
+    c.ellipse(12, 8.5, 5.2, 4.6, GREY)                           # head
+    c.ellipse(12, 7, 5.4, 3.2, STEEL)                            # helmet
+    c.rect(8, 8, 15, 8, (200, 210, 235, 255))
+    c.poly([(13, 4), (17, -0.5), (18, 3)], RED)                  # plume
+    c.set(9, 9, EYE)
+    c.set(7, 10, PINK_D)
+    c.set(11, 11, BLUSH)
+    c.rect(11, 24, 12, 25, PINK_D)
+    c.rect(16, 24, 17, 25, PINK_D)
+    c.outline()
+    c.save("boss_royal_guard.png")
+
+
+def splitter_bits(c):
+    # a zipper down the middle: it splits in two
+    for y in range(7, 16, 2):
+        c.set(12, y, GOLD_D)
+        c.set(13, y + 1, GOLD_D)
+    wind_key(c, 20, 6)
+
+
+def bomber_bits(c):
+    # carries a round cartoon bomb under a little balloon
+    c.line(16, 1, 16, 6, INK)
+    c.ellipse(16, 0.5, 2.6, 2.6, (255, 120, 160, 255))
+    c.ellipse(5, 16, 2.4, 2.4, (70, 60, 90, 255))
+    c.set(6, 13, ORANGE)
+    c.set(7, 12, GOLD)
+
+
 def main():
     mouse("grunt.png", LILAC, LILAC_L, accessory=grunt_bits)
     mouse("gunner.png", PEACH, PEACH_L, accessory=gunner_bits)
@@ -569,6 +646,11 @@ def main():
     mouse("shield_mouse.png", SKY, SKY_L, accessory=shield_bits)
     mouse("weaver.png", (255, 236, 160, 255), (255, 248, 210, 255), accessory=weaver_bits)
     turret()
+    mouse("splitter.png", (255, 196, 225, 255), (255, 228, 240, 255), accessory=splitter_bits)
+    mouse("bomber.png", (200, 225, 255, 255), (230, 242, 255, 255), accessory=bomber_bits)
+    tanky_jr()
+    saucer_scout()
+    royal_guard()
     plate()
     tank()
     mothership()

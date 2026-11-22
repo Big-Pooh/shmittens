@@ -131,6 +131,7 @@ func is_last_card() -> bool:
 
 func _start_card(index: int):
 	card = index
+	Game.level_cards_met += 1
 	var used = 0.0
 	for i in index + 1:
 		used += cards[i].share
@@ -159,6 +160,7 @@ func _end_card(captured: bool):
 	Game.track("cards_captured" if captured else "cards_missed")
 	if captured:
 		captures += 1
+		Game.level_cards_captured += 1
 		Game.add_score(CAPTURE_SCORE)
 		if spell_this_card:
 			Game.add_mech_part("spell_capture")
@@ -282,6 +284,7 @@ func take_damage(amount: float, judgement: int = -1):
 		Game.track("cards_captured" if card_clean else "cards_missed")
 		if card_clean:
 			captures += 1
+			Game.level_cards_captured += 1
 			Game.add_score(CAPTURE_SCORE)
 			if spell_this_card:
 				Game.add_mech_part("spell_capture")
@@ -484,6 +487,33 @@ func aimed(count: int, speed: float, spread_degrees: float = 6.0, kind: int = En
 	var base = (player_position() - global_position).angle()
 	for i in count:
 		fire_shot(Vector2.from_angle(base + deg_to_rad((i - (count - 1) / 2.0) * spread_degrees)), speed, kind)
+
+
+# SNAKE: one rice bullet aimed at the cat with a sinusoidal wobble - called on every hi-hat it
+# draws a wriggling stream that follows you (step = the call counter).
+func snake(step: int, speed: float, wobble_degrees: float = 18.0):
+	var aim = (player_position() - global_position).angle()
+	fire_shot(Vector2.from_angle(aim + deg_to_rad(sin(step * 0.8) * wobble_degrees)), speed, EnemyShot.Kind.RICE)
+
+
+# SEARCHLIGHT: a short fan of `count` bullets whose centre sweeps up and down over a bar
+# (angle from `phase` 0..1) - a moving beam made of bullets.
+func searchlight(phase: float, count: int, speed: float):
+	var center = PI + sin(phase * TAU) * deg_to_rad(55.0)
+	for i in dense(count):
+		fire_shot(Vector2.from_angle(center + deg_to_rad((i - (count - 1) / 2.0) * 3.0)), speed, EnemyShot.Kind.CANDY)
+
+
+# PINCER: bullets drop from the top and rise from the bottom in matching columns, closing on
+# the middle; `gap_x` leaves a safe column.
+func pincer(columns: int, speed: float, gap_x: float):
+	columns = dense(columns)
+	for i in columns:
+		var x = 80.0 + (global_position.x - 180.0) * (i + 0.5) / columns
+		if absf(x - gap_x) < 90.0 * (1.25 if Game.assist > 0 else 1.0):
+			continue
+		_spawn_shot(Vector2(x, 24.0), Vector2.DOWN, speed, EnemyShot.Kind.RICE)
+		_spawn_shot(Vector2(x, 696.0), Vector2.UP, speed, EnemyShot.Kind.RICE)
 
 
 # A few loose random shots toward the left half of the screen (spice, not the main pattern).

@@ -50,6 +50,11 @@ func _ready():
 	var level = Levels.LEVELS[cleared_index]
 	_text("LEVEL %d CLEAR!" % (cleared_index + 1), 54, GOLD, 70)
 	_text("RANK %s      time %d:%02d      perfect %d" % [rank, seconds / 60, seconds % 60, perfect_percent] + "%", 26, Color(0.9, 0.9, 1), 140)
+	var line = []
+	var now = Game.challenge_results()
+	for c in Game.PLANET_CHALLENGES:
+		line.append(("★ " if now[c] else "☆ ") + Game.PLANET_CHALLENGE_NAMES[c])
+	_text("CHALLENGES:   " + "      ".join(line), 20, Color(1, 0.9, 0.5), 182)
 	var map = Node2D.new()
 	add_child(map)
 	map.draw.connect(_draw_map.bind(map))
@@ -124,6 +129,11 @@ func _draw_map(map: Node2D):
 		map.draw_arc(at, 40.0, -0.4, PI + 0.4, 32, Color(1, 1, 1, 0.3), 3.0)
 		if done:
 			map.draw_string(ThemeDB.fallback_font, at + Vector2(-8, 8), "✓", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color(1, 1, 1))
+		if i > 0:
+			var st = Game.stars(i - 1)
+			var rank = Game.planet_records.get("level%d" % i, {}).get("rank", "")
+			var txt = "★".repeat(st) + "☆".repeat(3 - st) + ("  " + rank if rank != "" else "")
+			map.draw_string(ThemeDB.fallback_font, at + Vector2(-34, -44), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, GOLD)
 
 
 func _process(delta):

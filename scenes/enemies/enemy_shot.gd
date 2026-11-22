@@ -36,6 +36,8 @@ var grazed = false
 # Boss bullets PULSE with the music (playtest 5: "tie patterns to the music"): they surge right
 # after every beat and glide before the next (average speed unchanged), and swell on the beat.
 var pulse = false
+# Beat-Bomber bombs: burst_ring > 0 -> on the next downbeat the bomb bursts into that many rice.
+var burst_ring = 0
 var sprite: Sprite2D
 
 
@@ -71,6 +73,20 @@ func _ready():
 	shape.shape = circle
 	add_child(shape)
 	_face()
+	if burst_ring > 0:
+		sprite.modulate = Color(0.6, 0.55, 0.8)
+		Conductor.bar.connect(_burst)
+
+
+func _burst(_n: int):
+	if not is_inside_tree() or is_queued_for_deletion():
+		return
+	for i in burst_ring:
+		var shot = EnemyShot.create(global_position, Vector2.from_angle(TAU * i / burst_ring), 170.0 * Game.shot_speed_factor(), Kind.RICE)
+		shot.pulse = true
+		get_tree().current_scene.add_child(shot)
+	Game.shake(4.0)
+	queue_free()
 
 
 func _face():

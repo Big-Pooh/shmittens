@@ -622,7 +622,7 @@ func _level_tests():
 				if group.enemy == "midboss":
 					midbosses += 1
 					var mb = Levels.create_midboss(group)
-					check(mb.is_midboss and mb.cards.size() == 1, "mid-boss %s has one spell card" % group.name)
+					check(mb.is_midboss and mb.cards.size() == 2 and mb.get_script() != load("res://scenes/enemies/bosses/mecha_tank.gd"), "mid-boss %s is a unique boss with 2 spell cards" % mb.boss_name)
 					mb.free()
 	check(wave_counts.all(func(n): return n == 8) and midbosses == 3, "every planet has 8 waves; planets 2-4 have a mid-boss (%s, %d)" % [wave_counts, midbosses])
 
@@ -2022,4 +2022,62 @@ func _designer7_tests():
 	cal.queue_free()
 	conductor.set_offset_ms(saved_offset)
 	check(is_equal_approx(conductor.perfect_window(), conductor.PERFECT_WINDOW + (conductor.WEB_EXTRA if OS.has_feature("web") else 0.0)), "the PERFECT window is wider only on the web")
+	# content pass: mid-boss patterns, splitter, bomber, planet challenges
+	await _start_main()
+	main.level_runner.stop()
+	await _clear_world()
+	cat.position = Vector2(220, 360)
+	cat.is_invulnerable = true
+	var jr = await _make_boss("res://scenes/enemies/bosses/tanky_jr.gd")
+	jr.card = 1
+	var shots = _count("enemy_shots")
+	jr.on_hat(1)
+	await frames(1)
+	check(_count("enemy_shots") - shots == 1, "Tanky Jr.'s Baby Snake streams on the hi-hats")
+	jr.queue_free()
+	var guard = await _make_boss("res://scenes/enemies/bosses/royal_guard.gd")
+	guard.card = 1
+	shots = _count("enemy_shots")
+	guard.on_beat(0)
+	await frames(1)
+	var pincer = get_nodes_in_group("enemy_shots").slice(shots)
+	check(pincer.any(func(e): return e.velocity.y > 0) and pincer.any(func(e): return e.velocity.y < 0), "Royal Guard's pincer closes from top and bottom")
+	guard.queue_free()
+	await _clear_world()
+	var sp = load("res://scenes/enemies/splitter.tscn").instantiate()
+	sp.position = Vector2(900, 360)
+	sp.drops = false
+	main.add_child(sp)
+	await frames(1)
+	var before = _count("enemies")
+	sp.die()
+	await frames(2)
+	check(get_nodes_in_group("enemies").filter(func(e): return e.get_script() == sp.get_script() and e.is_mini).size() == 2, "a splitter pops into 2 minis")
+	await _clear_world()
+	var bomb_mouse = load("res://scenes/enemies/bomber.tscn").instantiate()
+	bomb_mouse.position = Vector2(900, 200)
+	main.add_child(bomb_mouse)
+	await frames(1)
+	bomb_mouse.on_beat(0)
+	await frames(1)
+	var bombs = get_nodes_in_group("enemy_shots").filter(func(e): return e.burst_ring > 0)
+	check(bombs.size() == 1, "the beat-bomber drops a bomb")
+	shots = _count("enemy_shots")
+	bombs[0]._burst(1)
+	await frames(1)
+	check(_count("enemy_shots") - shots >= 7, "the bomb bursts into a ring on the downbeat")
+	bomb_mouse.queue_free()
+	await _clear_world()
+	game.set_level(0, 8)
+	game.level_cards_met = 2
+	game.level_cards_captured = 2
+	for sk in ["shockwave", "laser", "lightning", "shield"]:
+		game.level_spells[sk] = true
+	var res = game.challenge_results()
+	check(res.no_hit and res.all_cards and res.all_spells, "challenges: no hits, every card captured, all 4 spells")
+	var saved_records = game.planet_records.duplicate(true)
+	game.record_planet(0, "A")
+	check(game.stars(0) == 3 and game.planet_records.level1.rank in ["A", "S"], "a planet record keeps the best rank and the stars")
+	game.planet_records = saved_records
+	cat.is_invulnerable = false
 
