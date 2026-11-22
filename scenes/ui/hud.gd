@@ -63,6 +63,12 @@ func _ready():
 		overdrive_label.visible = state == 1
 		if state == 1 and Game.first_time("overdrive"):
 			show_tip("CATNIP OVERDRIVE READY!\n50 on-beat hits in a row. Press F for 5 seconds of a giant rainbow beam - save it for a boss!"))
+	Game.combo_changed.connect(func(combo, _m):
+		if combo >= 10 and Game.level >= 1 and Game.first_time("companions"):
+			show_tip("FRIENDS JOIN YOUR COMBO!\nEvery 10 on-beat hits in a row a companion flies in: PIP zaps, NORI shields you, KIWI shockwaves.\nThey leave if your combo breaks - keep the beat!"))
+	Game.mech_parts_changed.connect(func(parts):
+		if parts > 0 and Game.first_time("mech"):
+			show_tip("MECH PART!\nCollect 4 mech parts (capture a spell card you hit with a spell, or reach a 75 combo)\nto pilot the PAWFRAME MK-IX: beam rifle, beam saber, armour. One per planet."))
 	Game.charges_changed.connect(func(charges, _cheese):
 		if charges >= 2 and Game.first_time("bomb"):
 			show_tip("You have spell charges!\nDraw a spell with RIGHT-CLICK over the mice - or press X for an emergency CATNIP BOMB (uses all charges)."))
@@ -302,6 +308,9 @@ func _on_card_started(index: int, card_name: String, _seconds: float, boss: Boss
 		armor_label.text = ""
 	if card_name != "":
 		_flash_text("SPELL CARD  -  " + card_name.to_upper(), Color(1, 0.75, 0.95))
+	if boss.weak_spell() != "" and not Game.tips_seen.has("weakness") and Game.tips_seen.has("spell_cards"):
+		Game.first_time("weakness")
+		show_tip("WEAK TO %s!\nEvery spell card shows the spell it's weak to (under the health bar): that spell does DOUBLE damage.\nZIGZAG lightning also shatters beat armour." % Boss.SPELL_NAMES.get(boss.weak_spell(), ""))
 	if index == 0 and Game.first_time("spell_cards"):
 		show_tip("BOSS SPELL CARDS\nEvery boss attacks in named SPELL CARDS. Each one owns a slice of its health bar and has a timer.\nEmpty the slice (or outlast the timer) to move on. Do it WITHOUT getting hit or bombing\nto CAPTURE the card: big bonus + a battery. Drawn spells hit bosses hard and SHATTER beat armour -\ncapture a card you hit with a spell to earn a MECH PART.")
 

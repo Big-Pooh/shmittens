@@ -69,6 +69,11 @@ func _ready():
 		endless.custom_minimum_size = Vector2(200, 44)
 		endless.pressed.connect(start_endless)
 		buttons.add_child(endless)
+	var rhythm = Button.new()
+	rhythm.text = "RHYTHM CHECK"
+	rhythm.custom_minimum_size = Vector2(200, 40)
+	rhythm.pressed.connect(open_calibration)
+	buttons.add_child(rhythm)
 	var settings_button = Button.new()
 	settings_button.text = "SETTINGS"
 	settings_button.custom_minimum_size = Vector2(200, 44)
@@ -87,8 +92,11 @@ func _ready():
 	start.grab_focus()
 	settings = SettingsMenu.new()
 	add_child(settings)
+	# first web launch: calibrate the rhythm before anything else (browser audio latency varies)
+	if OS.has_feature("web") and Game.first_time("calibration"):
+		open_calibration.call_deferred()
 
-	var controls = _label("WASD move  ·  mouse aims  ·  SPACE on the beat to shoot  ·  hold right-click and draw to cast skills  ·  Esc pause", 16, Color(0.7, 0.7, 0.8))
+	var controls = _label("WASD move  ·  mouse aims  ·  SPACE on the beat to shoot  ·  hold a mouse button and draw to cast spells  ·  Esc pause", 16, Color(0.7, 0.7, 0.8))
 	controls.position = Vector2(0, 670)
 	add_child(controls)
 
@@ -103,6 +111,12 @@ func _label(text: String, size: int, color: Color) -> Label:
 	label.add_theme_color_override("font_outline_color", Color.BLACK)
 	label.add_theme_constant_override("outline_size", 8)
 	return label
+
+
+func open_calibration() -> Calibration:
+	var c = Calibration.new()
+	add_child(c)
+	return c
 
 
 # Easter egg: click the cat on the title screen to pet her.

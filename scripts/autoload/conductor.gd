@@ -163,9 +163,16 @@ func beat_error(t: float = song_time()) -> float:
 	return (p - round(p)) * seconds_per_beat
 
 
+# Browsers add audio jitter: the PERFECT window is WEB_EXTRA s wider in the web build.
+const WEB_EXTRA = 0.015
+
+func perfect_window() -> float:
+	return PERFECT_WINDOW + (WEB_EXTRA if OS.has_feature("web") else 0.0)
+
+
 func judge(t: float = song_time()) -> Judgement:
 	var error = absf(beat_error(t))
-	if error <= PERFECT_WINDOW:
+	if error <= perfect_window():
 		return Judgement.PERFECT
 	if error <= (ASSIST_GOOD_WINDOW if Game.assist > 0 else GOOD_WINDOW):
 		return Judgement.GOOD

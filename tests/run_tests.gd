@@ -208,6 +208,7 @@ func _run():
 	await _playtest4_tests()
 	await _story_tests()
 	await _playtest5_tests()
+	await _designer7_tests()
 
 	game.difficulty_chosen = original.chosen
 	game.relaxed_mode = original.relaxed
@@ -2002,3 +2003,23 @@ func _playtest5_tests():
 
 func Banter_lines_has(text: String) -> bool:
 	return load("res://scenes/ui/banter.gd").CAT_COMBO.has(text)
+
+
+# ---------------------------------------------------------------- designer-7 iteration
+func _designer7_tests():
+	var conductor = root.get_node("Conductor")
+	var saved_offset = conductor.offset_ms
+	conductor.offset_ms = 0.0
+	var cal = load("res://scenes/ui/calibration.gd").new()
+	root.add_child(cal)
+	await process_frame
+	for i in cal.TAPS_NEEDED - 1:
+		cal.tap(0.04 if i % 2 == 0 else 0.05)
+	cal.tap(0.9)   # an outlier is ignored
+	check(not cal.finished, "rhythm check ignores outlier taps")
+	cal.tap(0.045)
+	check(cal.finished and absf(conductor.offset_ms - 45.0) <= 5.5, "rhythm check sets the beat offset from the median tap error (%.0f ms)" % conductor.offset_ms)
+	cal.queue_free()
+	conductor.set_offset_ms(saved_offset)
+	check(is_equal_approx(conductor.perfect_window(), conductor.PERFECT_WINDOW + (conductor.WEB_EXTRA if OS.has_feature("web") else 0.0)), "the PERFECT window is wider only on the web")
+
