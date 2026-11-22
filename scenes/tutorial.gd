@@ -146,6 +146,8 @@ func _on_judged(judgement: int):
 
 
 func _on_beat(_n: int):
+	if not is_inside_tree():
+		return
 	if step == 2 and Input.is_action_pressed("shoot"):
 		held_beats += 1
 		if held_beats >= HELD_BEATS_NEEDED:

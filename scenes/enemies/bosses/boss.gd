@@ -68,7 +68,7 @@ func take_damage(amount: float, judgement: int = -1):
 
 
 func _on_lead_note(pitch: int, length: int):
-	if entering or is_dead:
+	if entering or is_dead or not is_inside_tree():
 		return
 	_note_count += 1
 	if Game.assist >= 2 and _note_count % 2 == 0:

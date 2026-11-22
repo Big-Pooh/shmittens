@@ -31,6 +31,8 @@ func _process(_delta):
 
 
 func _on_beat(n: int):
+	if not is_inside_tree():
+		return
 	var peak = 4.2 if n % Conductor.BEATS_PER_BAR == 0 else 3.7
 	sprite.scale = Vector2.ONE * peak
 	create_tween().tween_property(sprite, "scale", Vector2.ONE * BASE_SCALE, 0.15)

@@ -84,6 +84,8 @@ func stop():
 
 
 func _on_bar(_n: int):
+	if not is_inside_tree():
+		return
 	if state == State.IDLE or state == State.DONE or state == State.BOSS or Game.is_game_over:
 		return
 	if bars_to_wait > 0:

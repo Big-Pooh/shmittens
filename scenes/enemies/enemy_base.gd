@@ -53,7 +53,7 @@ func _physics_process(delta):
 
 
 func _on_conductor_beat(n: int):
-	if entering or is_dead:
+	if entering or is_dead or not is_inside_tree():
 		return
 	beats_alive += 1
 	on_beat(n)

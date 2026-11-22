@@ -88,6 +88,8 @@ func _run():
 	Levels = load("res://scenes/levels/levels.gd")
 	# restore the player's real settings after the run (some tests change and save them)
 	var original = {"chosen": root.get_node("Game").difficulty_chosen, "relaxed": root.get_node("Game").relaxed_mode}
+	# tests must never write the player's real save (the persistence test enables it briefly)
+	root.get_node("Game").persist = false
 	EnemyBeam = load("res://scenes/enemies/enemy_beam.gd")
 	ShieldMouseScript = load("res://scenes/enemies/shield_mouse.gd")
 	await _start_main()
@@ -195,7 +197,6 @@ func _run():
 
 	game.difficulty_chosen = original.chosen
 	game.relaxed_mode = original.relaxed
-	game.save_settings()
 	print("%d passed, %d failed" % [passed, failed])
 	quit(1 if failed else 0)
 
@@ -1156,7 +1157,11 @@ func _lead_note_tests():
 func _iteration1_tests():
 	var saved = {"music": game.music_volume, "sfx": game.sfx_volume, "reduce": game.reduce_effects, "relaxed": game.relaxed_mode,
 		"unlocked": game.unlocked_level, "story": game.story_complete, "best": game.best_scores.duplicate()}
-	# settings persist
+	# settings persist. Writing is enabled only here: first reload the player's real values from
+	# disk (earlier tests changed progress in memory), test, then write the real values back.
+	game.persist = true
+	game.load_settings()
+	var real_music = game.music_volume
 	game.music_volume = 0.3
 	game.save_settings()
 	game.music_volume = 0.9
@@ -1164,6 +1169,10 @@ func _iteration1_tests():
 	check(is_equal_approx(game.music_volume, 0.3), "settings are saved and loaded")
 	game.apply_settings()
 	check(is_equal_approx(db_to_linear(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("Music"))), 0.3), "music volume applies to the Music bus")
+	game.music_volume = real_music
+	game.save_settings()
+	game.apply_settings()
+	game.persist = false
 	# reduce effects disables shake; relaxed mode keeps assist >= 1
 	await _start_main()
 	main.level_runner.stop()

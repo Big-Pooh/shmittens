@@ -7,16 +7,16 @@
 - **Purchase intent:** Next Fest's median demo-to-wishlist conversion is ~19%, so the target is 25%.
 - **Completion:** under 40% signals a problem, so the target is 60%.
 
-## Final KPIs (two independent panels of 100 testers)
+## Final KPIs (two independent panels of 100 testers, after iteration 5)
 
 | View | KPI | Panel A | Panel B | Target |
 |---|---|---|---|---|
-| Player | had fun | 87% | 89% | ≥ 80% ✅ |
-| Player | drop rate L1 / L2 / L3 | 5 / 7 / 5% | 4 / 8 / 3% | ≤ 20% ✅ |
-| Player | completion | 84% | 86% | ≥ 60% ✅ |
-| Critic | likely to endorse | 85% | 86% | ≥ 80% ✅ |
-| Business | purchase intent | 54% | 58% | ≥ 25% ✅ |
-| Business | GTM success (P > $100k gross) | 47% | 52% | ≥ 24% ✅ |
+| Player | had fun | 91% | 85% | ≥ 80% ✅ |
+| Player | drop rate L1 / L2 / L3 | 4 / 7 / 5% | 4 / 9 / 4% | ≤ 20% ✅ |
+| Player | completion | 85% | 84% | ≥ 60% ✅ |
+| Critic | likely to endorse | 85% | 85% | ≥ 80% ✅ |
+| Business | purchase intent | 55% | 55% | ≥ 25% ✅ |
+| Business | GTM success (P > $100k gross) | 48% | 49% | ≥ 24% ✅ |
 
 ## How we got here (panel A)
 
@@ -27,6 +27,7 @@
 | 2 | 68% | 82% | 47% | 36% | testers calibrated to your playtest; slower boss melody bullets |
 | 3 | 79% | 84% | 51% | 42% | forgiving hitboxes, wider assisted timing, boss lives top-up |
 | 4 | 87% | 85% | 54% | 47% | Second Wind, first-start Relaxed/Normal choice |
+| 5 | 91% | 85% | 55% | 48% | Spell Chains (signature mechanic, see `docs/DIFFERENTIATION.md`) |
 
 ## Caveats you should weigh
 - **Model-driven, not observed:**

@@ -58,7 +58,7 @@ Resume a session by reading this file and `docs/PLAN.md` only. The full history 
 
 ## Current state
 - **`main`:** includes the tooling and the 10 tuning commits, merged from `tuning/personas` (see `docs/KPI.md` and the audit log). Revert any single decision with `git revert <commit>`.
-- **Branch `feedback/playtest-1`:** playtest fixes, music bosses, and the GTM-readiness iterations (panel: `python3 tools/panel.py`, about 100 s). All panel KPIs are met on two independent panels (`docs/GTM_READINESS.md`). Next: the Steam uniqueness check (your request), then merge after your review.
+- **Branch `feedback/playtest-1`:** playtest fixes, music bosses, and the GTM-readiness iterations (panel: `python3 tools/panel.py`, about 100 s). All panel KPIs are met on two independent panels (`docs/GTM_READINESS.md`). The Steam uniqueness check is done (`docs/DIFFERENTIATION.md`). **Waiting for your review / merge of `feedback/playtest-1` into `main`.**
 - **KPIs:** `python3 tools/montecarlo.py --runs 40` (about 1.5 min); the report is in `montecarlo/report.md`.
 - **Open issues:** the beginner at the final boss (L3: 55% clear); the speedrunner L2 fun dip.
 

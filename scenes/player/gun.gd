@@ -33,6 +33,8 @@ func _unhandled_input(event):
 
 
 func _on_beat(_n: int):
+	if not is_inside_tree():
+		return
 	if Input.is_action_pressed("shoot") and Time.get_ticks_msec() - last_click_msec > CLICK_SUPPRESS_MSEC:
 		fire(HELD_DAMAGE)
 

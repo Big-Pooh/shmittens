@@ -656,3 +656,19 @@ Full tables are in `docs/KPI.md`; raw reports are in `montecarlo/report_original
 - **First START asks Relaxed / Normal.** Panel B's unhappy testers were low-skill, low-challenge, low-rhythm players who'd never find Relaxed inside Settings.
 - **Test hygiene:** the test run now restores your real settings (difficulty choice, relaxed mode).
 - **Result:** both panels meet every KPI. See `docs/GTM_READINESS.md`, `montecarlo/panel_report_iter4_seedA.md` and `montecarlo/panel_report_iter4_seedB.md`.
+
+### Iteration 5: uniqueness check + signature mechanic
+- **Steam search:** no 90%+ similar game found. Neighbours share at most 2 of the 4 pillars:
+  - rhythm shmups: Bass Harrier, RHYUP, Rhythm Overdrive, BeatShips, Rhythm Destruction, Rhythm Storm, Just Shapes & Beats;
+  - draw-to-cast games: Olive's Art-Venture, Blades of Mayhem, Counterspell.
+  - The rhythm-shmup half is crowded; the **drawing + rhythm fusion** is the differentiator.
+  - Full analysis: `docs/DIFFERENTIATION.md`.
+- **Spell Chains, to strengthen it:** spells cast on consecutive bars link (+25% per link, up to ×1.75), and each link plays a rising note in the song's key.
+- **KPIs after this change** (two panels): fun 91 / 85%; drop at most 9%; completion 84–85%; endorsement 85%; intent 55%; GTM 48–49%. All targets still met.
+
+### Bugs found and fixed in this iteration
+- **The panel's simulated runs and the test suite wrote into your real save file:** relaxed mode, unlocked levels, story complete, best scores.
+  - `Game.persist = false` for simulations and tests. Only the persistence test writes, after reloading your real values from disk.
+  - Your file was restored to defaults (tutorial-done and audio/video kept). Verified clean after a full test run.
+  - Earlier panel KPIs are unaffected: relaxed mode wasn't written before iteration 4, and from then on it's set explicitly per simulated tester.
+- **A beat could reach a scene that was being removed** (for example, quitting mid-song), causing a harmless script error. All music-clock listeners now ignore beats once they've left the game.
