@@ -628,3 +628,25 @@ Full tables are in `docs/KPI.md`; raw reports are in `montecarlo/report_original
 - **Tests:** 164, all passing. They save and restore your real settings and progress.
 - **Panel results:** fun 43 → 53%; endorsement 23 → 77%; intent 18 → 36% ✅; GTM 3 → 23%; checklist 40 → 100%.
   - **Model caveat:** the checklist weighs heavily in polish, so features move these scores by design.
+
+### Iteration 2: making the measurement realistic
+- **Panel testers calibrated to your playtest.** You dodged easily, while the simulated average tester died about 2.5 times a minute.
+  - Dodge reliability raised to 0.7 / 0.95 / 0.99.
+  - Look-ahead dodging: try 9 moves, simulate 0.6 s ahead, take the safest.
+  - Tooling only.
+- **Boss melody bullets slowed** to about 220–280 px/s.
+- **Result:** fun 68%, endorsement 82%, intent 47%, GTM 36%.
+
+### Iteration 3: fairness
+- **Forgiving hitboxes:** cat core radius 9 → 7, bullet hit radius 7 → 5; sprites unchanged.
+- **Wider GOOD window while assisted:** 140 ms instead of 100.
+- **Lives topped up to at least 2** when a boss appears.
+- **Two independent panels** (seeds 2026 and 7):
+  - fun 79% / 74%;
+  - drop at most 10% per level;
+  - completion 80%;
+  - endorsement 84%;
+  - intent 51–53%;
+  - GTM 42–45%.
+- **Only "had fun" misses its target.**
+- **Known minor issue:** the level intro counts the track's "bar 0", so intros are one bar shorter than set. Harmless.
