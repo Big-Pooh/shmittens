@@ -33,6 +33,9 @@ var then_aim = false
 var then_turn = 0.0
 var age = 0.0
 var grazed = false
+# Boss bullets PULSE with the music (playtest 5: "tie patterns to the music"): they surge right
+# after every beat and glide before the next (average speed unchanged), and swell on the beat.
+var pulse = false
 var sprite: Sprite2D
 
 
@@ -92,7 +95,12 @@ func _physics_process(delta):
 		velocity = dir.rotated(then_turn) * then_speed * Game.shot_speed_factor()
 		stop_after = -1.0
 		_face()
-	position += velocity * delta
+	if pulse:
+		var p = 1.0 - Conductor.beat_phase()
+		position += velocity * (0.7 + 0.9 * p * p) * delta
+		sprite.scale = Vector2.ONE * SPRITE_SCALE * (1.0 + 0.3 * p * p * p)
+	else:
+		position += velocity * delta
 	_check_graze()
 	if not Game.SCREEN.grow(40).has_point(position):
 		queue_free()

@@ -14,6 +14,7 @@ signal bar(n: int)
 signal track_started(track_name: String)
 # A note of the lead melody starts now (pitch = scale index 0..7, length in 8th notes).
 signal lead_note(pitch: int, length: int)
+signal eighth(n: int)   # every 8th note (odd n = the off-beat hi-hat)
 
 enum Judgement { MISS, GOOD, PERFECT }
 
@@ -206,6 +207,7 @@ func _process(_delta):
 		_last_eighth += 1
 		if _last_eighth < 0:
 			continue
+		eighth.emit(_last_eighth)
 		var bar_index = (_last_eighth / 8) % MusicPatterns.BARS
 		var step = _last_eighth % 8
 		for note in MusicPatterns.LEAD[bar_index]:

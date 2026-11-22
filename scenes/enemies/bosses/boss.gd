@@ -82,6 +82,7 @@ func build(texture: Texture2D, sprite_scale: float, radius: float, health: float
 	s.name = "Sprite2D"
 	s.texture = texture
 	s.scale = Vector2.ONE * sprite_scale
+	base_scale = s.scale
 	add_child(s)
 	var shape = CollisionShape2D.new()
 	var circle = CircleShape2D.new()
@@ -100,6 +101,7 @@ func _ready():
 	add_to_group("bosses")
 	health_changed.emit(health, max_health)
 	Conductor.lead_note.connect(_on_lead_note)
+	Conductor.eighth.connect(_on_eighth)
 	if cards.is_empty():
 		cards = [{"name": "", "share": 0.5, "seconds": 60.0, "armored": false},
 				 {"name": "", "share": 0.5, "seconds": 60.0, "armored": true}]
@@ -290,6 +292,11 @@ func _on_conductor_beat(n: int):
 	if card_intro > 0:
 		card_intro -= 1   # the card's name is showing: no attacks yet
 		return
+	mirror = 1.0 if (n / (Conductor.BEATS_PER_BAR * MusicPatterns.BARS)) % 2 == 0 else -1.0
+	if n % 2 == 0 and stunned_beats == 0:
+		# bounce on the kick drum
+		sprite.scale = base_scale * 1.08
+		create_tween().tween_property(sprite, "scale", base_scale, 0.15)
 	if stunned_beats > 0:
 		stunned_beats -= 1
 		beats_alive += 1
@@ -330,6 +337,7 @@ static func dense(n: int) -> int:
 
 
 func arc(count: int, spread_degrees: float, speed: float, center_degrees: float = 180.0):
+	center_degrees = 180.0 + (center_degrees - 180.0) * mirror   # flips every 4-bar phrase
 	if Game.density() > 1.0:
 		spread_degrees /= Game.density()
 		count = dense(count)
@@ -460,8 +468,36 @@ func spray(count: int, speed: float, kind: int = EnemyShot.Kind.CANDY):
 		fire_shot(Vector2.from_angle(PI + randf_range(-0.9, 0.9)), speed * randf_range(0.7, 1.2), kind)
 
 
+# Music ties (playtest 5): every boss bullet pulses with the beat; the boss bounces on the
+# kick drum; in armoured cards the spiral streams on the off-beat hi-hats; and patterns
+# mirror every 4-bar phrase (one loop of the song): `mirror` is +1 / -1.
+var mirror = 1.0
+var base_scale = Vector2.ONE
+
+
+func fire_shot(direction: Vector2, speed: float = 320.0, kind: int = 0) -> EnemyShot:
+	var shot = super(direction, speed, kind)
+	shot.pulse = true
+	return shot
+
+
+func _on_eighth(n: int):
+	if entering or is_dead or card < 0 or card_intro > 0 or stunned_beats > 0 or not is_inside_tree():
+		return
+	if n % 2 == 1:
+		on_hat(n)
+
+
+# Override: what to fire on the off-beat hi-hat. Default: armoured cards stream one rice
+# bullet along the spiral, turning the spiral into a continuous rhythmic stream.
+func on_hat(_n: int):
+	if cards[card].armored and Game.assist < 2:
+		spiral(1, 140.0, 13.0 * mirror)
+
+
 func _spawn_shot(at: Vector2, direction: Vector2, speed: float, kind: int = 0):
 	var shot = EnemyShot.create(at, direction, speed * Game.shot_speed_factor(), kind)
+	shot.pulse = true
 	shot.volley = "%d:%d" % [get_instance_id(), Engine.get_physics_frames()]
 	get_tree().current_scene.add_child(shot)
 
