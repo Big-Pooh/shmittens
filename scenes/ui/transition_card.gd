@@ -17,7 +17,7 @@ const GOLD = Color(1, 0.82, 0.25)
 # Stop 0 is home (Pisitania); stop i + 1 is level i.
 const HOME = "PISITANIA"
 const HOME_COLOR = Color(1, 0.7, 0.55)
-const MAP_Y = 400.0
+const MAP_Y = 420.0
 const MAP_X0 = 170.0
 const MAP_DX = 235.0
 
@@ -48,13 +48,14 @@ func _ready():
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(bg)
 	var level = Levels.LEVELS[cleared_index]
-	_text("LEVEL %d CLEAR!" % (cleared_index + 1), 54, GOLD, 70)
-	_text("RANK %s      time %d:%02d      perfect %d" % [rank, seconds / 60, seconds % 60, perfect_percent] + "%", 26, Color(0.9, 0.9, 1), 140)
+	_text("LEVEL %d CLEAR!" % (cleared_index + 1), 44, GOLD, 18)
+	_text("RANK %s      time %d:%02d      perfect %d" % [rank, seconds / 60, seconds % 60, perfect_percent] + "%", 22, Color(0.9, 0.9, 1), 76)
 	var line = []
 	var now = Game.challenge_results()
 	for c in Game.PLANET_CHALLENGES:
 		line.append(("★ " if now[c] else "☆ ") + Game.PLANET_CHALLENGE_NAMES[c])
-	_text("CHALLENGES:   " + "      ".join(line), 20, Color(1, 0.9, 0.5), 182)
+	_text("CHALLENGES:   " + "      ".join(line), 18, Color(1, 0.9, 0.5), 108)
+	_show_cards(Game.level_cards_won, 140)
 	var map = Node2D.new()
 	add_child(map)
 	map.draw.connect(_draw_map.bind(map))
@@ -76,13 +77,33 @@ func _ready():
 	var next = cleared_index + 1
 	if next < Levels.count():
 		var nl = Levels.LEVELS[next]
-		_text("NEXT: LEVEL %d - %s" % [next + 1, nl.title], 30, GOLD, 480)
-		_text(nl.story, 22, Color(0.9, 0.9, 1), 525)
+		_text("NEXT: LEVEL %d - %s" % [next + 1, nl.title], 26, GOLD, 498)
+		_text(nl.story, 20, Color(0.9, 0.9, 1), 536)
 	_text(Banter.pick(Banter.MAP_TIPS), 18, Color(1, 0.85, 0.6), 610)
 	_text(Game.btn("SPACE", "A") + " - continue", 18, Color(0.7, 0.7, 0.85), 650)
 	var tween = create_tween()
 	tween.tween_interval(0.6)
 	tween.tween_property(cat, "position:x", MAP_X0 + min(next + 1, _stops() - 1) * MAP_DX, 2.2).set_trans(Tween.TRANS_SINE)
+
+
+# The spell cards captured on this planet, revealed one after another (flip-in).
+func _show_cards(won: Array, y: float):
+	if won.is_empty():
+		_text("No spell cards captured here - capture one (no hits, no bomb) to start your album!", 16, Color(0.7, 0.7, 0.85), y + 70)
+		return
+	_text("SPELL CARDS WON", 16, Color(1, 0.75, 0.95), y)
+	var shown = won.slice(0, 7)
+	var gap = 14.0
+	var total = shown.size() * SpellCardView.CARD_SIZE.x + (shown.size() - 1) * gap
+	for i in shown.size():
+		var v = SpellCardView.make(shown[i][0], shown[i][1])
+		v.position = Vector2(640 - total / 2.0 + i * (SpellCardView.CARD_SIZE.x + gap), y + 24)
+		v.pivot_offset = SpellCardView.CARD_SIZE / 2.0
+		v.scale = Vector2(0, 1)
+		add_child(v)
+		var tw = v.create_tween()
+		tw.tween_interval(0.25 + 0.18 * i)
+		tw.tween_property(v, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK)
 
 
 func _text(text: String, size: int, color: Color, y: float, x: float = 60.0, width: float = 1160.0) -> Label:

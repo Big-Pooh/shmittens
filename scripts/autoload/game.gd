@@ -104,6 +104,11 @@ func rank_health(is_boss: bool) -> float:
 const PLANET_CHALLENGES = ["no_hit", "all_cards", "all_spells"]
 const PLANET_CHALLENGE_NAMES = {"no_hit": "No hits", "all_cards": "Capture every card", "all_spells": "Use all 4 spells"}
 var planet_records = {}
+# SPELL CARD ALBUM (owner request): every captured boss card is collected.
+# card_album[name] = {"name", "boss", "weak", "script", "captures"}; level_cards_won lists this
+# planet's captures as [entry, is_new] for the end-of-planet card reveal.
+var card_album = {}
+var level_cards_won: Array = []
 var level_hits = 0
 var level_cards_met = 0
 var level_cards_captured = 0
@@ -446,6 +451,7 @@ func set_level(value: int, total_waves: int):
 	level_cards_met = 0
 	level_cards_captured = 0
 	level_spells = {}
+	level_cards_won = []
 	bomb_used_this_level = false
 	mech_used_this_level = false
 	level_changed.emit(level)
@@ -546,6 +552,7 @@ func load_settings():
 	challenge = c.get_value("access", "challenge", challenge)
 	hard_cleared = c.get_value("progress", "hard_cleared", hard_cleared)
 	planet_records = c.get_value("progress", "planet_records", planet_records)
+	card_album = c.get_value("progress", "card_album", card_album)
 	tips_seen = c.get_value("progress", "tips_seen", tips_seen)
 	difficulty_chosen = c.get_value("access", "difficulty_chosen", difficulty_chosen)
 	unlocked_level = c.get_value("progress", "unlocked_level", unlocked_level)
@@ -567,6 +574,7 @@ func save_settings():
 	c.set_value("access", "challenge", challenge)
 	c.set_value("progress", "hard_cleared", hard_cleared)
 	c.set_value("progress", "planet_records", planet_records)
+	c.set_value("progress", "card_album", card_album)
 	c.set_value("progress", "tips_seen", tips_seen)
 	c.set_value("access", "difficulty_chosen", difficulty_chosen)
 	c.set_value("progress", "unlocked_level", unlocked_level)
@@ -583,6 +591,28 @@ func apply_settings():
 			AudioServer.set_bus_volume_db(bus, linear_to_db(max(volume, 0.0001)))
 	if DisplayServer.get_name() != "headless":
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen else DisplayServer.WINDOW_MODE_WINDOWED)
+
+
+# Adds a captured boss card to the album (and to this planet's reveal).
+func collect_card(card_name: String, boss_name: String, weak: String, script_path: String):
+	var is_new = not card_album.has(card_name)
+	var entry = card_album.get(card_name, {"name": card_name, "boss": boss_name, "weak": weak, "script": script_path, "captures": 0})
+	entry.captures += 1
+	card_album[card_name] = entry
+	level_cards_won.append([entry.duplicate(), is_new])
+	track("cards_collected_new" if is_new else "cards_collected_again")
+	save_settings()
+
+
+# Every spell card in the game (bosses and mid-bosses), for the album.
+static func all_cards() -> Array:
+	var out = []
+	for path in ["res://scenes/enemies/bosses/mecha_tank.gd", "res://scenes/enemies/bosses/tanky_jr.gd", "res://scenes/enemies/bosses/mothership.gd", "res://scenes/enemies/bosses/saucer_scout.gd", "res://scenes/enemies/bosses/rat_king.gd", "res://scenes/enemies/bosses/royal_guard.gd", "res://scenes/enemies/bosses/sho.gd"]:
+		var b = load(path).new()
+		for c in b.cards:
+			out.append({"name": c.name, "boss": b.boss_name, "weak": c.get("weak", ""), "script": path, "captures": 0})
+		b.free()
+	return out
 
 
 # This attempt's challenge results.

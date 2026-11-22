@@ -34,6 +34,8 @@ func on_beat(n: int):
 			sun(2, 150.0, 37.0, bar)
 		if beat == 0 and bar % 2 == 0:
 			flower(2, 10, 170.0, EnemyShot.Kind.ORB, bar * 0.2)
+		if beat == 2 and bar % 2 == 1:
+			butterfly(3, 170.0, 0.9)   # curving wings
 	if beat == 0 and bar % 2 == 0:
 		drift_to(260.0 if (bar / 2) % 2 == 0 else 460.0, Conductor.seconds_per_beat * 4.0)
 	if beat == 3:

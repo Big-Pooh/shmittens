@@ -2122,6 +2122,36 @@ func _designer7_tests():
 	main.hud.hide_message()
 	check(load("res://scenes/gestures/gesture_guide.gd").SKILL.values() == game.SPELL_TITLES.values() and Boss_names_ok(), "one name per spell everywhere (guide, banners, weaknesses)")
 
+	# spell card album: capturing a card collects it; the album lists every card
+	await _start_main()
+	main.level_runner.stop()
+	var saved_album = game.card_album.duplicate(true)
+	game.card_album = {}
+	game.level_cards_won = []
+	var cb = await _make_boss("res://scenes/enemies/bosses/mecha_tank.gd")
+	cb.take_damage(cb.health - cb.card_floor)
+	check(game.card_album.has("Toy Cannon Parade") and game.level_cards_won.size() == 1 and game.level_cards_won[0][1], "capturing a spell card adds it to the album (NEW)")
+	cb.queue_free()
+	var everything = game.all_cards()
+	check(everything.size() >= 17 and everything.any(func(c): return c.name == "Muscle Supernova"), "the album knows every spell card in the game (%d)" % everything.size())
+	var card_ui = load("res://scenes/ui/transition_card.gd").create(0, "A", 60, 80)
+	main.add_child(card_ui)
+	await frames(2)
+	check(card_ui.find_children("*", "Control", false, false).any(func(c): return c.get_script() == load("res://scenes/ui/spell_card_view.gd")), "the end-of-planet screen shows the cards you won")
+	card_ui.queue_free()
+	game.card_album = saved_album
+	# new danmaku building blocks
+	var pb = await _make_boss("res://scenes/enemies/bosses/sho.gd")
+	var n0 = _count("enemy_shots")
+	pb.butterfly(3, 160.0, 1.0)
+	pb.galaxy(4, 260.0, 20.0)
+	pb.bounce_fan(5, 180.0)
+	pb.split_orbs(3, 120.0)
+	await frames(1)
+	var made = get_nodes_in_group("enemy_shots").slice(n0)
+	check(made.any(func(e): return e.curve != 0.0) and made.any(func(e): return e.accel > 0.0) and made.any(func(e): return e.bounces > 0) and made.any(func(e): return e.split > 0), "new patterns: curving, accelerating, bouncing and splitting bullets")
+	pb.queue_free()
+	await _clear_world()
 
 func Boss_names_ok() -> bool:
 	var names = load("res://scenes/enemies/bosses/boss.gd").SPELL_NAMES

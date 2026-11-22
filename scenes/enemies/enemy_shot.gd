@@ -38,6 +38,12 @@ var grazed = false
 var pulse = false
 # Beat-Bomber bombs: burst_ring > 0 -> on the next downbeat the bomb bursts into that many rice.
 var burst_ring = 0
+# Pattern-diversity pass (danmaku building blocks, generic - no franchise patterns copied):
+var curve = 0.0        # radians/s the bullet's heading turns (curving "butterfly" streams)
+var accel = 0.0        # px/s^2 along its heading (slow start, then fast: "galaxy" spirals)
+var max_speed = 380.0
+var bounces = 0        # times it bounces off the top/bottom edge
+var split = 0          # >0: on the next off-beat hi-hat it splits into this many rice
 var sprite: Sprite2D
 
 
@@ -76,6 +82,20 @@ func _ready():
 	if burst_ring > 0:
 		sprite.modulate = Color(0.6, 0.55, 0.8)
 		Conductor.bar.connect(_burst)
+	if split > 0:
+		sprite.modulate = Color(1.3, 1.1, 0.7)
+		Conductor.eighth.connect(_split)
+
+
+func _split(n: int):
+	if n % 2 == 0 or age < 0.2 or not is_inside_tree() or is_queued_for_deletion():
+		return
+	var base = velocity.angle()
+	for i in split:
+		var shot = EnemyShot.create(global_position, Vector2.from_angle(base + TAU * i / split + PI / split), 160.0 * Game.shot_speed_factor(), Kind.RICE)
+		shot.pulse = true
+		get_tree().current_scene.add_child(shot)
+	queue_free()
 
 
 func _burst(_n: int):
@@ -110,6 +130,15 @@ func _physics_process(delta):
 				dir = (player.global_position - global_position).normalized()
 		velocity = dir.rotated(then_turn) * then_speed * Game.shot_speed_factor()
 		stop_after = -1.0
+		_face()
+	if curve != 0.0:
+		velocity = velocity.rotated(curve * delta)
+		_face()
+	if accel != 0.0 and velocity.length() < max_speed:
+		velocity += velocity.normalized() * accel * delta
+	if bounces > 0 and ((position.y < 16.0 and velocity.y < 0.0) or (position.y > 704.0 and velocity.y > 0.0)):
+		velocity.y = -velocity.y
+		bounces -= 1
 		_face()
 	if pulse:
 		var p = 1.0 - Conductor.beat_phase()

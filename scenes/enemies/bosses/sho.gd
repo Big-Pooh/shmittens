@@ -44,19 +44,26 @@ func on_beat(n: int):
 			if beat == 2:
 				aimed(3, 230.0, 7.0)
 		1:
-			if beat == 0 or beat == 2:
+			if beat == 0:
 				curtain(12, 150.0, rain_gap(bar), EnemyShot.Kind.ORB, 0.15 * sin(bar))
+			if beat == 2:
+				split_orbs(3, 130.0)   # protein shakes that burst
 			if beat == 1 or beat == 3:
 				sun(2, 160.0, 24.0, bar)
 		2:
 			sun(3, 150.0, 19.0, bar)
+			if beat == 3 and bar % 2 == 1:
+				butterfly(3, 160.0, 1.0)
 			if beat == 1 and bar % 2 == 0:
 				freeze_ring(12, 170.0, 220.0, EnemyShot.Kind.ORB, bar * 0.3)
 		_:
 			if beat == 0:
 				flower(3, 12, 180.0, EnemyShot.Kind.RICE, bar * 0.13)
 			if beat == 2:
-				rose(14, 170.0, 4, bar * 0.4, EnemyShot.Kind.CANDY)
+				if bar % 2 == 0:
+					rose(14, 170.0, 4, bar * 0.4, EnemyShot.Kind.CANDY)
+				else:
+					galaxy(5, 280.0, 17.0)
 			if beat == 1 or beat == 3:
 				spiral(1, 150.0, 29.0)
 				_counter_spiral()

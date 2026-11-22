@@ -71,6 +71,11 @@ func _ready():
 		endless.custom_minimum_size = Vector2(200, 44)
 		endless.pressed.connect(start_endless)
 		buttons.add_child(endless)
+	var album = Button.new()
+	album.text = "CARD ALBUM (%d)" % Game.card_album.size()
+	album.custom_minimum_size = Vector2(200, 40)
+	album.pressed.connect(open_album)
+	buttons.add_child(album)
 	var feedback = Button.new()
 	feedback.text = "FEEDBACK"
 	feedback.custom_minimum_size = Vector2(200, 40)
@@ -115,6 +120,16 @@ func _label(text: String, size: int, color: Color) -> Label:
 	label.add_theme_color_override("font_outline_color", Color.BLACK)
 	label.add_theme_constant_override("outline_size", 8)
 	return label
+
+
+func open_album() -> CardAlbum:
+	for child in get_children():
+		if child is CardAlbum:
+			return child
+	get_viewport().gui_release_focus()
+	var a = CardAlbum.new()
+	add_child(a)
+	return a
 
 
 # Easter egg: click the cat on the title screen to pet her.

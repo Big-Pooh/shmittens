@@ -50,6 +50,8 @@ func on_beat(n: int):
 		spiral(3, 150.0, 29.0)
 	if card >= 1 and beat == 3 and bar % 2 == 0:
 		aimed(3, 220.0, 8.0)
+	if card == 0 and beat == 2 and bar % 2 == 1:
+		bounce_fan(6, 180.0)   # cheese bouncing off the sewer walls
 	if card >= 1 and beat == 1 and bar % 4 == 1:
 		freeze_ring(10, 160.0, 200.0, EnemyShot.Kind.ORB, bar * 0.3)
 	# beam every 4th bar (every 8th when heavily assisted)

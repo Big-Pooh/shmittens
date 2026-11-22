@@ -44,12 +44,16 @@ func on_beat(n: int):
 			_counter_spiral()
 			if beat == 0 and bar % 2 == 0:
 				freeze_ring(12, 170.0, 210.0, EnemyShot.Kind.ORB, bar * 0.25)
+			if beat == 2 and bar % 2 == 1:
+				galaxy(4, 260.0, 23.0)   # the royal galaxy: slow, then fast
 		_:
 			if beat == 0:
 				flower(3, 12, 180.0, EnemyShot.Kind.RICE, bar * 0.17)
 			if beat == 1 or beat == 3:
 				sun(1, 150.0, 31.0, bar)
 				_counter_spiral()
+			if beat == 2 and bar % 2 == 0:
+				split_orbs(3, 120.0)
 	if beat == 0 and bar % 2 == 0:
 		drift_to(360.0 + 150.0 * sin(bar * 0.8), Conductor.seconds_per_beat * 8.0)
 	if beat == 3:

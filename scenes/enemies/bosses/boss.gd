@@ -162,6 +162,7 @@ func _end_card(captured: bool):
 	if captured:
 		captures += 1
 		Game.level_cards_captured += 1
+		Game.collect_card(cards[ended].name, boss_name, cards[ended].get("weak", ""), get_script().resource_path)
 		Game.add_score(CAPTURE_SCORE)
 		if spell_this_card:
 			Game.add_mech_part("spell_capture")
@@ -286,6 +287,7 @@ func take_damage(amount: float, judgement: int = -1):
 		if card_clean:
 			captures += 1
 			Game.level_cards_captured += 1
+			Game.collect_card(cards[card].name, boss_name, cards[card].get("weak", ""), get_script().resource_path)
 			Game.add_score(CAPTURE_SCORE)
 			if spell_this_card:
 				Game.add_mech_part("spell_capture")
@@ -489,6 +491,49 @@ func aimed(count: int, speed: float, spread_degrees: float = 6.0, kind: int = En
 	var base = (player_position() - global_position).angle()
 	for i in count:
 		fire_shot(Vector2.from_angle(base + deg_to_rad((i - (count - 1) / 2.0) * spread_degrees)), speed, kind)
+
+
+# --- pattern-diversity pass (generic danmaku archetypes) ---------------------------------
+# BUTTERFLY: two mirrored fans of rice that curve in opposite directions, opening like wings.
+func butterfly(count: int, speed: float, curve_rad: float):
+	count = dense(count)
+	for side in [-1.0, 1.0]:
+		for i in count:
+			var a = PI + side * deg_to_rad(15.0 + i * 12.0)
+			var shot = fire_shot(Vector2.from_angle(a), speed, EnemyShot.Kind.RICE)
+			shot.curve = -side * curve_rad
+
+
+# GALAXY: a spiral that starts crawling and then accelerates outward.
+func galaxy(arms: int, accel: float, step_degrees: float):
+	arms = dense(arms)
+	if Game.assist >= 2 and arms > 1:
+		arms -= 1
+	for i in arms:
+		var shot = fire_shot(Vector2.from_angle(spiral_angle + TAU * i / arms), 40.0, EnemyShot.Kind.RICE)
+		shot.accel = accel
+		shot.max_speed = 300.0 * Game.shot_speed_factor()
+	spiral_angle += deg_to_rad(step_degrees) * mirror
+
+
+# BOUNCE FAN: a wide fan toward the top and bottom edges that bounces once - the screen edges
+# become part of the pattern.
+func bounce_fan(count: int, speed: float):
+	count = dense(count)
+	for i in count:
+		var a = PI + deg_to_rad(lerp(-70.0, 70.0, float(i) / max(count - 1, 1)))
+		var shot = fire_shot(Vector2.from_angle(a), speed, EnemyShot.Kind.CANDY)
+		shot.bounces = 1
+
+
+# SPLIT ORBS: slow orbs that burst into a small cross of rice on the next off-beat hi-hat.
+func split_orbs(count: int, speed: float, pieces: int = 4):
+	count = dense(count)
+	if Game.assist >= 1:
+		pieces = 3
+	for i in count:
+		var shot = fire_shot(Vector2.from_angle(PI + deg_to_rad((i - (count - 1) / 2.0) * 22.0)), speed, EnemyShot.Kind.ORB)
+		shot.split = pieces
 
 
 # SNAKE: one rice bullet aimed at the cat with a sinusoidal wobble - called on every hi-hat it

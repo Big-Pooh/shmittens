@@ -1134,3 +1134,15 @@ You approved fixes 1–3.
 - **Bug:** the RHYTHM CHECK screen "blocked". The title button kept keyboard focus, so SPACE re-pressed the button and stacked new check screens instead of counting taps.
 - **Your decision:** remove the rhythm check. It's gone from the title screen and from the first web launch, and `scenes/ui/calibration.gd` is deleted.
 - **Unchanged:** the beat-offset slider in the pause menu remains as the manual fallback, and the web PERFECT window stays 15 ms wider.
+
+### Spell-card collection + pattern diversity (your request after playtest 7)
+- **Collectible spell cards** (`scenes/ui/spell_card_view.gd`): every captured boss or mid-boss card is added to a saved **Card Album**.
+  - **The card:** a gilded card showing the boss portrait, the card's name, the boss, its weakness and the capture count; a shimmering NEW ribbon on the first capture.
+  - **End of planet:** the map card reveals the cards won there (they flip in one by one); the ending shows the last planet's cards.
+  - **Album:** a CARD ALBUM button on the title screen (`scenes/ui/card_album.gd`) shows all 17 cards, with uncaptured ones as "?".
+- **Pattern diversity** (generic bullet-hell building blocks, nothing copied from a franchise): bullets can now **curve**, **accelerate**, **bounce** off the top and bottom edges once, and **split** on the hi-hat. These give four new patterns:
+  - **butterfly:** mirrored curving wings;
+  - **galaxy:** a slow spiral that then accelerates;
+  - **bounce fan;**
+  - **split orbs.**
+  - **Where they appear:** Tanky's "Clockwork Waltz" gets butterfly wings; the Cheese Saucer's "Cheese Rain" bounces off the sewer walls; Ratbert gets a galaxy in "Rat Race Rondo" and split orbs in his final card; Sho's "Protein Rain" shakes split, the Waltz gets wings, and "Muscle Supernova" alternates rose and galaxy.
