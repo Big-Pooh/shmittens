@@ -2117,6 +2117,7 @@ func _designer7_tests():
 	# presentation: banners queue up instead of overlapping; challenges are visible in play
 	await _start_main()
 	main.level_runner.stop()
+	main.hud.hide_message()   # banners wait while a centre message (the level intro) is up
 	main.hud.queue_banner("SPELL CARD - TEST", Color.WHITE)
 	main.hud.queue_banner("SPELL CARD CAPTURED!", Color.WHITE)
 	main.hud.queue_banner("SPELL CARD CAPTURED!", Color.WHITE)   # duplicate is dropped
@@ -2127,4 +2128,9 @@ func _designer7_tests():
 	shown = main.hud.get_children().filter(func(c): return c.name.begins_with("Banner") and c.modulate.a > 0.5)
 	check(shown.size() <= 1 and main.hud.banner_queue.is_empty(), "the next banner follows once the first has had its time")
 	check(main.hud.challenge_label.text.contains("spells"), "planet challenges are shown during play")
+	main.hud.queue_banner("WAITS", Color.WHITE)
+	main.hud.show_message("A CENTRE MESSAGE")
+	await wait(0.8)
+	check(main.hud.banner_queue.size() == 1, "banners wait while a centre message is showing")
+	main.hud.hide_message()
 
