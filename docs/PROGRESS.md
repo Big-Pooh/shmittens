@@ -112,3 +112,14 @@ Designer v0.11 scores: core loop 7, feel 7, onboarding 6, content 4, presentatio
   - 👤 10+ cold playtests and survey
   - 👤 devlog + GIFs posted
   - 👤 ≥ 100 wishlists
+
+## ACTIVE: GO-LIVE SPRINTS 1–7 (owner, 2026-11-22: "utmost speed, I only check at the end")
+Branch `iterate/designer-7`. Commit and push after each sprint. **No release until the owner checks.**
+Core loop is FROZEN: polish and content only.
+- [ ] **S1 Music:** 32-bar arranged tracks (intro, A, B, bridge, A′), boss tracks build; MusicPatterns follows the arrangement; QOA compression for size.
+- [ ] **S2 Animation:** 2-frame idle/blink on the beat for every mouse and boss (`*_b.png`), cute defeat poof, boss entrance bounce.
+- [ ] **S3 UI theme:** pastel rounded theme on the root window, menu hover/press sounds, styled panels.
+- [ ] **S4 Meta:** cat hats (unlocked by stars and cards) + wardrobe, local achievements with toasts (Steam-ready API), album/stats screen.
+- [ ] **S5 Settings:** key rebinding, colour-blind / high-contrast bullet palette.
+- [ ] **S6 World 2:** planets 5–8 (Cheddaria, Neon Nibble, Frostwhisker, Mount Flexmore) with 10 waves each, 4 bosses (Big Cheese, DJ Squeak, Captain Frostbite, Sho Maximum Flex), music, themes, story; map per world; the demo stops after world 1.
+- [ ] **S7 Tech:** Platform/achievement abstraction (Steamworks-ready), BULLET HELL performance stress test, release checklist doc.
