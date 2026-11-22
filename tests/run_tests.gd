@@ -1131,7 +1131,7 @@ func _boss_assist_tests():
 	await frames(1)
 	check(_count("enemy_shots") - shots == 3, "assist 2 thins boss fans (5 -> 3)")
 	var assisted_tank = await _make_boss("res://scenes/enemies/bosses/mecha_tank.gd")
-	check(is_equal_approx(assisted_tank.max_health, 190.0 * 0.7), "assist 2 cuts boss health by 30%")
+	check(is_equal_approx(assisted_tank.max_health, 380.0 * 0.7), "assist 2 cuts boss health by 30%")
 	assisted_tank.queue_free()
 	game.assist = 0
 	tank.queue_free()
@@ -1538,7 +1538,7 @@ func _playtest3_tests():
 	var boss = await _make_boss("res://scenes/enemies/bosses/mecha_tank.gd")
 	var hp = boss.health
 	boss.take_skill_damage(1.0)
-	check(is_equal_approx(hp - boss.health, boss.max_health * boss.SKILL_MIN_FRACTION), "a spell takes at least 7% of a boss's health")
+	check(is_equal_approx(hp - boss.health, boss.max_health * boss.SKILL_MIN_FRACTION), "a spell takes at least 5% of a boss health")
 	boss.take_damage(boss.health - boss.max_health * 0.4)
 	boss.card_intro = 0
 	boss.take_skill_damage(1.0)

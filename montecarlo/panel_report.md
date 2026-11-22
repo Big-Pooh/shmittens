@@ -2,16 +2,16 @@
 
 | View | KPI | Value | Target | |
 |---|---|---|---|---|
-| Player | had fun | 99% | ≥ 80% | ✅ |
-| Player | drop rate level 1 | 1% | ≤ 20% | ✅ |
-| Player | drop rate level 2 | 2% | ≤ 20% | ✅ |
+| Player | had fun | 100% | ≥ 80% | ✅ |
+| Player | drop rate level 1 | 0% | ≤ 20% | ✅ |
+| Player | drop rate level 2 | 1% | ≤ 20% | ✅ |
 | Player | drop rate level 3 | 1% | ≤ 20% | ✅ |
-| Player | completion (finish the story) | 96% | ≥ 60% | ✅ |
-| Critic | likely to endorse | 92% | ≥ 80% | ✅ |
-| Business | purchase intent (monetization) | 77% | ≥ 25% | ✅ |
+| Player | completion (finish the story) | 98% | ≥ 60% | ✅ |
+| Critic | likely to endorse | 91% | ≥ 80% | ✅ |
+| Business | purchase intent (monetization) | 75% | ≥ 25% | ✅ |
 | Business | GTM success (P > $100k gross) | 60% | ≥ 24% | ✅ |
 
-Average session: 6.8 min. Critic rubric score: 0.76. Feature checklist: 100%.
+Average session: 5.8 min. Critic rubric score: 0.76. Feature checklist: 100%.
 
 | Feature checklist | weight | done |
 |---|---|---|
@@ -29,3 +29,8 @@ Average session: 6.8 min. Critic rubric score: 0.76. Feature checklist: 100%.
 | story cards between levels | 0.5 | 100% |
 | spell-shape guides | 0.5 | 100% |
 | no dead time between waves (dance breaks) | 0.5 | 100% |
+| spells land where drawn + real impact | 1.0 | 100% |
+| boss spell cards (names, timers, captures) | 1.0 | 100% |
+| bullet variety + graze | 0.5 | 100% |
+| mastery goal: overdrive | 0.5 | 100% |
+| playtest telemetry (local session stats) | 0.5 | 100% |

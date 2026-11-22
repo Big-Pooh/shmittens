@@ -35,7 +35,7 @@ GODOT = os.environ.get("GODOT", os.path.expanduser("~/Desktop/Godot_v4.7.2.app/C
 OUT = os.path.join(ROOT, "montecarlo")
 RUNS = os.path.join(OUT, "panel_runs")
 LEVELS = 3
-PAR = [55.0, 48.0, 50.0]
+PAR = [55.0, 52.0, 52.0]
 
 # Presentation quality of the current assets (0-1). Fixed judgement, NOT computable from code:
 # generated placeholder pixel art (the cat is hand-made) and generated chiptune loops/sfx.
@@ -70,6 +70,12 @@ CHECKLIST = [
     ("story cards between levels", 0.5, lambda: 1.0 if _exists("scenes", "ui", "transition_card.gd") else 0.0),
     ("spell-shape guides", 0.5, lambda: 1.0 if _exists("scenes", "gestures", "gesture_guide.gd") else 0.0),
     ("no dead time between waves (dance breaks)", 0.5, lambda: 1.0 if _grep("scenes/levels/level_runner.gd", "set_dancing") else 0.0),
+    # playtest 3
+    ("spells land where drawn + real impact", 1.0, lambda: 1.0 if _grep("scenes/gestures/gesture_input.gd", "cancel_bullets") else 0.0),
+    ("boss spell cards (names, timers, captures)", 1.0, lambda: 1.0 if _grep("scenes/enemies/bosses/boss.gd", "card_started") else 0.0),
+    ("bullet variety + graze", 0.5, lambda: 1.0 if _grep("scenes/enemies/enemy_shot.gd", "GRAZE_RADIUS") else 0.0),
+    ("mastery goal: overdrive", 0.5, lambda: 1.0 if _exists("scenes", "player", "overdrive_beam.gd") else 0.0),
+    ("playtest telemetry (local session stats)", 0.5, lambda: 1.0 if _grep("scripts/autoload/game.gd", "save_session") else 0.0),
 ]
 
 

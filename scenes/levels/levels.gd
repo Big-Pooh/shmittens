@@ -40,7 +40,7 @@ const LEVELS = [
 		"track": "level2",
 		"boss_track": "boss2",
 		"boss": "mothership",
-		"par_seconds": 48.0,
+		"par_seconds": 52.0,
 		"story": "The trail leads down into the sewers,\nwhere the mouse fleet guards the way.",
 		"waves": [
 			[{"enemy": "dasher", "formation": "line", "count": 3, "health": 2}],
@@ -57,7 +57,7 @@ const LEVELS = [
 		"track": "level3",
 		"boss_track": "boss3",
 		"boss": "rat_king",
-		"par_seconds": 50.0,
+		"par_seconds": 52.0,
 		"story": "At last, the Rat King's castle.\nThe Queen is somewhere inside...",
 		"waves": [
 			[{"enemy": "shield", "formation": "grid", "columns": 3, "rows": 3, "health": 4}],

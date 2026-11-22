@@ -757,3 +757,81 @@ Full tables are in `docs/KPI.md`; raw reports are in `montecarlo/report_original
 - **A pure beginner who never picks Relaxed** still drops 17–27% per level in the 16-run Monte Carlo. That's at or above the 20% line, within noise. The panel is lower because 70% of low-challenge testers pick Relaxed. It's the first item for the next round.
 
 **Tests:** 210 passing (33 new: weapons, focus, snappy reverse, magnet, dance breaks, beat armour, stun, assist cracking, staff notes, walls, the card, message wrapping, spell guides, tutorial steps).
+
+## Phase 11: playtest 3 (iteration 7, same branch `feedback/playtest-2`)
+**Why:** your third playtest and questions:
+- Shift did nothing;
+- you want Touhou-like patterns;
+- Spread was useless and Fish removed any reason to aim;
+- you barely used skills, and they mostly missed;
+- the idea of a 50-combo power weapon;
+- you liked charging up spells during dance breaks;
+- "implement all": drawn spells plus an emergency bomb, the weapon rework, Overdrive, spell cards, Touhou bullets, the Relaxed offer, and session stats.
+
+### Findings (measured, not guessed)
+- **Focus worked, but couldn't be seen:** the hitbox was drawn by the parent node, under the cat sprite. Fixed with a marker above the sprite (z 30), a see-through cat, and a ring.
+- **Skill probe** (cat at x=220, Level 1 formation 700–950 px away):
+  - Shockwave hit 0/16;
+  - Laser hit 8/16 only when drawn perfectly horizontal, and 0/16 at 15° off;
+  - Lightning hit 5/16 for 5 damage;
+  - every skill took only 2–4% of a boss's health.
+  - The design was at fault, not your hands.
+- **Weapon damage per shot against a boss:** Fish ≈ Laser with no aiming, so it dominated. Spread's fan mostly missed single targets.
+- **Persona match:** your per-level scores (20k / 49k / 75k) put you around skill 0.75, between the 0.65 and 0.8 bot runs.
+
+### What changed
+- **Spells land where you draw them:**
+  - circle = a burst at the circle's centre, sized by the circle;
+  - line = a slash along your line, across the whole screen (44 px wide);
+  - zigzag = lightning on every mouse within 110 px of your stroke (up to 6, or 9 empowered);
+  - triangle = shield.
+- **Spell impact:**
+  - a named banner for each spell;
+  - every bullet on screen is cleared, and up to 6 of them turn into cheese;
+  - against bosses: at least 5% of max health per cast, and 2 armour pips cracked.
+- **Snap assist:** after 2 unrecognised strokes in a row, a stroke scoring ≥0.6 is accepted as its closest shape.
+- **Catnip Bomb (X):** spends all charges; clears bullets; hits every mouse for 5 per charge and bosses for 4% of health per charge; 1.5 s of invulnerability; fails that card's capture.
+- **Weapons:**
+  - **Fish** is now the default (0.5 per fish);
+  - **Laser** does 0.8 + 0.4 per level (1.2–1.6× Fish) and pierces;
+  - **Spread** is a short-range shotgun: 2 + level pellets, full damage within 200 px down to 30% at 700 px, gone at 760 px, and **pellets erase enemy bullets**.
+- **Catnip Overdrive:** every 50 on-beat combo banks one (max 1). F unleashes 5 s of a rainbow beam that turns toward your aim. It hits on every 8th note as PERFECT (so it cracks armour), erases bullets, and plays the full music mix.
+- **Boss spell cards:**
+  - **Tanky:** "Toy Cannon Parade", then "Clockwork Waltz" (armoured).
+  - **The Cheese Saucer:** "Cheese Rain", then "Holey Lattice" (armoured).
+  - **King Ratbert:** "Royal Decree", "Rat Race Rondo", then "Long Live the King" (armoured).
+  - Each card owns a share of the health bar, and damage can't spill into the next card.
+  - Each card opens with 2 invulnerable beats while its name shows, and has a timer (×1.25 after a game over).
+  - Capture (clear the card without getting hit or bombing) gives +3000, a battery, and leftover bullets turned into cheese. When the timer runs out the card ends with no bonus, so beginners always progress.
+- **Touhou bullets:**
+  - three kinds: candy, rice (points where it flies) and orb (big and slow);
+  - flower bursts, and freeze-and-scatter rings: they stop on the beat, hold, then re-aim at you;
+  - **graze:** a bullet passing within 30 px gives +20 points; every 3 on-beat grazes give 1 cheese; with sparkles.
+- **Boss health ×2** (tank 380, saucer 520, king 700). This is safe because card timers now cap fight length.
+- **Medians after this change:**
+  - speedrunner: about 17 s per boss (was 10 s);
+  - average player: 42–67 s;
+  - beginner: unchanged, because the timers cap the fight.
+- **Relaxed offer:** from the 2nd game over, "T - switch to RELAXED and try again".
+- **Session stats:** saved to `user://sessions/<time>.json`, on your machine only (casts per spell, fizzles, spell hits, bombs, overdrives, grazes, cards captured or missed, seconds per weapon, focus seconds, deaths by cause, game overs). Never written by tests or simulations.
+- **Bots:**
+  - they draw spells over their targets (with their aim error);
+  - they pick weapons by real damage: Fish if their aim is poor, Laser if good, Spread when mice are close;
+  - they use Overdrive on bosses, and panic-bomb when swamped (`bomb_panic`).
+- **Par times:** 55 / 52 / 52 s.
+
+### Results
+| KPI | Panel A | Panel B | Target |
+|---|---|---|---|
+| had fun | 100% | 100% | ≥ 80% |
+| drop L1 / L2 / L3 | 0 / 2 / 1% | 0 / 1 / 1% | ≤ 20% |
+| completion | 97% | 98% | ≥ 60% |
+| endorse | 91% | 91% | ≥ 80% |
+| purchase intent | 76% | 75% | ≥ 25% |
+| GTM | 60% (cap) | 60% (cap) | ≥ 24% |
+
+**Monte Carlo, beginner in Normal mode:** drop 3 / 16 / 11%. Before this iteration it was 17 / 21 / 27%. It's now under 20% on every level.
+
+**Caveat:** the panel model is saturated (fun 100%, GTM at its cap), so it can't separate good from great any more. Real playtests and the new session stats are now the measurement that matters.
+
+**Tests:** 242 passing (30 new).

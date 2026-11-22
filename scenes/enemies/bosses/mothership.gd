@@ -13,7 +13,7 @@ const GRUNT = preload("res://scenes/enemies/grunt.tscn")
 
 
 func _init():
-	build(TEXTURE, 5.0, 82.0, 260.0)
+	build(TEXTURE, 5.0, 82.0, 520.0)
 	boss_name = "THE CHEESE SAUCER"
 	cards = [
 		{"name": "Cheese Rain", "share": 0.5, "seconds": 35.0, "armored": false},

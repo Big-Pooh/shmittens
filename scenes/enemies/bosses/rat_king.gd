@@ -18,7 +18,7 @@ var counter_angle = 0.0
 
 
 func _init():
-	build(TEXTURE, 6.0, 84.0, 350.0)
+	build(TEXTURE, 6.0, 84.0, 700.0)
 	boss_name = "KING RATBERT"
 	cards = [
 		{"name": "Royal Decree", "share": 0.35, "seconds": 35.0, "armored": false},
