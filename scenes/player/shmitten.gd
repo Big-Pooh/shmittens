@@ -125,6 +125,7 @@ func _process(delta):
 			guardian_ready = true
 			guardian_timer = 0.0
 	queue_redraw()
+	_pad_aim()
 	if is_mech():
 		mech_time -= delta
 		sprite.rotation = sin(anim_time * 6.0) * 0.04   # stompy idle wobble
@@ -142,6 +143,29 @@ func _process(delta):
 
 
 # Dance break: hop on every beat, sway left/right on alternate beats, spin on the bar.
+# GAMEPAD AIM (right stick): when a pad is connected and the stick is pushed, aim that way.
+const PAD_AIM_DISTANCE = 450.0
+var using_pad = false
+
+
+func _pad_aim():
+	if Input.get_connected_joypads().is_empty():
+		return
+	var v = Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")
+	if v.length() > 0.3:
+		using_pad = true
+		if not Game.drawing:
+			Game.aim_override = global_position + v.normalized() * PAD_AIM_DISTANCE
+	elif using_pad and not Game.drawing and Game.aim_override != null:
+		Game.aim_override = global_position + (Game.aim_override - global_position).normalized() * PAD_AIM_DISTANCE
+
+
+func _input(event):
+	if using_pad and event is InputEventMouseMotion:
+		using_pad = false
+		Game.aim_override = null   # the mouse takes over again
+
+
 func _dance():
 	if not Game.dancing or is_dead:
 		if sprite.position != sprite_base or sprite.rotation != 0.0:

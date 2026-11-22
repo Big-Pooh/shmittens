@@ -2106,4 +2106,12 @@ func _designer7_tests():
 	await create_timer(0.12, true, false, true).timeout
 	check(is_equal_approx(Engine.time_scale, 1.0), "...for a moment only")
 	await _clear_world()
+	# GTM: gamepad mappings, feedback links, demo flag
+	var pad_ok = true
+	for action in ["move_up", "move_left", "shoot", "focus", "weapon_next", "bomb", "overdrive", "pause", "draw", "aim_left", "aim_up"]:
+		if not InputMap.action_get_events(action).any(func(e): return e is InputEventJoypadButton or e is InputEventJoypadMotion):
+			pad_ok = false
+	check(pad_ok, "every action has a gamepad binding (sticks, buttons, LT to draw)")
+	check(game.FEEDBACK_URL.begins_with("https://github.com/") and game.BUG_URL.contains("bug_report"), "feedback and bug-report links point at the issue templates")
+	check(not game.is_demo(), "the desktop build is not the demo")
 

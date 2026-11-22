@@ -90,7 +90,13 @@ func _player() -> Shmitten:
 
 func _unhandled_input(event):
 	if event.is_action_pressed("draw"):
-		begin()
+		pad_drawing = event is InputEventJoypadMotion or event is InputEventJoypadButton
+		if pad_drawing:
+			var player = _player()
+			pad_pen = Game.aim_override if Game.aim_override != null else (player.global_position + Vector2(300, 0) if player else Vector2(640, 360))
+			begin(pad_pen)
+		else:
+			begin()
 	elif event.is_action_released("draw") and drawing:
 		finish()
 	elif drawing and event is InputEventMouseMotion:
@@ -99,7 +105,19 @@ func _unhandled_input(event):
 		bomb()
 
 
+# GAMEPAD DRAWING: hold LT and trace the shape with the right stick (a virtual pen that starts
+# where you are aiming).
+const PAD_PEN_SPEED = 900.0
+var pad_pen = Vector2.ZERO
+var pad_drawing = false
+
+
 func _process(_delta):
+	if pad_drawing and drawing:
+		var v = Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")
+		var real = _delta / max(Engine.time_scale, 0.01)
+		pad_pen = (pad_pen + v * PAD_PEN_SPEED * real).clamp(Vector2.ZERO, Game.SCREEN.size)
+		add_point(pad_pen)
 	if not drawing:
 		return
 	var player = _player()

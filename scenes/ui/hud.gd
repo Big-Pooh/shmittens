@@ -107,8 +107,8 @@ func _build():
 	add_child(score_label)
 
 	wave_label = _label("", 24)
-	wave_label.position = Vector2(960, 14)
-	wave_label.size = Vector2(300, 40)
+	wave_label.position = Vector2(800, 14)
+	wave_label.size = Vector2(460, 40)   # fits "BULLET HELL  RATOPOLIS  WAVE 10/10"
 	wave_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	add_child(wave_label)
 

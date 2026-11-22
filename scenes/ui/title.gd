@@ -76,6 +76,11 @@ func _ready():
 	rhythm.custom_minimum_size = Vector2(200, 40)
 	rhythm.pressed.connect(open_calibration)
 	buttons.add_child(rhythm)
+	var feedback = Button.new()
+	feedback.text = "FEEDBACK"
+	feedback.custom_minimum_size = Vector2(200, 40)
+	feedback.pressed.connect(func(): Game.open_feedback())
+	buttons.add_child(feedback)
 	var settings_button = Button.new()
 	settings_button.text = "SETTINGS"
 	settings_button.custom_minimum_size = Vector2(200, 44)
@@ -98,6 +103,11 @@ func _ready():
 	if OS.has_feature("web") and Game.first_time("calibration"):
 		open_calibration.call_deferred()
 
+	var version = _label("v" + str(ProjectSettings.get_setting("application/config/version", "dev")) + (" DEMO" if Game.is_demo() else ""), 14, Color(0.6, 0.6, 0.75))
+	version.position = Vector2(1100, 690)
+	version.size = Vector2(170, 20)
+	version.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	add_child(version)
 	var controls = _label("WASD move  ·  mouse aims  ·  SPACE on the beat to shoot  ·  hold a mouse button and draw to cast spells  ·  Esc pause", 16, Color(0.7, 0.7, 0.8))
 	controls.position = Vector2(0, 670)
 	add_child(controls)

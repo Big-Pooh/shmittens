@@ -1,0 +1,21 @@
+name: Bug report
+description: Something broke? Tell us what happened.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Game version (shown on the title screen) and platform (web / Windows / macOS)
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce (planet, wave, what you were doing)

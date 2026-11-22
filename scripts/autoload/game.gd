@@ -163,6 +163,23 @@ var hard_cleared = false     # unlocks TOUHOU
 var bomb_stock = 0           # TOUHOU: free bombs (1 per life)
 # One-time tips (playtest 4: "I didn't know until the end how spell cards work")
 var tips_seen = {}
+# Feedback and bug reports (GTM: an in-game path for testers). Opened in the browser; nothing is
+# sent automatically.
+const FEEDBACK_URL = "https://github.com/Big-Pooh/shmittens/issues/new?template=playtest_feedback.yml"
+const BUG_URL = "https://github.com/Big-Pooh/shmittens/issues/new?template=bug_report.yml"
+const STEAM_URL = "https://github.com/Big-Pooh/shmittens"   # swap for the Steam page once it is live
+# DEMO build (export feature "demo"): the story stops after world 1 with a wishlist screen.
+func is_demo() -> bool:
+	return OS.has_feature("demo")
+
+
+func open_feedback():
+	track("feedback_opened")
+	OS.shell_open(FEEDBACK_URL)
+
+
+func open_bug_report():
+	OS.shell_open(BUG_URL)
 var skip_intro = false   # tests and simulations start games without the story
 # BOMB (playtest 5: 11 bombs in one run crowded out drawing -> cut to about a quarter): one bomb
 # per planet, and it needs at least BOMB_MIN_CHARGES charges. TOUHOU keeps its free bomb per life.

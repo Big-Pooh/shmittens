@@ -26,7 +26,20 @@ func _ready():
 	add_child(_label("FINAL SCORE  %06d" % Game.score, 34, GOLD, 520))
 	if not Game.ranks.is_empty():
 		add_child(_label("RANKS   " + "  ".join(Game.ranks.map(func(r): return r)), 26, Color(0.9, 0.9, 1), 570))
-	add_child(_label("Thanks for playing!  -  click to return to the title", 18, Color(0.7, 0.7, 0.8), 640))
+	if Game.is_demo():
+		add_child(_label("Thanks for playing the DEMO! Sho will be back - wishlist Shmittens! to follow the full journey.", 20, Color(1, 0.85, 0.6), 600))
+		var row = HBoxContainer.new()
+		row.position = Vector2(470, 640)
+		row.add_theme_constant_override("separation", 16)
+		add_child(row)
+		for b in [["WISHLIST", func(): OS.shell_open(Game.STEAM_URL)], ["FEEDBACK", func(): Game.open_feedback()]]:
+			var btn = Button.new()
+			btn.text = b[0]
+			btn.custom_minimum_size = Vector2(160, 40)
+			btn.pressed.connect(b[1])
+			row.add_child(btn)
+	else:
+		add_child(_label("Thanks for playing!  -  click to return to the title", 18, Color(0.7, 0.7, 0.8), 640))
 	cat = Sprite2D.new()
 	cat.texture = CAT_SHEET
 	cat.hframes = 10
