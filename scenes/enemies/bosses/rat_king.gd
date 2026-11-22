@@ -2,51 +2,49 @@ extends Boss
 
 class_name RatKing
 
-# Level 3 (final) boss. Plays the music:
-#   drums  - phase 1: 5-shot fan on the downbeat; phase 2: 10-shot ring on the downbeat and
-#            2 shield-mouse guards every 2 bars; warning flash on beat 4; moves.
-#   melody - aimed shot per lead note (a tight triple on long notes); phase 2: pairs.
-# Phase 2 starts below half health and summons guards immediately.
+# Level 3 (final) boss, "King Ratbert". Playtest 2: "too many random bullets and hard to hit"
+# -> no shield-mouse guards (they blocked your shots), no jumping to your height, every bullet
+# is part of a fixed pattern:
+#   melody  - staff notes (height = pitch); long notes are chords of 2.
+#   drums   - downbeat: a 14-shot ring that rotates a little every bar; beat 3: a 5-shot arc.
+#             Drifts slowly in a figure of eight.
+#   phase 2 - beat armour (see Boss) + two counter-rotating spiral arms on every beat; the
+#             ring only on every other bar.
 
 const TEXTURE = preload("res://Art/Generated/boss_rat_king.png")
-const SHIELD_MOUSE = preload("res://scenes/enemies/shield_mouse.tscn")
 
 
 func _init():
-	build(TEXTURE, 6.0, 66.0, 220.0)
-	boss_name = "THE RAT KING"
+	build(TEXTURE, 6.0, 84.0, 220.0)
+	boss_name = "KING RATBERT"
+
+
+var counter_angle = 0.0
 
 
 func on_beat(n: int):
 	var beat = n % Conductor.BEATS_PER_BAR
 	var bar = n / Conductor.BEATS_PER_BAR
-	match beat:
-		0:
-			if phase == 1:
-				fan(5, 11.0, 320.0)
-			else:
-				ring(10, 250.0, bar * 0.31)
-		1:
-			if phase == 1 and bar % 2 == 0:
-				move_to_y(200.0 if (bar / 2) % 2 == 0 else 520.0)
-			elif phase == 2 and bar % 2 == 0:
-				_summon_guards()
-		3:
-			telegraph()
-			if phase == 2:
-				move_to_y(player_position().y, 0.3)
+	if beat == 0 and (phase == 1 or bar % 2 == 0):
+		ring(14, 160.0, bar * 0.11)
+	if beat == 2 and phase == 1:
+		arc(5, 14.0, 190.0)
+	if phase == 2:
+		spiral(1, 150.0, 31.0)
+		_counter_spiral()
+	if beat == 0 and bar % 2 == 0:
+		drift_to(360.0 + 150.0 * sin(bar * 0.8), Conductor.seconds_per_beat * 8.0)
+	if beat == 3:
+		telegraph()
+
+
+# The second arm turns the other way, so the two arms cross in a readable lattice.
+func _counter_spiral():
+	if Game.assist >= 2:
+		return
+	fire_shot(Vector2.from_angle(PI + counter_angle), 150.0)
+	counter_angle -= deg_to_rad(31.0)
 
 
 func on_lead_note(pitch: int, length: int):
-	if phase == 1:
-		melody_shot(pitch, 270.0, 3 if length >= 2 else 1, 4.0)
-	else:
-		melody_shot(pitch, 280.0, 2, 6.0)
-
-
-func on_phase_2():
-	_summon_guards()
-
-
-func _summon_guards():
-	summon(SHIELD_MOUSE, [Vector2(position.x - 180, 200), Vector2(position.x - 180, 520)], 5.0)
+	staff_note(pitch, 205.0, 2 if length >= 2 else 1)

@@ -39,6 +39,7 @@ var points = PackedVector2Array()
 var started_msec = 0
 var trail: Line2D
 var tint: ColorRect
+var guide: GestureGuide   # faded shape outlines while drawing (playtest 2)
 
 
 func _ready():
@@ -59,6 +60,11 @@ func _ready():
 	tint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tint.hide()
 	layer.add_child(tint)
+	var guide_layer = CanvasLayer.new()
+	guide_layer.layer = 6
+	add_child(guide_layer)
+	guide = GestureGuide.new()
+	guide_layer.add_child(guide)
 
 
 func _player() -> Shmitten:
@@ -98,6 +104,7 @@ func begin(at = null):
 	Engine.time_scale = SLOW_MO_SCALE
 	Conductor.set_muffled(true)
 	tint.show()
+	guide.show_panel(true)
 	add_point(at if at != null else get_global_mouse_position())
 
 
@@ -107,6 +114,9 @@ func add_point(p: Vector2):
 	if points.is_empty() or p.distance_to(points[points.size() - 1]) >= MIN_POINT_SPACING:
 		points.append(p)
 		trail.add_point(p)
+		# live hint: light up the shape the stroke looks like so far
+		if points.size() >= 8 and points.size() % 5 == 0:
+			guide.set_match(recognizer.recognize(points).name)
 
 
 func _stop_drawing():
@@ -115,6 +125,7 @@ func _stop_drawing():
 	Engine.time_scale = 1.0
 	Conductor.set_muffled(false)
 	tint.hide()
+	guide.show_panel(false)
 	create_tween().tween_property(trail, "modulate:a", 0.0, 0.25)
 
 

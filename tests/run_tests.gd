@@ -194,6 +194,7 @@ func _run():
 	_second_wind_tests()
 	await _spell_chain_tests()
 	await _screen_tests()
+	await _playtest2_tests()
 
 	game.difficulty_chosen = original.chosen
 	game.relaxed_mode = original.relaxed
@@ -208,7 +209,7 @@ func _rhythm_tests():
 	# the restart test reloaded the scene, so grab fresh references
 	await _start_main()
 	var spb = conductor.seconds_per_beat
-	check(is_equal_approx(spb, 60.0 / 110.0), "level1 plays at 110 BPM")
+	check(is_equal_approx(spb, 60.0 / 92.0), "level1 plays at 92 BPM (playtest 2: slower start)")
 
 	# judging windows (time_override drives the clock)
 	var saved_offset = conductor.offset_ms
@@ -504,7 +505,7 @@ func _rhythm_loop_tests():
 	gun._on_beat(1)
 	Input.action_release("shoot")
 	var held = main.get_children().filter(func(n): return n.get_script() == PlayerShot)
-	check(held.size() - before == game.gun_level and held[-1].judgement == -1 and is_equal_approx(held[-1].damage, 1.0), "held fire shoots on the beat (1.0 dmg, unjudged)")
+	check(held.size() - before == game.gun_level and held[-1].judgement == -1 and is_equal_approx(held[-1].damage, gun.HELD_DAMAGE), "held fire shoots on the beat (0.6 dmg, unjudged)")
 	check(game.combo == combo_before, "held fire doesn't touch the combo")
 	gun._on_beat(2)
 	check(main.get_children().filter(func(n): return n.get_script() == PlayerShot).size() == held.size(), "no beat shot when not holding")
@@ -632,9 +633,11 @@ func _level_tests():
 		bosses[0].die()
 	await frames(2)
 	check(runner.state == runner.State.CLEARED, "killing the boss clears the level")
-	await next_bar.call()
+	check(main.transition_card != null and main.transition_card.is_inside_tree(), "a transition card shows between levels")
+	main.transition_card.dismissed.emit()   # SPACE on the card: move on at the next bar
 	await next_bar.call()
 	bar[0] = 0
+	check(main.transition_card == null, "the card closes when the next level starts")
 	check(game.level == 1 and conductor.track == "level2", "level 2 starts with its own music (%s)" % conductor.track)
 	conductor.time_override = -1.0
 
@@ -669,50 +672,88 @@ func _boss_tests():
 	tank.take_damage(10.0)
 	check(is_equal_approx(tank.health, full - 30.0), "skills do full damage to a boss")
 
-	# tank pattern: 5-shot fan on the downbeat; phase 2 below half health: 7-shot fans
+	# tank pattern: 5-shot left-pointing arc on the downbeat (not aimed)
 	var shots = _count("enemy_shots")
 	tank.on_beat(4)
 	await frames(1)
-	check(_count("enemy_shots") - shots == 5, "tank fires a 5-shot fan on the downbeat")
+	check(_count("enemy_shots") - shots == 5, "tank fires a 5-shot arc on the downbeat")
+	var arc_shots = get_nodes_in_group("enemy_shots").slice(-5)
+	check(arc_shots.all(func(e): return e.velocity.x < 0.0), "the arc points left, away from the boss")
+	# the melody is a stave: notes fly straight left, higher pitch = higher on screen
+	shots = _count("enemy_shots")
+	tank.on_lead_note(7, 1)
+	tank.on_lead_note(0, 1)
+	await frames(1)
+	var melody = get_nodes_in_group("enemy_shots").slice(-2)
+	check(_count("enemy_shots") - shots == 2 and melody[0].position.y < melody[1].position.y and is_zero_approx(melody[0].velocity.y), "lead notes are staff notes: straight left, higher pitch higher up")
+	# phase 2: beat armour
 	var phases = []
 	tank.phase_changed.connect(func(p): phases.append(p))
 	tank.take_damage(tank.health - tank.max_health * 0.4)
-	check(tank.phase == 2 and phases == [2], "boss enters phase 2 below half health")
+	check(tank.phase == 2 and phases == [2] and tank.is_armored() and is_equal_approx(tank.armor, tank.ARMOR_PIPS), "phase 2 below half health raises 5 pips of beat armour")
+	var hp = tank.health
+	tank.take_hit(10.0, Vector2.RIGHT, conductor.Judgement.GOOD)
+	tank.take_hit(10.0, Vector2.RIGHT, -1)
+	check(is_equal_approx(tank.health, hp), "armoured: GOOD and held shots do no damage")
+	tank.take_hit(10.0, Vector2.RIGHT, conductor.Judgement.PERFECT)
+	check(is_equal_approx(tank.health, hp - 10.0), "armoured: PERFECT shots do full damage")
+	check(is_equal_approx(tank.armor, tank.ARMOR_PIPS - 1.0 - 0.5 - 0.1), "each hit chips the armour (PERFECT 1, GOOD 0.5, held 0.1)")
+	for i in 4:
+		tank.take_hit(0.01, Vector2.RIGHT, conductor.Judgement.PERFECT)
+	check(tank.is_stunned() and not tank.is_armored(), "breaking the last pip stuns the boss")
 	shots = _count("enemy_shots")
-	tank.on_beat(8)
+	tank._on_conductor_beat(8)
+	tank._on_lead_note(3, 1)
 	await frames(1)
-	check(_count("enemy_shots") - shots == 7, "phase 2 tank fires 7-shot fans")
-	# bosses play the melody: one shot per lead note, higher notes aim higher
-	var t2 = tank
-	shots = _count("enemy_shots")
-	t2.phase = 1
-	t2.on_lead_note(7, 1)
-	t2.on_lead_note(0, 1)
-	await frames(1)
-	var melody = get_nodes_in_group("enemy_shots").slice(-2)
-	check(_count("enemy_shots") - shots == 2 and melody[0].velocity.y < melody[1].velocity.y, "lead notes fire melody shots; higher pitch aims higher")
+	check(_count("enemy_shots") == shots, "a stunned boss doesn't fire")
+	hp = tank.health
+	tank.take_hit(10.0, Vector2.RIGHT, -1)
+	check(is_equal_approx(tank.health, hp - 15.0), "a stunned boss takes 1.5x damage from everything")
+	for n in tank.STUN_BEATS:
+		tank._on_conductor_beat(9 + n)
+	check(not tank.is_stunned() and tank.is_armored() and is_equal_approx(tank.armor, tank.ARMOR_PIPS), "after the stun the armour comes back")
+	# off-beat play alone still breaks the armour eventually (the beat is the key way, not the only one)
+	var misses = 0
+	while tank.is_armored() and misses < 100:
+		tank.take_hit(0.01, Vector2.RIGHT, conductor.Judgement.MISS)
+		misses += 1
+	check(misses <= 40 and tank.is_stunned(), "off-beat shots alone break the armour too, just slowly (%d)" % misses)
 	tank.queue_free()
 	await _clear_world()
+	# assisted players: GOOD cracks a whole pip
+	game.assist = 1
+	var easy = await _make_boss("res://scenes/enemies/bosses/mecha_tank.gd")
+	easy.take_damage(easy.health - easy.max_health * 0.4)
+	easy.take_hit(1.0, Vector2.RIGHT, conductor.Judgement.GOOD)
+	check(is_equal_approx(easy.armor, easy.ARMOR_PIPS - 1.0), "with assist, GOOD shots crack a whole pip")
+	game.assist = 0
+	easy.queue_free()
+	await _clear_world()
 
-	# mothership: launches grunts on even bars; beam hits only along its line
+	# mothership: a full-height wall with one gap; beam hits only along its line
 	var ship = await _make_boss("res://scenes/enemies/bosses/mothership.gd")
-	var before = _count("enemies")
+	shots = _count("enemy_shots")
 	ship.on_beat(0)
 	await frames(2)
-	check(_count("enemies") - before == 3, "mothership launches 3 grunts")
+	var wall = get_nodes_in_group("enemy_shots").slice(shots)
+	var gap_y = load("res://scenes/enemies/bosses/mothership.gd").gap_for_bar(0)
+	check(wall.size() >= 9 and wall.all(func(e): return absf(e.position.y - gap_y) > 70.0), "mothership wall leaves a gap at the predictable height (%d shots)" % wall.size())
 	var beam = EnemyBeam.create(900, 300, 0.0, 1.0)
 	check(beam.hits(Vector2(200, 310)) and not beam.hits(Vector2(200, 380)) and not beam.hits(Vector2(1000, 300)), "beam hits only along its line")
 	beam.free()
 	ship.queue_free()
 	await _clear_world()
 
-	# rat king: phase 2 summons shield mice
+	# rat king: no guards any more (they blocked shots); phase 2 adds crossing spirals
 	var king = await _make_boss("res://scenes/enemies/bosses/rat_king.gd")
-	before = get_nodes_in_group("enemies").filter(func(e): return e.get_script() == ShieldMouseScript).size()
+	var enemies_before = _count("enemies")
 	king.take_damage(king.max_health * 0.6)
 	await frames(2)
-	var guards = get_nodes_in_group("enemies").filter(func(e): return e.get_script() == ShieldMouseScript).size() - before
-	check(guards == 2, "Rat King summons 2 shield mice entering phase 2 (%d)" % guards)
+	check(_count("enemies") == enemies_before, "Rat King no longer summons shot-blocking guards")
+	shots = _count("enemy_shots")
+	king.on_beat(1)
+	await frames(1)
+	check(_count("enemy_shots") - shots == 2, "phase 2 Rat King: two counter-rotating spiral arms per beat")
 	king.queue_free()
 	await _clear_world()
 
@@ -933,6 +974,12 @@ func _tutorial_tests():
 		tutorial._on_beat(n)
 	Input.action_release("shoot")
 	check(tutorial.step == 3, "step 3 completes after holding fire for 4 beats")
+	# 4: try the weapons (the one you hold counts)
+	game.set_weapon(game.Weapon.LASER)
+	check(tutorial.step == 3, "one weapon switch isn't enough")
+	game.set_weapon(game.Weapon.FISH)
+	check(tutorial.step == 4, "step 4 completes after trying all three weapons")
+	game.set_weapon(game.Weapon.SPREAD)
 	await frames(3)
 	var practice = get_nodes_in_group("enemies")
 	check(practice.size() == 6 and practice.all(func(e): return not e.marching), "practice mice appear and stay put")
@@ -941,14 +988,15 @@ func _tutorial_tests():
 	# process_frame fires *before* nodes' _process, so wait two frames
 	await process_frame
 	await process_frame
-	check(tutorial.step == 4 and game.charges == game.MAX_CHARGES, "step 4 completes with a charge; step 5 gives free charges")
+	check(tutorial.step == 5 and game.charges == game.MAX_CHARGES, "step 5 completes with a charge; step 6 gives free charges")
+	check(tutorial.guide.focus_shape == "circle", "the spell step shows the shape to trace (circle first)")
 	# 5: cast each skill in order (wrong order doesn't count)
 	var gestures = main.get_node("GestureInput")
 	gestures.cast_skill("laser", false, Vector2.RIGHT)
 	check(tutorial.gesture_index == 0, "wrong gesture doesn't advance")
 	for skill in ["shockwave", "laser", "lightning", "shield"]:
 		gestures.cast_skill(skill, false, Vector2.RIGHT)
-	check(tutorial.step == 5, "all 4 gestures complete the tutorial")
+	check(tutorial.step == 6, "all 4 gestures complete the tutorial")
 	await wait(4.5)
 	for i in 3:
 		await process_frame
@@ -1258,3 +1306,116 @@ func _spell_chain_tests():
 	check(is_equal_approx(wave.damage, Shockwave.DAMAGE * game.spell_power), "skills use the chain power")
 	wave.free()
 	conductor.time_override = -1.0
+
+
+# ---------------------------------------------------------------- playtest 2
+func _shots() -> Array:
+	return main.get_children().filter(func(n): return n.get_script() == PlayerShot)
+
+
+func _playtest2_tests():
+	await _start_main()
+	main.level_runner.stop()
+	await _clear_world()
+	var gun = cat.get_node("Gun")
+	cat.position = Vector2(300, 360)
+	game.aim_override = Vector2(900, 360)
+
+	# weapons: spread = streams, laser = one piercing bolt that scales with level, fish = homing
+	game.gun_level = 3
+	game.set_weapon(game.Weapon.SPREAD)
+	var before = _shots().size()
+	gun.fire(1.0)
+	check(_shots().size() - before == 3, "spread fires one stream per gun level")
+	game.set_weapon(game.Weapon.LASER)
+	before = _shots().size()
+	gun.fire(1.0)
+	var bolt = _shots()[-1]
+	check(_shots().size() - before == 1 and bolt.pierce and is_equal_approx(bolt.damage, 1.0 + 2 * gun.LASER_PER_LEVEL), "laser: one piercing bolt, damage grows with gun level")
+	game.set_weapon(game.Weapon.FISH)
+	before = _shots().size()
+	gun.fire(1.0)
+	check(_shots().size() - before == gun.FISH_COUNT[3] and _shots()[-1].kind == PlayerShot.Kind.FISH, "fish: homing shots, count by gun level")
+	# a fish fired straight right curves toward a mouse above it
+	await _clear_world()
+	var target = load("res://scenes/enemies/grunt.tscn").instantiate()
+	target.position = Vector2(560, 200)
+	target.max_health = 50
+	main.add_child(target)
+	var fish = PlayerShot.create(Vector2(300, 360), Vector2.RIGHT, 0.1, -1, PlayerShot.Kind.FISH)
+	main.add_child(fish)
+	await frames(10)
+	check(is_instance_valid(fish) and fish.velocity.y < -50.0, "fish home in on the nearest mouse")
+	game.aim_override = null
+	game.set_weapon(game.Weapon.SPREAD)
+	game.cycle_weapon(1)
+	check(game.weapon == game.Weapon.LASER, "Q/E cycle weapons")
+	game.cycle_weapon(-2)
+	check(game.weapon == game.Weapon.FISH, "cycling wraps around")
+	game.set_weapon(game.Weapon.SPREAD)
+	await _clear_world()
+
+	# focus: slower movement and the hitbox is drawn
+	cat.velocity = Vector2.ZERO
+	game.focus_override = true
+	Input.action_press("move_right")
+	await frames(20)
+	var focused_speed = cat.velocity.length()
+	game.focus_override = false
+	await frames(20)
+	var normal_speed = cat.velocity.length()
+	Input.action_release("move_right")
+	check(focused_speed < normal_speed * 0.5 and normal_speed > 500.0, "focus (Shift) moves slower (%d vs %d)" % [focused_speed, normal_speed])
+	# snappy controls: from full speed right, reversing gets to full speed left within ~0.1 s
+	Input.action_press("move_left")
+	await frames(6)
+	Input.action_release("move_left")
+	check(cat.velocity.x < -400.0, "reversing direction is near-instant (%d)" % cat.velocity.x)
+	cat.velocity = Vector2.ZERO
+	cat.position = Vector2(300, 360)
+	await frames(5)
+
+	# stronger magnet: cheese 300 px away gets pulled in
+	var cheese = Pickup.create(Pickup.Type.CHEESE, cat.position + Vector2(300, 0))
+	main.add_child(cheese)
+	var cheese_before = game.cheese + game.charges * game.CHEESE_PER_CHARGE
+	await wait(0.8)
+	check(game.cheese + game.charges * game.CHEESE_PER_CHARGE == cheese_before + 1, "the magnet pulls cheese from 300 px away")
+
+	# dance break: clearing a wave starts it; on-beat taps give score + cheese; next wave ends it
+	main.level_runner.state = main.level_runner.State.WAVES
+	main.level_runner.alive = 1
+	main.level_runner._on_enemy_gone()
+	check(game.dancing, "clearing a wave starts a dance break")
+	var score = game.score
+	game.register_judgement(root.get_node("Conductor").Judgement.PERFECT)
+	await frames(2)
+	check(game.score > score and _count("pickups") >= 1, "an on-beat tap while dancing gives score and cheese")
+	var far = Pickup.create(Pickup.Type.CHEESE, Vector2(1100, 100))
+	main.add_child(far)
+	await wait(1.2)
+	check(not is_instance_valid(far), "during a dance break every pickup flies to the cat")
+	main.level_runner._next_wave()
+	check(not game.dancing, "the next wave ends the dance break")
+	main.level_runner.stop()
+	await _clear_world()
+
+	# HUD message: first line big, the rest small and wrapped inside the screen
+	main.hud.show_message("LEVEL 1 - MOUSE FACTORY\n" + "a very long story line that would have run off the screen before ".repeat(3))
+	await frames(2)
+	var body = main.hud.message_body
+	check(main.hud.message_title.text == "LEVEL 1 - MOUSE FACTORY" and body.get_line_count() > 1, "long messages wrap onto several lines")
+	check(body.get_global_rect().position.x >= 0 and body.get_global_rect().end.x <= 1280, "messages stay inside the screen")
+	main.hud.hide_message()
+
+	# spell guide: shows while drawing, lights up the shape being drawn
+	var gestures = main.get_node("GestureInput")
+	game.add_charge(1)
+	gestures.begin(Vector2(400, 300))
+	check(gestures.guide.panel, "the spell guide shows while drawing")
+	for i in 41:
+		gestures.add_point(Vector2(400, 300) + Vector2.from_angle(-PI / 2 + TAU * i / 40.0) * 80.0 + Vector2(0, 80))
+	check(gestures.guide.matched == "circle", "the guide lights up the shape you're drawing (%s)" % gestures.guide.matched)
+	gestures.cancel()
+	check(not gestures.guide.panel, "the guide hides when drawing stops")
+	game.gun_level = 1

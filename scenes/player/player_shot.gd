@@ -2,9 +2,20 @@ extends Area2D
 
 class_name PlayerShot
 
-const TEXTURE = preload("res://Art/Generated/player_shot.png")
+# Kinds (one per weapon, see gun.gd): BOLT (yarn spread), LASER (fast, pierces), FISH (homes).
+enum Kind { BOLT, LASER, FISH }
+const TEXTURES = {
+	Kind.BOLT: preload("res://Art/Generated/player_shot.png"),
+	Kind.LASER: preload("res://Art/Generated/shot_laser.png"),
+	Kind.FISH: preload("res://Art/Generated/shot_fish.png"),
+}
+const SPEEDS = {Kind.BOLT: 900.0, Kind.LASER: 1500.0, Kind.FISH: 640.0}
 const SPEED = 900.0
 const SPRITE_SCALE = 3.0
+const FISH_TURN_RATE = 7.0     # radians per second
+const FISH_SEEK_RANGE = 900.0
+
+var kind = Kind.BOLT
 
 var velocity: Vector2
 var damage = 1.0
@@ -14,10 +25,12 @@ var pierce = false          # FEVER shots go through enemies (each enemy hit onc
 var already_hit = {}
 
 
-static func create(at: Vector2, direction: Vector2, dmg: float = 1.0, judged: int = -1) -> PlayerShot:
+static func create(at: Vector2, direction: Vector2, dmg: float = 1.0, judged: int = -1, shot_kind: Kind = Kind.BOLT) -> PlayerShot:
 	var shot = PlayerShot.new()
+	shot.kind = shot_kind
 	shot.position = at
-	shot.velocity = direction.normalized() * SPEED
+	shot.velocity = direction.normalized() * SPEEDS[shot_kind]
+	shot.pierce = shot_kind == Kind.LASER
 	shot.rotation = direction.angle()
 	shot.damage = dmg
 	shot.judgement = judged
@@ -31,10 +44,10 @@ func _ready():
 	collision_layer = Game.LAYER_PLAYER_SHOT
 	collision_mask = Game.LAYER_ENEMY
 	var sprite = Sprite2D.new()
-	sprite.texture = TEXTURE
+	sprite.texture = TEXTURES[kind]
 	sprite.scale = Vector2.ONE * SPRITE_SCALE
 	# on-beat shots are bigger and glow gold
-	if pierce:
+	if Game.is_fever():
 		sprite.scale *= 1.5
 		sprite.modulate = Color(2.0, 1.4, 0.3)
 	elif judgement == Conductor.Judgement.PERFECT:
@@ -53,6 +66,8 @@ func _ready():
 
 
 func _physics_process(delta):
+	if kind == Kind.FISH:
+		_home(delta)
 	position += velocity * delta
 	if not Game.SCREEN.grow(60).has_point(position):
 		queue_free()
@@ -70,3 +85,23 @@ func _on_area_entered(area):
 		spent = true
 		area.take_hit(damage, velocity, judgement)
 		queue_free()
+
+
+# Fish turn toward the nearest living enemy in front of them.
+func _home(delta: float):
+	var best: Node2D = null
+	var best_d = FISH_SEEK_RANGE
+	for enemy in get_tree().get_nodes_in_group("enemies"):
+		if enemy.is_dead:
+			continue
+		var d = enemy.global_position.distance_to(global_position)
+		if d < best_d:
+			best_d = d
+			best = enemy
+	if best == null:
+		return
+	var want = (best.global_position - global_position).angle()
+	var now = velocity.angle()
+	var turn = clamp(angle_difference(now, want), -FISH_TURN_RATE * delta, FISH_TURN_RATE * delta)
+	velocity = velocity.rotated(turn)
+	rotation = velocity.angle()

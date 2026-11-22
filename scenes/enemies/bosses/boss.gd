@@ -2,29 +2,57 @@ extends EnemyBase
 
 class_name Boss
 
-# Shared boss behaviour:
-# - Armour (Revision 1): off-beat and held shots do OFFBEAT_ARMOR (50%); on-beat clicks and
-#   skills do full damage. Rhythm is the key way through, not the only one.
-# - Phase 2 below half health (on_phase_2 hook).
-# - Guaranteed reward on death: 5 cheese + a battery + a yarn.
-# - Attack helpers: fan (aimed spread), ring (all directions), melody_shot (follows the lead melody).
-# - Bosses "play" the music: on_lead_note() fires on each note of the lead melody
-#   (Conductor.lead_note); the drums (beats/bars) drive the big attacks in on_beat().
-# Subclasses call build() in _init and script their attacks in on_beat(n).
+# Shared boss behaviour (playtest 2: closer to bullet hell - you dodge readable patterns while
+# keeping a steady aim; bosses drift slowly instead of jumping to your height).
+#
+# Phase 1 - armour: off-beat and held shots do OFFBEAT_ARMOR (50%); on-beat clicks and skills
+#   do full damage.
+# Phase 2 (below half health) - BEAT ARMOUR: ARMOR_PIPS pips around the boss. While any pip is
+#   left, only PERFECT shots hurt (full damage); everything else just pings off. Each hit chips
+#   the armour by CRACK[judgement] (PERFECT a whole pip; GOOD half - a whole one when assisted;
+#   off-beat/held a little, so the beat is the key way through, not the only one). When the last
+#   pip breaks the boss is STUNNED for STUN_BEATS beats: it stops firing and takes STUN_DAMAGE x
+#   damage from everything. Then the armour comes back.
+# Guaranteed reward on death: 5 cheese + a battery + a yarn.
+# Patterns (all fixed geometry, no aiming randomness):
+#   staff_note - the lead melody as bullets: each note flies straight left at a height set by
+#                its pitch, like notes on a stave. You can hear where the gap will be.
+#   arc        - an evenly spaced fan pointing left (not aimed).
+#   spiral     - rotating arms; the angle advances every call.
+#   wall       - a column of bullets across the screen with a gap that moves predictably.
+#   ring       - all directions.
+# Subclasses call build() in _init and script their attacks in on_beat(n) / on_lead_note().
 
 signal health_changed(health: float, max_health: float)
 signal phase_changed(phase: int)
+signal armor_changed(pips: float, stunned: bool)
 
 const OFFBEAT_ARMOR = 0.5
 const ASSIST_OFFBEAT_ARMOR = 0.75   # beginner care: with any assist, off-beat shots do 75%
 const ASSIST_HEALTH_CUT = 0.15      # beginner care: boss health -15% per assist level
+const ARMOR_PIPS = 5.0
+const CRACK = {
+	Conductor.Judgement.PERFECT: 1.0,
+	Conductor.Judgement.GOOD: 0.5,
+	Conductor.Judgement.MISS: 0.15,
+	-1: 0.1,   # held fire
+}
+const SKILL_CRACK = 1.0
+const STUN_BEATS = 8
+const STUN_DAMAGE = 1.5
+const STAFF_SPACING = 30.0   # pixels per scale step for staff notes
+const DRIFT_RANGE = Vector2(170.0, 550.0)
 
 var boss_name = "BOSS"
 var phase = 1
+var armor = 0.0          # pips left (phase 2)
+var stunned_beats = 0
+var spiral_angle = 0.0
 var _note_count = 0
+var hit_radius = 80.0
 
 
-func build(texture: Texture2D, sprite_scale: float, hit_radius: float, health: float):
+func build(texture: Texture2D, sprite_scale: float, radius: float, health: float):
 	var s = Sprite2D.new()
 	s.name = "Sprite2D"
 	s.texture = texture
@@ -32,7 +60,8 @@ func build(texture: Texture2D, sprite_scale: float, hit_radius: float, health: f
 	add_child(s)
 	var shape = CollisionShape2D.new()
 	var circle = CircleShape2D.new()
-	circle.radius = hit_radius
+	circle.radius = radius
+	hit_radius = radius
 	shape.shape = circle
 	add_child(shape)
 	max_health = health
@@ -48,10 +77,48 @@ func _ready():
 	Conductor.lead_note.connect(_on_lead_note)
 
 
+func _process(_delta):
+	if phase == 2:
+		queue_redraw()
+
+
+func is_armored() -> bool:
+	return phase == 2 and armor > 0.0 and stunned_beats == 0
+
+
+func is_stunned() -> bool:
+	return stunned_beats > 0
+
+
+func _crack_for(judgement: int) -> float:
+	if judgement == Conductor.Judgement.GOOD and Game.assist > 0:
+		return 1.0
+	return CRACK.get(judgement, 0.1)
+
+
 func take_hit(amount: float, _direction: Vector2, judgement: int = -1):
+	if is_armored():
+		_crack(_crack_for(judgement))
+		if judgement == Conductor.Judgement.PERFECT:
+			take_damage(amount, judgement)
+		else:
+			_ping()
+		return
 	var on_beat = judgement == Conductor.Judgement.GOOD or judgement == Conductor.Judgement.PERFECT
-	var armor = ASSIST_OFFBEAT_ARMOR if Game.assist > 0 else OFFBEAT_ARMOR
-	take_damage(amount * (1.0 if on_beat else armor), judgement)
+	var factor = 1.0 if on_beat else (ASSIST_OFFBEAT_ARMOR if Game.assist > 0 else OFFBEAT_ARMOR)
+	if is_stunned():
+		factor = STUN_DAMAGE
+	take_damage(amount * factor, judgement)
+
+
+# Skills: full damage in phase 1; in phase 2 they crack a whole pip (half damage) while
+# armoured, and do STUN_DAMAGE x while stunned.
+func take_skill_damage(amount: float):
+	if is_armored():
+		_crack(SKILL_CRACK)
+		take_damage(amount * 0.5)
+		return
+	take_damage(amount * (STUN_DAMAGE if is_stunned() else 1.0))
 
 
 func take_damage(amount: float, judgement: int = -1):
@@ -61,14 +128,51 @@ func take_damage(amount: float, judgement: int = -1):
 	health_changed.emit(max(health, 0.0), max_health)
 	if phase == 1 and not is_dead and health <= max_health * 0.5:
 		phase = 2
+		armor = ARMOR_PIPS
 		phase_changed.emit(phase)
+		armor_changed.emit(armor, false)
 		_flash(Color(3, 1, 1))
 		Game.shake(10.0)
 		on_phase_2()
 
 
-func _on_lead_note(pitch: int, length: int):
+func _crack(amount: float):
+	var before = ceil(armor)
+	armor = max(armor - amount, 0.0)
+	if armor <= 0.0:
+		stunned_beats = STUN_BEATS
+		Sfx.play("armor_break")
+		Game.shake(14.0)
+		_flash(Color(1, 3, 3))
+		armor_changed.emit(0.0, true)
+	elif ceil(armor) < before:
+		Sfx.play("armor_crack", -4.0)
+		armor_changed.emit(armor, false)
+
+
+var _last_ping_msec = 0
+
+func _ping():
+	if Time.get_ticks_msec() - _last_ping_msec > 90:
+		_last_ping_msec = Time.get_ticks_msec()
+		Sfx.play("armor_ping", -12.0)
+
+
+func _on_conductor_beat(n: int):
 	if entering or is_dead or not is_inside_tree():
+		return
+	if stunned_beats > 0:
+		stunned_beats -= 1
+		beats_alive += 1
+		if stunned_beats == 0:
+			armor = ARMOR_PIPS
+			armor_changed.emit(armor, false)
+		return
+	super(n)
+
+
+func _on_lead_note(pitch: int, length: int):
+	if entering or is_dead or stunned_beats > 0 or not is_inside_tree():
 		return
 	_note_count += 1
 	if Game.assist >= 2 and _note_count % 2 == 0:
@@ -76,25 +180,105 @@ func _on_lead_note(pitch: int, length: int):
 	on_lead_note(pitch, length)
 
 
-# Override: what to fire on each lead-melody note (default: one melody shot).
+# Override: what to fire on each lead-melody note (default: one staff note).
 func on_lead_note(pitch: int, _length: int):
-	melody_shot(pitch, 280.0)
+	staff_note(pitch, 200.0)
 
 
-# Aimed at the cat, tilted by the note's pitch: higher notes aim higher.
-func melody_shot(pitch: int, speed: float, count: int = 1, spread_degrees: float = 5.0):
-	var aim = (player_position() - global_position).angle()
-	# tilt toward the top of the screen for higher notes, whichever way the boss is aiming
-	var up_sign = 1.0 if cos(aim) < 0.0 else -1.0
-	var tilt = (pitch - (MusicPatterns.SCALE_STEPS - 1) / 2.0) * 6.0 * up_sign
-	var base = aim + deg_to_rad(tilt)
+# The melody as a stave: a note flies straight left at a height set by its pitch
+# (higher note = higher on screen). `count` > 1 stacks a chord (tight vertical pair/triple).
+func staff_note(pitch: int, speed: float, count: int = 1):
+	var y = global_position.y - (pitch - (MusicPatterns.SCALE_STEPS - 1) / 2.0) * STAFF_SPACING
 	for i in count:
-		fire_shot(Vector2.from_angle(base + deg_to_rad((i - (count - 1) / 2.0) * spread_degrees)), speed)
+		var at = Vector2(global_position.x - hit_radius * 0.6, y + (i - (count - 1) / 2.0) * 16.0)
+		_spawn_shot(at, Vector2.LEFT, speed)
 
 
-# Override for a phase-2 entrance (summons etc.).
+# Evenly spaced fan around `center_degrees` (180 = straight left). Not aimed.
+func arc(count: int, spread_degrees: float, speed: float, center_degrees: float = 180.0):
+	if Game.assist >= 2:
+		count = max(count - 2, 3)
+	for i in count:
+		var angle = deg_to_rad(center_degrees + (i - (count - 1) / 2.0) * spread_degrees)
+		fire_shot(Vector2.from_angle(angle), speed)
+
+
+# Rotating arms: each call fires one shot per arm and turns the spiral by step_degrees.
+func spiral(arms: int, speed: float, step_degrees: float):
+	if Game.assist >= 2 and arms > 1:
+		arms -= 1
+	for i in arms:
+		fire_shot(Vector2.from_angle(spiral_angle + TAU * i / arms), speed)
+	spiral_angle += deg_to_rad(step_degrees)
+
+
+# A column of bullets across the screen at the boss's front, leaving a gap of gap_size pixels
+# centred on gap_y. Bullets travel straight left.
+func wall(gap_y: float, gap_size: float, speed: float, spacing: float = 46.0):
+	if Game.assist > 0:
+		gap_size *= 1.25
+	var x = global_position.x - hit_radius
+	var y = 70.0
+	while y < 660.0:
+		if absf(y - gap_y) > gap_size / 2.0:
+			_spawn_shot(Vector2(x, y), Vector2.LEFT, speed)
+		y += spacing
+
+
+# Aimed spread (only used by endless-mode extras now).
+func fan(count: int, spread_degrees: float, speed: float):
+	if Game.assist >= 2:
+		count = max(count - 2, 3)
+	var base = (player_position() - global_position).angle()
+	for i in count:
+		var angle = base + deg_to_rad((i - (count - 1) / 2.0) * spread_degrees)
+		fire_shot(Vector2.from_angle(angle), speed)
+
+
+func ring(count: int, speed: float, offset_angle: float = 0.0):
+	if Game.assist >= 2:
+		count = max(count - 4, 6)
+	for i in count:
+		fire_shot(Vector2.from_angle(offset_angle + TAU * i / count), speed)
+
+
+func _spawn_shot(at: Vector2, direction: Vector2, speed: float):
+	var shot = EnemyShot.create(at, direction, speed * Game.shot_speed_factor())
+	get_tree().current_scene.add_child(shot)
+
+
+# Slow, predictable vertical drift (keeps the boss easy to aim at).
+func drift_to(y: float, seconds: float):
+	create_tween().tween_property(self, "position:y", clamp(y, DRIFT_RANGE.x, DRIFT_RANGE.y), seconds).set_trans(Tween.TRANS_SINE)
+
+
+# Override for a phase-2 entrance.
 func on_phase_2():
 	pass
+
+
+func _draw():
+	if phase != 2 or is_dead:
+		return
+	if stunned_beats > 0:
+		# dizzy stars while stunned
+		var t = Time.get_ticks_msec() / 1000.0
+		for i in 3:
+			var p = Vector2.from_angle(t * 4.0 + TAU * i / 3.0) * Vector2(50, 16) + Vector2(0, -hit_radius - 10)
+			draw_circle(p, 6.0, Color(1, 0.9, 0.3))
+		return
+	# beat armour: one glowing pip per remaining point, around the boss, pulsing on the beat
+	var pips = int(ceil(armor))
+	var pulse = 0.6 + 0.4 * (1.0 - Conductor.beat_phase())
+	for i in int(ARMOR_PIPS):
+		var a = -PI / 2.0 + TAU * i / ARMOR_PIPS
+		var p = Vector2.from_angle(a) * (hit_radius + 18.0)
+		if i < pips:
+			draw_circle(p, 11.0, Color(1, 0.85, 0.3, pulse))
+			draw_circle(p, 6.0, Color(1, 1, 1, pulse))
+		else:
+			draw_arc(p, 9.0, 0, TAU, 12, Color(1, 1, 1, 0.25), 2.0)
+	draw_arc(Vector2.ZERO, hit_radius + 18.0, 0, TAU, 48, Color(1, 0.85, 0.3, 0.35 * pulse), 3.0)
 
 
 func die():
@@ -119,27 +303,6 @@ func _drop():
 func player_position() -> Vector2:
 	var player = get_tree().get_first_node_in_group("player") as Node2D
 	return player.global_position if player else global_position + Vector2.LEFT * 500
-
-
-# `count` shots spread over `spread_degrees` between each, centred on the cat.
-func fan(count: int, spread_degrees: float, speed: float):
-	if Game.assist >= 2:
-		count = max(count - 2, 3)   # beginner care: thinner fans after repeated game overs
-	var base = (player_position() - global_position).angle()
-	for i in count:
-		var angle = base + deg_to_rad((i - (count - 1) / 2.0) * spread_degrees)
-		fire_shot(Vector2.from_angle(angle), speed)
-
-
-func ring(count: int, speed: float, offset_angle: float = 0.0):
-	if Game.assist >= 2:
-		count = max(count - 4, 6)   # beginner care: thinner rings after repeated game overs
-	for i in count:
-		fire_shot(Vector2.from_angle(offset_angle + TAU * i / count), speed)
-
-
-func move_to_y(y: float, seconds: float = 0.3):
-	create_tween().tween_property(self, "position:y", clamp(y, 120.0, 600.0), seconds).set_trans(Tween.TRANS_SINE)
 
 
 # Spawns helper enemies that fly in from the boss.

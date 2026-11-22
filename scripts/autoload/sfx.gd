@@ -21,6 +21,13 @@ const SOUNDS = {
 	"chain_2": preload("res://Audio/chain_2.wav"),
 	"chain_3": preload("res://Audio/chain_3.wav"),
 	"chain_4": preload("res://Audio/chain_4.wav"),
+	"shoot_laser": preload("res://Audio/shoot_laser.wav"),
+	"shoot_fish": preload("res://Audio/shoot_fish.wav"),
+	"weapon_switch": preload("res://Audio/weapon_switch.wav"),
+	"armor_ping": preload("res://Audio/armor_ping.wav"),
+	"armor_crack": preload("res://Audio/armor_crack.wav"),
+	"armor_break": preload("res://Audio/armor_break.wav"),
+	"dance": preload("res://Audio/dance.wav"),
 }
 
 const POOL_SIZE = 12

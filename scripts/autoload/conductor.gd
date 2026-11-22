@@ -23,8 +23,9 @@ const PERFECT_WINDOW = 0.05
 const GOOD_WINDOW = 0.10
 const ASSIST_GOOD_WINDOW = 0.14   # beginner care: wider GOOD window while assisted
 const TRACK_BPM = {
-	"level1": 110, "level2": 125, "level3": 140,
-	"boss1": 120, "boss2": 135, "boss3": 150,
+	# playtest 2: slower to start (was 110/125/140, bosses 120/135/150); keep in sync with tools/gen_audio.py
+	"level1": 92, "level2": 104, "level3": 116,
+	"boss1": 100, "boss2": 112, "boss3": 124,
 }
 const SETTINGS_PATH = "user://settings.cfg"
 const SILENT_DB = -60.0

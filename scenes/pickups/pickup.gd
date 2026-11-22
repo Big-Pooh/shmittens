@@ -15,9 +15,11 @@ const TEXTURES = {
 	Type.YARN: preload("res://Art/Generated/yarn.png"),
 }
 const SPRITE_SCALE = 3.0
-const DRIFT_SPEED = 90.0
-const MAGNET_RADIUS = 160.0
-const MAGNET_SPEED = 700.0
+const DRIFT_SPEED = 70.0
+# playtest 2: "a more potent magnet for cheese" (was radius 160, speed 700)
+const MAGNET_RADIUS = 340.0
+const MAGNET_SPEED = 1100.0
+# During a dance break (between waves) every pickup on screen flies to the cat.
 
 var type: Type = Type.CHEESE
 var velocity: Vector2
@@ -53,8 +55,10 @@ func _ready():
 func _physics_process(delta):
 	time += delta
 	var player = get_tree().get_first_node_in_group("player") as Shmitten
-	if player and not player.is_dead and player.global_position.distance_to(global_position) < MAGNET_RADIUS:
-		velocity = global_position.direction_to(player.global_position) * MAGNET_SPEED
+	if player and not player.is_dead and (Game.dancing or player.global_position.distance_to(global_position) < MAGNET_RADIUS):
+		# accelerate in, so pickups near the edge of the magnet don't overshoot or orbit
+		var want = global_position.direction_to(player.global_position) * MAGNET_SPEED
+		velocity = velocity.lerp(want, min(10.0 * delta, 1.0))
 	else:
 		velocity = velocity.lerp(Vector2(-DRIFT_SPEED, sin(time * 2.0) * 30.0), 2.0 * delta)
 	position += velocity * delta

@@ -57,7 +57,7 @@ func _process(delta):
 			continue
 		if distance_to_beam(enemy.global_position) <= width / 2.0 + ENEMY_RADIUS:
 			already_hit[enemy] = true
-			enemy.take_damage(damage)
+			enemy.take_skill_damage(damage)
 	for shot in get_tree().get_nodes_in_group("enemy_shots"):
 		if distance_to_beam(shot.global_position) <= width / 2.0:
 			shot.queue_free()

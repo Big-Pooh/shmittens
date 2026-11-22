@@ -7,7 +7,10 @@ class_name LevelRunner
 #   WAVES      - each wave spawns on a bar; when it's cleared the next one waits for the next bar
 #   BOSS_INTRO - "WARNING" + boss name, boss music starts, BOSS_INTRO_BARS bars
 #   BOSS       - until the boss dies
-#   CLEARED    - CLEARED_BARS bars, then the next level (or DONE after the last one)
+#   CLEARED    - CLEARED_BARS bars (the transition card), then the next level (or DONE)
+# Dance breaks (playtest 2: "dead time between waves"): during the intro, between a cleared
+# wave and the next one, and during the boss warning, Game.dancing is on - the cat dances,
+# pickups fly to her, and on-beat taps earn cheese (see main.gd).
 
 signal level_started(index: int)
 signal wave_started(index: int, total: int)
@@ -21,7 +24,7 @@ enum State { IDLE, INTRO, WAVES, BOSS_INTRO, BOSS, CLEARED, DONE }
 const INTRO_BARS = 3
 const RETRY_INTRO_BARS = 1
 const BOSS_INTRO_BARS = 2
-const CLEARED_BARS = 2
+const CLEARED_BARS = 4   # the transition card (Space skips ahead)
 
 var state = State.IDLE
 var level_index = 0
@@ -55,6 +58,7 @@ func start_level(index: int, resume_wave: int = 0):
 	bars_to_wait = RETRY_INTRO_BARS if from_wave > 0 else INTRO_BARS
 	Game.set_level(level_index, level().waves.size())
 	Conductor.play(level().track, Game.multiplier() + 1)
+	Game.set_dancing(true)
 	level_started.emit(level_index)
 
 
@@ -81,6 +85,13 @@ func start_endless():
 
 func stop():
 	state = State.IDLE
+	Game.set_dancing(false)
+
+
+# The transition card was dismissed: move on at the next bar.
+func skip_transition():
+	if state == State.CLEARED and bars_to_wait > 1:
+		bars_to_wait = 1
 
 
 func _on_bar(_n: int):
@@ -122,6 +133,7 @@ func _next_wave():
 		_start_boss_intro()
 		return
 	Game.set_wave(wave_index + 1)
+	Game.set_dancing(false)
 	for group in waves[wave_index]:
 		for enemy in Levels.create_group(group, level().get("volley_rate", 1.0)):
 			enemy.tree_exited.connect(_on_enemy_gone)
@@ -142,6 +154,8 @@ func checkpoint() -> int:
 
 func _on_enemy_gone():
 	alive -= 1
+	if alive <= 0 and state == State.WAVES and is_inside_tree():
+		Game.set_dancing(true)
 	# the next wave starts on the next bar (handled in _on_bar)
 
 
@@ -159,6 +173,7 @@ const BOSS_MIN_LIVES = 2   # lives are topped up to at least this when a boss ap
 
 func _spawn_boss():
 	state = State.BOSS
+	Game.set_dancing(false)
 	if Game.lives < BOSS_MIN_LIVES:
 		Game.lives = BOSS_MIN_LIVES
 		Game.lives_changed.emit(Game.lives)
@@ -173,6 +188,7 @@ func _next_endless_wave():
 		Game.level = stage
 		Conductor.play(Endless.TRACKS[stage], Game.multiplier() + 1)
 	Game.set_wave(wave_index + 1)
+	Game.set_dancing(false)
 	if Endless.is_boss_wave(wave_index):
 		state = State.BOSS
 		boss = Levels.create_boss(stage)
@@ -198,4 +214,5 @@ func _on_boss_died(_boss):
 	Game.record_level_clear(level_index)
 	state = State.CLEARED
 	bars_to_wait = CLEARED_BARS
+	Game.set_dancing(false)
 	level_cleared.emit(level_index)

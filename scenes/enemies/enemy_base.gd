@@ -75,7 +75,11 @@ func take_hit(amount: float, _direction: Vector2, judgement: int = -1):
 	take_damage(amount, judgement)
 
 
-# Skills call this directly (judgement -1).
+# Skills call this (bosses override it for beat armour).
+func take_skill_damage(amount: float):
+	take_damage(amount)
+
+
 func take_damage(amount: float, judgement: int = -1):
 	if is_dead:
 		return

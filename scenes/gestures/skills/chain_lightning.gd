@@ -49,7 +49,7 @@ func _strike():
 		path.append(current.global_position)
 		current = _nearest(candidates, current.global_position, JUMP_RANGE)
 	for enemy in targets:
-		enemy.take_damage(damage)
+		enemy.take_skill_damage(damage)
 
 
 func _nearest(candidates: Array, to: Vector2, max_distance: float):

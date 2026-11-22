@@ -40,7 +40,7 @@ func _process(delta):
 			continue
 		if enemy.global_position.distance_to(global_position) <= radius + ENEMY_RADIUS:
 			already_hit[enemy] = true
-			enemy.take_damage(damage)
+			enemy.take_skill_damage(damage)
 	for shot in get_tree().get_nodes_in_group("enemy_shots"):
 		if shot.global_position.distance_to(global_position) <= radius:
 			shot.queue_free()

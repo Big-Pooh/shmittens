@@ -18,12 +18,19 @@ const ENDING_DELAY = 3.5
 var queen_cage: QueenCage
 var shake_strength = 0.0
 var game_over_checkpoint = 0   # saved before the runner stops
+# Dance break rewards: each on-beat tap = DANCE_SCORE points + 1 cheese (max DANCE_CHEESE per break)
+const DANCE_SCORE = 50
+const DANCE_CHEESE = 4
+var dance_hits = 0
+var transition_card: TransitionCard
 
 
 func _ready():
 	Game.reset()
 	Game.game_over.connect(_on_game_over)
 	Game.reward.connect(_on_reward)
+	Game.judged.connect(_on_judged)
+	Game.dance_changed.connect(func(on): if on: dance_hits = 0)
 	Game.shake_requested.connect(func(s): shake_strength = max(shake_strength, s))
 	level_runner.level_started.connect(_on_level_started)
 	level_runner.wave_started.connect(func(_i, _total): hud.hide_message())
@@ -57,6 +64,9 @@ func _exit_tree():
 
 
 func _on_level_started(index: int):
+	if transition_card and is_instance_valid(transition_card):
+		transition_card.close()
+		transition_card = null
 	if Game.endless_mode:
 		hud.show_message("ENDLESS\nbest %d" % Game.best_scores.get("endless", 0))
 		return
@@ -91,10 +101,20 @@ func _on_level_cleared(index: int):
 		hud.show_message("THE QUEEN IS FREE!")
 		queen_cage.release(player.global_position)
 	else:
-		var level = Levels.LEVELS[index]
-		var seconds = int(level_runner.level_seconds)
 		var ratio = 100.0 * Game.level_perfects / max(Game.level_judged, 1)
-		hud.show_message("LEVEL CLEAR!   RANK %s\ntime %d:%02d (par %d:%02d)   perfect %d" % [level_runner.last_rank, seconds / 60, seconds % 60, int(level.par_seconds) / 60, int(level.par_seconds) % 60, int(ratio)] + "%")
+		transition_card = TransitionCard.create(index, level_runner.last_rank, int(level_runner.level_seconds), int(ratio))
+		transition_card.dismissed.connect(level_runner.skip_transition)
+		add_child(transition_card)
+
+
+func _on_judged(judgement: int):
+	if not Game.dancing or judgement == Conductor.Judgement.MISS:
+		return
+	dance_hits += 1
+	Game.add_score(DANCE_SCORE)
+	Sfx.play("dance", -6.0)
+	if dance_hits <= DANCE_CHEESE:
+		add_child.call_deferred(Pickup.create(Pickup.Type.CHEESE, player.global_position + Vector2(60, -30)))
 
 
 # Combo milestone rewards appear right in front of the cat.

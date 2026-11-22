@@ -236,6 +236,20 @@ def write_png(path, rows):
         f.write(png)
 
 
+def write_png_rgba(path, rows):
+    """rows: list of lists of (r, g, b, a) tuples."""
+    h, w = len(rows), len(rows[0])
+    raw = b"".join(b"\x00" + bytes(v for px in row for v in px) for row in rows)
+
+    def chunk(tag, data):
+        return struct.pack(">I", len(data)) + tag + data + struct.pack(">I", zlib.crc32(tag + data) & 0xFFFFFFFF)
+
+    png = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 6, 0, 0, 0))
+    png += chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b"")
+    with open(path, "wb") as f:
+        f.write(png)
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     for name, art in SPRITES.items():

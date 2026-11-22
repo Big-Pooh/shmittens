@@ -87,6 +87,14 @@ def main():
     for i, semis in enumerate([0, 3, 7, 12]):
         f = 440.0 * 2 ** (semis / 12.0)
         write("chain_%d.wav" % (i + 1), mix(sweep(0.25, f, f, 0.18, tri, 1.2), sweep(0.25, f * 2, f * 2, 0.06, square, 2.0)))
+    # playtest 2: weapons, beat armour, dance break
+    write("shoot_laser.wav", sweep(0.08, 2600, 1900, 0.14, square, 2.0))
+    write("shoot_fish.wav", sweep(0.1, 700, 1100, 0.14, tri, 1.5))
+    write("weapon_switch.wav", sweep(0.05, 1200, 1200, 0.15, square, 1.0) + sweep(0.06, 1600, 1600, 0.15, square, 1.0))
+    write("armor_ping.wav", sweep(0.12, 2400, 2300, 0.12, tri, 6.0))
+    write("armor_crack.wav", mix(sweep(0.18, 1500, 700, 0.18, square, 3.0), noise(0.12, 0.2, 3)))
+    write("armor_break.wav", mix(sweep(0.5, 900, 120, 0.25, square, 1.0), noise(0.5, 0.3, 4)))
+    write("dance.wav", sweep(0.07, 1319, 1319, 0.16, tri, 2.0))
     print("wrote sounds to %s" % os.path.normpath(OUT))
     write_music()
 
@@ -100,12 +108,12 @@ BEATS_PER_BAR = 4
 
 # name: (bpm, root midi note, chord roots as semitones from root, minor scale lead pattern)
 TRACKS = {
-    "level1": (110, 57, [0, -4, 3, -2]),   # A minor: Am F C G
-    "level2": (125, 50, [0, -4, 3, -2]),   # D minor: Dm Bb F C
-    "level3": (140, 52, [0, -4, -2, 0]),   # E minor: Em C D Em
-    "boss1": (120, 57, [0, 1, 0, -1]),     # tense: i bII i VII
-    "boss2": (135, 50, [0, 1, -2, -5]),
-    "boss3": (150, 52, [0, 1, 3, -1]),
+    "level1": (92, 57, [0, -4, 3, -2]),   # A minor: Am F C G
+    "level2": (104, 50, [0, -4, 3, -2]),   # D minor: Dm Bb F C
+    "level3": (116, 52, [0, -4, -2, 0]),   # E minor: Em C D Em
+    "boss1": (100, 57, [0, 1, 0, -1]),     # tense: i bII i VII
+    "boss2": (112, 50, [0, 1, -2, -5]),
+    "boss3": (124, 52, [0, 1, 3, -1]),
 }
 MINOR_PENTATONIC = [0, 3, 5, 7, 10, 12, 15, 17]
 LEAD_PATTERNS = [  # (step in 8ths, scale index, length in 8ths) per bar

@@ -6,6 +6,8 @@ signal score_changed(score: int)
 signal lives_changed(lives: int)
 signal charges_changed(charges: int, cheese: int)
 signal gun_level_changed(level: int)
+signal weapon_changed(weapon: int)
+signal dance_changed(active: bool)   # dance break between waves (see LevelRunner)
 signal wave_changed(wave: int)
 signal game_over
 signal combo_changed(combo: int, multiplier: int)
@@ -51,6 +53,14 @@ var lives = START_LIVES
 var charges = 0
 var cheese = 0
 var gun_level = 1
+# Weapons (playtest 2): switch any time with 1/2/3, Q/E or the mouse wheel. Gun level
+# (yarn) powers whichever weapon is equipped. Kept across deaths and levels.
+enum Weapon { SPREAD, LASER, FISH }
+const WEAPON_NAMES = ["YARN SPREAD", "LASER POINTER", "FISH SEEKERS"]
+const WEAPON_HINTS = ["wide - for waves", "focused - for bosses", "homing - for dodging"]
+var weapon = Weapon.SPREAD
+var focus_override = false   # automated playthroughs hold "focus" with this
+var dancing = false          # true during a dance break between waves
 var wave = 0
 var combo = 0
 var plain_kills = 0
@@ -116,11 +126,13 @@ func reset():
 	second_wind_until = -1.0
 	is_game_over = false
 	drawing = false
+	dancing = false
 	combo_changed.emit(combo, multiplier())
 	score_changed.emit(score)
 	lives_changed.emit(lives)
 	charges_changed.emit(charges, cheese)
 	gun_level_changed.emit(gun_level)
+	weapon_changed.emit(weapon)
 	wave_changed.emit(wave)
 
 
@@ -152,6 +164,26 @@ func use_charge() -> bool:
 	charges -= 1
 	charges_changed.emit(charges, cheese)
 	return true
+
+
+func set_dancing(on: bool):
+	if on == dancing:
+		return
+	dancing = on
+	dance_changed.emit(on)
+
+
+func set_weapon(w: int):
+	w = posmod(w, WEAPON_NAMES.size())
+	if w == weapon:
+		return
+	weapon = w
+	weapon_changed.emit(weapon)
+	Sfx.play("weapon_switch", -8.0)
+
+
+func cycle_weapon(step: int):
+	set_weapon(weapon + step)
 
 
 func add_gun_level(amount: int = 1):

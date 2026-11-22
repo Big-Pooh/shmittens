@@ -17,7 +17,13 @@ var wave_label: Label
 var charge_icons: Array[TextureRect] = []
 var cheese_bar: ProgressBar
 var gun_label: Label
-var message: Label
+var message: VBoxContainer
+var message_title: Label
+var message_body: Label
+var weapon_icons: Array[Label] = []
+var weapon_hint: Label
+var dance_label: Label
+var armor_label: Label
 var combo_label: Label
 var fever_label: Label
 var wind_label: Label
@@ -34,7 +40,7 @@ func _ready():
 	Game.wave_changed.connect(func(_w): _update_wave_label())
 	Game.level_changed.connect(func(_l): _update_wave_label())
 	Game.charges_changed.connect(_on_charges)
-	Game.gun_level_changed.connect(func(l): gun_label.text = "GUN Lv %d" % l)
+	Game.gun_level_changed.connect(func(l): gun_label.text = "Lv %d" % l)
 	Game.combo_changed.connect(_on_combo)
 	Game.fever_changed.connect(_on_fever)
 	Game.second_wind_changed.connect(func(on): wind_label.visible = on)
@@ -43,7 +49,11 @@ func _ready():
 	score_label.text = "SCORE  %06d" % Game.score
 	_update_wave_label()
 	_on_charges(Game.charges, Game.cheese)
-	gun_label.text = "GUN Lv %d" % Game.gun_level
+	gun_label.text = "Lv %d" % Game.gun_level
+	_on_weapon(Game.weapon)
+	Game.weapon_changed.connect(_on_weapon)
+	Game.dance_changed.connect(_on_dance)
+	boss_box.add_child(armor_label)
 
 
 func _label(text: String, size: int, color := Color.WHITE) -> Label:
@@ -103,13 +113,22 @@ func _build():
 	cheese_bar.add_theme_stylebox_override("fill", fill)
 	bottom.add_child(cheese_bar)
 
+	# weapons: 1 2 3 slots (equipped one highlighted) + gun level
 	var gun_box = HBoxContainer.new()
-	gun_box.position = Vector2(1080, 664)
-	gun_box.add_theme_constant_override("separation", 8)
+	gun_box.position = Vector2(905, 664)
+	gun_box.add_theme_constant_override("separation", 6)
 	add_child(gun_box)
-	gun_box.add_child(_icon(YARN, Vector2(36, 36)))
-	gun_label = _label("", 24)
+	for i in Game.WEAPON_NAMES.size():
+		var slot = _label("%d %s" % [i + 1, ["SPREAD", "LASER", "FISH"][i]], 16)
+		slot.custom_minimum_size = Vector2(74, 0)
+		gun_box.add_child(slot)
+		weapon_icons.append(slot)
+	gun_box.add_child(_icon(YARN, Vector2(28, 28)))
+	gun_label = _label("", 20)
 	gun_box.add_child(gun_label)
+	weapon_hint = _label("", 15, Color(0.8, 0.85, 1))
+	weapon_hint.position = Vector2(905, 640)
+	add_child(weapon_hint)
 
 	combo_label = _label("", 22, Color(0.6, 1, 0.7))
 	combo_label.position = Vector2(490, 46)
@@ -149,12 +168,35 @@ func _build():
 	boss_bar.add_theme_stylebox_override("fill", boss_fill)
 	boss_box.add_child(boss_bar)
 
-	message = _label("", 48, GOLD)
-	message.position = Vector2(0, 280)
-	message.size = Vector2(1280, 160)
-	message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	# centre message: a big first line + smaller wrapped lines, so long text never leaves
+	# the screen (playtest 2: a long message ran off the edges in fullscreen)
+	message = VBoxContainer.new()
+	message.position = Vector2(80, 250)
+	message.size = Vector2(1120, 0)
+	message.alignment = BoxContainer.ALIGNMENT_CENTER
+	message.add_theme_constant_override("separation", 6)
 	message.hide()
 	add_child(message)
+	message_title = _label("", 46, GOLD)
+	message_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	message_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	message_title.custom_minimum_size = Vector2(1120, 0)
+	message.add_child(message_title)
+	message_body = _label("", 24, Color(0.92, 0.92, 1))
+	message_body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	message_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	message_body.custom_minimum_size = Vector2(1120, 0)
+	message.add_child(message_body)
+
+	dance_label = _label("DANCE BREAK!  tap SPACE on the beat", 26, Color(1, 0.6, 0.85))
+	dance_label.position = Vector2(0, 560)
+	dance_label.size = Vector2(1280, 40)
+	dance_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	dance_label.hide()
+	add_child(dance_label)
+
+	armor_label = _label("", 18, Color(1, 0.85, 0.3))
+	armor_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 
 func _update_wave_label():
@@ -199,8 +241,30 @@ func show_boss(boss: Boss):
 	boss_bar.value = boss.max_health
 	boss_box.show()
 	boss.health_changed.connect(func(health, _max): boss_bar.value = health)
-	boss.phase_changed.connect(func(_p): boss_label.text = boss.boss_name + "  - ENRAGED!")
+	armor_label.text = ""
+	boss.phase_changed.connect(func(_p): boss_label.text = boss.boss_name + "  - BEAT ARMOUR!")
+	boss.armor_changed.connect(_on_armor)
 	boss.died.connect(func(_b): boss_box.hide())
+
+
+func _on_armor(pips: float, stunned: bool):
+	if stunned:
+		armor_label.text = "ARMOUR BROKEN - HIT IT WITH EVERYTHING!"
+		armor_label.add_theme_color_override("font_color", Color(0.5, 1, 1))
+	else:
+		armor_label.text = "ARMOUR %d - only PERFECT shots get through" % int(ceil(pips))
+		armor_label.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
+
+
+func _on_weapon(w: int):
+	for i in weapon_icons.size():
+		weapon_icons[i].add_theme_color_override("font_color", GOLD if i == w else Color(0.6, 0.6, 0.7))
+		weapon_icons[i].add_theme_font_size_override("font_size", 18 if i == w else 15)
+	weapon_hint.text = "%s - %s" % [Game.WEAPON_NAMES[w], Game.WEAPON_HINTS[w]]
+
+
+func _on_dance(active: bool):
+	dance_label.visible = active
 
 
 func _on_fever(active: bool):
@@ -212,8 +276,13 @@ func _on_fever(active: bool):
 		Sfx.play("jingle")
 
 
+# First line = big title, the rest = smaller body text (both wrap).
 func show_message(text: String):
-	message.text = text
+	var lines = text.split("\n", true, 1)
+	message_title.text = lines[0]
+	message_body.text = lines[1] if lines.size() > 1 else ""
+	message_body.visible = lines.size() > 1
+	message.reset_size()
 	message.show()
 
 

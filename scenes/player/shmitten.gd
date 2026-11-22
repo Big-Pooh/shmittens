@@ -4,9 +4,14 @@ class_name Shmitten
 
 signal died
 
-@export var max_speed = 600
-@export var acceleration = 2000
-@export var friction = 2000
+# playtest 2: controls felt "chunky" (was accel/friction 2000 -> ~0.3 s to start/stop).
+# Now ~0.08 s, plus FOCUS (hold Shift): slower, precise movement with the hitbox shown,
+# the standard bullet-hell tool for threading patterns.
+@export var max_speed = 580
+@export var acceleration = 7500
+@export var friction = 9000
+const FOCUS_SPEED = 0.45
+var focused = false
 
 const INVULNERABLE_TIME = 2.0
 const RESPAWN_DELAY = 1.0
@@ -35,9 +40,14 @@ var guardian_ready = false
 var guardian_timer = 0.0
 
 
+var sprite_base: Vector2
+
+
 func _ready():
 	add_to_group("player")
+	sprite_base = sprite.position
 	spawn_position = position
+	Conductor.beat.connect(_on_beat)
 	hitbox.area_entered.connect(_on_hitbox_area_entered)
 	pickup_area.area_entered.connect(_on_pickup_area_entered)
 
@@ -56,6 +66,42 @@ func _process(delta):
 			guardian_timer = 0.0
 	queue_redraw()
 	sprite.frame = int(anim_time * FLY_FPS) % FLY_FRAMES
+	_dance()
+
+
+# Dance break: hop on every beat, sway left/right on alternate beats, spin on the bar.
+func _dance():
+	if not Game.dancing or is_dead:
+		if sprite.position != sprite_base or sprite.rotation != 0.0:
+			sprite.position = sprite_base
+			sprite.rotation = 0.0
+		return
+	var phase = Conductor.beat_phase()
+	var beat = int(floor(Conductor.beat_position()))
+	sprite.position = sprite_base + Vector2(0, -18.0 * (1.0 - phase) * (1.0 - phase))
+	var sway = 0.22 if beat % 2 == 0 else -0.22
+	sprite.rotation = sway * (1.0 - phase)
+	if beat % Conductor.BEATS_PER_BAR == 0:
+		sprite.rotation = TAU * phase   # a full spin on the downbeat
+
+
+func _on_beat(_n: int):
+	if not is_inside_tree() or not Game.dancing or is_dead:
+		return
+	# a little music note floats up from the dancing cat
+	var note = Label.new()
+	note.text = ["♪", "♫"][_n % 2]
+	note.add_theme_font_size_override("font_size", 28)
+	note.add_theme_color_override("font_color", Color(1, 0.6, 0.85))
+	note.add_theme_color_override("font_outline_color", Color.BLACK)
+	note.add_theme_constant_override("outline_size", 5)
+	note.position = global_position + Vector2(randf_range(-30, 20), -60)
+	note.z_index = 40
+	get_tree().current_scene.add_child(note)
+	var tween = note.create_tween().set_parallel()
+	tween.tween_property(note, "position:y", note.position.y - 50, 0.8)
+	tween.tween_property(note, "modulate:a", 0.0, 0.8)
+	tween.chain().tween_callback(note.queue_free)
 
 
 func _physics_process(delta):
@@ -74,10 +120,14 @@ func get_input_axis():
 
 func move(delta):
 	axis = get_input_axis()
+	focused = Input.is_action_pressed("focus") or Game.focus_override
 
 	if axis == Vector2.ZERO:
 		apply_friction(friction * delta)
 	else:
+		# turning around is instant-ish: drop the velocity component against the input
+		if velocity.dot(axis) < 0.0:
+			velocity = velocity.project(axis.orthogonal())
 		apply_movement(axis * acceleration * delta)
 
 	move_and_slide()
@@ -92,10 +142,14 @@ func apply_friction(amount):
 
 func apply_movement(accel):
 	velocity += accel
-	velocity = velocity.limit_length(max_speed)
+	velocity = velocity.limit_length(max_speed * (FOCUS_SPEED if focused else 1.0))
 
 
 func _draw():
+	if focused and not is_dead:
+		# the real hitbox (core) so the player can thread bullets
+		draw_circle(hitbox.position, 8.0, Color(1, 1, 1, 0.9))
+		draw_circle(hitbox.position, 5.0, Color(1, 0.3, 0.5, 1.0))
 	if guardian_ready:
 		draw_arc(Vector2(4, 4), 40.0, 0, TAU, 32, Color(1, 0.9, 0.5, 0.55), 2.5)
 

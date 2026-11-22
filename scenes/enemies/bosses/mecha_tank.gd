@@ -2,16 +2,18 @@ extends Boss
 
 class_name MechaTank
 
-# Level 1 boss. Plays the music:
-#   drums  - downbeat: 5-shot fan (phase 2: 7-shot); warning flash on beat 4; repositions.
-#   melody - one aimed shot per lead note, tilted by pitch (phase 2: pairs, faster).
+# Level 1 boss, "Tanky": the gentle introduction to patterns.
+#   melody  - every lead note is a staff note (height = pitch), flying straight left.
+#   drums   - downbeat: a 5-shot left-pointing arc, nudged half a gap every bar so the safe
+#             lanes alternate; drifts slowly between two heights every 2 bars.
+#   phase 2 - beat armour (see Boss) + a slow 2-arm spiral on beats 2 and 4.
 
 const TEXTURE = preload("res://Art/Generated/boss_tank.png")
 
 
 func _init():
-	build(TEXTURE, 5.0, 62.0, 120.0)
-	boss_name = "MECHA-MOUSE TANK"
+	build(TEXTURE, 5.0, 78.0, 120.0)
+	boss_name = "TANKY THE MECHA-MOUSE"
 
 
 func on_beat(n: int):
@@ -19,21 +21,15 @@ func on_beat(n: int):
 	var bar = n / Conductor.BEATS_PER_BAR
 	match beat:
 		0:
-			if phase == 1:
-				fan(5, 12.0, 300.0)
-			else:
-				fan(7, 10.0, 340.0)
-		1:
+			arc(5, 16.0, 180.0, 180.0 + (8.0 if bar % 2 == 0 else -8.0))
+			if bar % 2 == 0:
+				drift_to(260.0 if (bar / 2) % 2 == 0 else 460.0, Conductor.seconds_per_beat * 4.0)
+		1, 3:
 			if phase == 2:
-				move_to_y(player_position().y, 0.25)
-			elif bar % 2 == 0:
-				move_to_y(240.0 if (bar / 2) % 2 == 0 else 480.0)
-		3:
-			telegraph()
+				spiral(2, 150.0, 37.0)
+	if beat == 3:
+		telegraph()
 
 
 func on_lead_note(pitch: int, _length: int):
-	if phase == 1:
-		melody_shot(pitch, 220.0)
-	else:
-		melody_shot(pitch, 260.0, 2)
+	staff_note(pitch, 190.0 if phase == 1 else 210.0)
