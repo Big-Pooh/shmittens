@@ -87,7 +87,7 @@ var start_wave = 0
 # Effects: enemy shots ASSIST_SHOT_SLOWDOWN slower per level, +1 life per level (up to +2).
 const MAX_ASSIST = 3
 const ASSIST_SHOT_SLOWDOWN = 0.12
-const LEVEL_SHOT_SPEED = [1.0, 1.15, 1.3, 1.35]
+const LEVEL_SHOT_SPEED = [1.0, 1.15, 1.3, 1.3]
 const LEVEL_COUNT = 4   # Levels.LEVELS.size() (playtest 4: + Flexor, Sho's planet)   # playtest 1: dodging felt too easy (was 0.8/0.9/1.0)
 var assist = 0
 # per-level rank stats (time is measured by the level runner)
@@ -122,7 +122,7 @@ enum Challenge { NORMAL, HARD, TOUHOU }
 const CHALLENGE_NAMES = ["NORMAL", "HARD", "TOUHOU"]
 const CHALLENGE_DENSITY = [1.0, 1.4, 2.0]
 const CHALLENGE_SHOT_SPEED = [1.0, 1.15, 0.9]
-const CHALLENGE_BOSS_HEALTH = [1.0, 1.25, 1.5]
+const CHALLENGE_BOSS_HEALTH = [1.0, 1.6, 2.0]   # longer fights for players who chose them
 var challenge = Challenge.NORMAL
 var hard_cleared = false     # unlocks TOUHOU
 var bomb_stock = 0           # TOUHOU: free bombs (1 per life)

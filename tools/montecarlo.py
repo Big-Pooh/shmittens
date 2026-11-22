@@ -39,11 +39,11 @@ ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
 GODOT = os.environ.get("GODOT", os.path.expanduser("~/Desktop/Godot_v4.7.2.app/Contents/MacOS/Godot"))
 OUT = os.path.join(ROOT, "montecarlo")
 PERSONAS = ["noob", "average", "speedrunner"]
-LEVELS = 3
+LEVELS = 4
 
 QUIT_BASE = {"noob": 0.22, "average": 0.12, "speedrunner": 0.06}
 BOREDOM_QUIT = {"noob": 0.0, "average": 0.02, "speedrunner": 0.05}
-PAR = [55.0, 52.0, 52.0]
+PAR = [55.0, 52.0, 52.0, 60.0]
 DEATHS_PER_MIN_SWEET = {"noob": 0.8, "average": 0.6, "speedrunner": 0.35}
 PACE_RANGE = {"noob": (60, 240), "average": (45, 180), "speedrunner": (25, 90)}
 

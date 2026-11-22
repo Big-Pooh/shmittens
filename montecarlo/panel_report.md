@@ -6,12 +6,13 @@
 | Player | drop rate level 1 | 0% | ≤ 20% | ✅ |
 | Player | drop rate level 2 | 1% | ≤ 20% | ✅ |
 | Player | drop rate level 3 | 1% | ≤ 20% | ✅ |
-| Player | completion (finish the story) | 98% | ≥ 60% | ✅ |
-| Critic | likely to endorse | 91% | ≥ 80% | ✅ |
-| Business | purchase intent (monetization) | 75% | ≥ 25% | ✅ |
+| Player | drop rate level 4 | 2% | ≤ 20% | ✅ |
+| Player | completion (finish the story) | 95% | ≥ 60% | ✅ |
+| Critic | likely to endorse | 92% | ≥ 80% | ✅ |
+| Business | purchase intent (monetization) | 77% | ≥ 25% | ✅ |
 | Business | GTM success (P > $100k gross) | 60% | ≥ 24% | ✅ |
 
-Average session: 5.8 min. Critic rubric score: 0.76. Feature checklist: 100%.
+Average session: 7.9 min. Critic rubric score: 0.77. Feature checklist: 100%.
 
 | Feature checklist | weight | done |
 |---|---|---|
@@ -34,3 +35,6 @@ Average session: 5.8 min. Critic rubric score: 0.76. Feature checklist: 100%.
 | bullet variety + graze | 0.5 | 100% |
 | mastery goal: overdrive | 0.5 | 100% |
 | playtest telemetry (local session stats) | 0.5 | 100% |
+| story intro + planet journey map | 1.0 | 100% |
+| difficulty modes (hard / touhou) | 1.0 | 100% |
+| companions | 0.5 | 100% |

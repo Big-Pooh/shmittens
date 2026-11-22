@@ -1721,7 +1721,7 @@ func _playtest4_tests():
 	boss.drops = false
 	main.add_child(boss)
 	await frames(2)
-	check(is_equal_approx(boss.max_health, 380.0 * 1.5), "TOUHOU bosses have 1.5x health")
+	check(is_equal_approx(boss.max_health, 380.0 * 2.0), "TOUHOU bosses have 2x health")
 	var shots = _count("enemy_shots")
 	boss.ring(10, 100.0)
 	await frames(1)

@@ -835,3 +835,86 @@ Full tables are in `docs/KPI.md`; raw reports are in `montecarlo/report_original
 **Caveat:** the panel model is saturated (fun 100%, GTM at its cap), so it can't separate good from great any more. Real playtests and the new session stats are now the measurement that matters.
 
 **Tests:** 242 passing (30 new).
+
+## Phase 12: playtest 4 (iteration 8, branch `feedback/playtest-2`)
+**Why:** your fourth playtest. Session stats showed 0 deaths, 5/7 cards captured, Fish 91% of the time, and spells hitting mostly bosses.
+
+What you asked for:
+- Overdrive should hit hard.
+- Spell cards weren't explained.
+- Hard and Touhou modes.
+- PERFECT Laser crits.
+- More Touhou-like boss patterns.
+- A Mario-Galaxy-style planet journey.
+- The story of Pisitania and Sho.
+- Companions every 10 combo.
+
+**Your answers:**
+- Sho is the final boss, with King Ratbert as his general, and you rescue the Princess.
+- 5 planets.
+- I design the companions.
+- Hard is available now; Touhou unlocks after beating Hard.
+
+### What changed and why
+- **Story:**
+  - a 5-panel opening story (`scenes/ui/intro_story.gd`): Pisitania, Sho's attack, the kidnapped Princess, Shmitten with Pip, Nori and Kiwi, and the journey map;
+  - it plays before the first NEW GAME, and STORY on the title replays it;
+  - all texts now say Princess, and the ending names the companions.
+- **Planets:**
+  - **map:** Pisitania (home) → Mousetronica → Drainia → Ratopolis → **Flexor** (new level 4: 5 waves, music at 120/128 BPM, Sho);
+  - the between-level card is now a planet map with ✓ marks, and the cat flies to the next planet;
+  - each level has a big turning planet in the background, and the HUD shows the planet's name;
+  - the title's level select and CONTINUE use planet names, and the buttons sit in two columns so they fit on screen.
+- **Sho (`sho.gd`):** 1000 health, 4 spell cards:
+  - "Flex Parade": rose + aimed triple;
+  - "Protein Rain": cheese-orb rain with a moving safe column + reversing sun spirals;
+  - "Demon Lord's Waltz": 3-arm sun + freeze rings;
+  - "Muscle Supernova": beat armour; flowers, roses, crossing spirals, light random spray.
+- **Touhou-style pattern toolbox** (`boss.gd`):
+  - **rose:** a ring whose speeds follow a rose curve, so it blooms into petals;
+  - **curtain:** rain from the top with a safe column;
+  - **sun:** a spiral that reverses each bar;
+  - **aimed fan;**
+  - **light random spray.**
+  - Added to every boss: Tanky blooms a rose every 4th bar and gets a sun waltz; the Saucer gets real cheese rain and aimed triples; Ratbert gets roses and a sun in his final card.
+- **Companions** (`companions.gd`):
+  - Pip (hamster pilot), Nori (engineer kitten) and Kiwi (bird) join at 10, 20 and 30 combo;
+  - they fly in formation and zap the nearest mouse on every beat (0.6 damage);
+  - they leave when the combo breaks.
+- **Modes:**
+  - **HARD:** bullets ×1.15 faster, ×1.4 pattern density, boss health ×1.6, no assist, guardian or Second Wind;
+  - **TOUHOU:** ×2 density at ×0.9 speed, boss health ×2, graze radius ×1.3 and graze points ×3, 1 free bomb per life;
+  - Touhou unlocks after finishing the story on Hard or Touhou;
+  - available in the first-START prompt and in Settings (Difficulty); the HUD shows the mode.
+- **Overdrive hits hard:** 8 damage per 8th note (was 3), plus 1.2% of a boss's health per tick, a 130 px wide beam, and shake and sound on every tick.
+- **Laser crit:** PERFECT laser bolts do ×1.5 and show "CRIT!".
+- **One-time tips:**
+  - spell cards (the first time a boss card starts);
+  - Overdrive ready;
+  - the first time you have 2 spell charges (draw over mice, or X to bomb).
+- **Balance:**
+  - Flexor waves: −1 health per mouse; its shot speed matches Ratopolis;
+  - Sho's card timers 35/35/35/40 s.
+- **Test hygiene:** the test suite now restores your settings file byte-for-byte (MD5 checked before and after a full run). A stray tip flag that one run had written was removed.
+- **Simulations:**
+  - 4 levels;
+  - half the testers who want a real challenge (challenge > 0.75) pick HARD in the panel. This is my assumption; documented in `tools/panel.py`.
+
+### Results
+| KPI | Panel A | Panel B | Target |
+|---|---|---|---|
+| had fun | 100% | 100% | ≥ 80% |
+| drop L1 / L2 / L3 / L4 | 0 / 1 / 1 / 1% | 0 / 1 / 1 / 2% | ≤ 20% |
+| completion | 97% | 95% | ≥ 60% |
+| endorse | 92% | 92% | ≥ 80% |
+| purchase intent | 75% | 77% | ≥ 25% |
+| GTM | 60% (cap) | 60% (cap) | ≥ 24% |
+
+- **Average session:** 6.9–7.9 min (was 5.7).
+- **Monte Carlo, beginner in Normal mode (no Relaxed):** drop 0 / 10 / 14 / 21%. Flexor is borderline for someone who refuses Relaxed. The Relaxed offer after the 2nd game over is the safety net.
+- **Boss medians on Normal:**
+  - speedrunner: about 8–13 s. It now chains Overdrive and crits, which is a reward for mastery; Hard and Touhou give such players fights 1.6–2× longer;
+  - average player: 36–54 s;
+  - beginner: capped by the card timers.
+
+**Tests:** 264 passing.

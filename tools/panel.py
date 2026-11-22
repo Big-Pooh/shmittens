@@ -34,8 +34,8 @@ ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
 GODOT = os.environ.get("GODOT", os.path.expanduser("~/Desktop/Godot_v4.7.2.app/Contents/MacOS/Godot"))
 OUT = os.path.join(ROOT, "montecarlo")
 RUNS = os.path.join(OUT, "panel_runs")
-LEVELS = 3
-PAR = [55.0, 52.0, 52.0]
+LEVELS = 4
+PAR = [55.0, 52.0, 52.0, 60.0]
 
 # Presentation quality of the current assets (0-1). Fixed judgement, NOT computable from code:
 # generated placeholder pixel art (the cat is hand-made) and generated chiptune loops/sfx.
@@ -76,6 +76,10 @@ CHECKLIST = [
     ("bullet variety + graze", 0.5, lambda: 1.0 if _grep("scenes/enemies/enemy_shot.gd", "GRAZE_RADIUS") else 0.0),
     ("mastery goal: overdrive", 0.5, lambda: 1.0 if _exists("scenes", "player", "overdrive_beam.gd") else 0.0),
     ("playtest telemetry (local session stats)", 0.5, lambda: 1.0 if _grep("scripts/autoload/game.gd", "save_session") else 0.0),
+    # playtest 4
+    ("story intro + planet journey map", 1.0, lambda: 1.0 if _exists("scenes", "ui", "intro_story.gd") else 0.0),
+    ("difficulty modes (hard / touhou)", 1.0, lambda: 1.0 if _grep("scripts/autoload/game.gd", "Challenge") else 0.0),
+    ("companions", 0.5, lambda: 1.0 if _exists("scenes", "player", "companions.gd") else 0.0),
 ]
 
 
@@ -95,12 +99,15 @@ def make_panel(n, seed=2026):
             "challenge": min(max(rng.gauss(skill, 0.2), 0.0), 1.0), "aesthetic": rng.random(),
         })
         panel[-1]["relaxed"] = panel[-1]["challenge"] < 0.3 and rng.random() < 0.7
+        # playtest 4: the first-start prompt now offers HARD; assume half of the testers who
+        # want a real challenge (challenge > 0.75) pick it
+        panel[-1]["hard"] = not panel[-1]["relaxed"] and panel[-1]["challenge"] > 0.75 and rng.random() < 0.5
     return panel
 
 
 def run_tester(t):
     cmd = [GODOT, "--headless", "--fixed-fps", "60", "--path", ROOT, "-s", "tests/playthrough.gd", "--",
-           "skill:%.3f" % t["skill"], str(t["id"]), "relaxed" if t["relaxed"] else "normal"]
+           "skill:%.3f" % t["skill"], str(t["id"]), "relaxed" if t["relaxed"] else ("hard" if t.get("hard") else "normal")]
     out = subprocess.run(cmd, capture_output=True, text=True, timeout=900).stdout
     for line in out.splitlines():
         if line.startswith("RESULT "):

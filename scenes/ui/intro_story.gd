@@ -130,7 +130,7 @@ func _draw_panel():
 			canvas.draw_rect(Rect2(700, 200, 140, 160), Color(0.75, 0.75, 0.85), false, 4.0)
 			for k in 5:
 				canvas.draw_line(Vector2(712 + k * 29, 200), Vector2(712 + k * 29, 360), Color(0.75, 0.75, 0.85), 3.0)
-			_tex(PRINCESS, Vector2(770, 290 - bob), 5.0, Rect2(), true)
+			_tex(PRINCESS, Vector2(770, 290 - bob), 5.0)
 		3:
 			_cat(Vector2(560, 280 + bob), 3.0)
 			for i in CREW.size():
