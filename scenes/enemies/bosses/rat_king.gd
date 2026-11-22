@@ -2,51 +2,71 @@ extends Boss
 
 class_name RatKing
 
-# Level 3 (final) boss. Plays the music:
-#   drums  - phase 1: 5-shot fan on the downbeat; phase 2: 10-shot ring on the downbeat and
-#            2 shield-mouse guards every 2 bars; warning flash on beat 4; moves.
-#   melody - aimed shot per lead note (a tight triple on long notes); phase 2: pairs.
-# Phase 2 starts below half health and summons guards immediately.
+# Level 3 boss, "King Ratbert", Sho's loyal general. Playtest 2: "too many random bullets and hard to hit"
+# -> no shot-blocking guards, no jumping to your height, every bullet is part of a fixed
+# pattern. Three spell cards:
+#   0 "Royal Decree" - a 14-candy ring that rotates a little every bar + a 5-shot arc on beat 3.
+#   1 "Rat Race Rondo" - two counter-rotating rice spirals on every beat (a readable lattice)
+#     and an orb ring every other bar that freezes on the beat, then re-aims at you.
+#   2 "Long Live the King" (beat armour) - a 3-petal flower on every downbeat + the crossing
+#     spirals on beats 2 and 4. Long melody notes become chords.
+# Slow figure-of-eight drift throughout.
 
 const TEXTURE = preload("res://Art/Generated/boss_rat_king.png")
-const SHIELD_MOUSE = preload("res://scenes/enemies/shield_mouse.tscn")
+
+var counter_angle = 0.0
 
 
 func _init():
-	build(TEXTURE, 6.0, 66.0, 220.0)
-	boss_name = "THE RAT KING"
+	build(TEXTURE, 6.0, 84.0, 700.0)
+	boss_name = "KING RATBERT"
+	cards = [
+		{"name": "Royal Decree", "share": 0.35, "seconds": 35.0, "armored": false, "weak": "laser"},
+		{"name": "Rat Race Rondo", "share": 0.35, "seconds": 35.0, "armored": false, "weak": "shockwave"},
+		{"name": "Long Live the King", "share": 0.3, "seconds": 40.0, "armored": true, "weak": "lightning"},
+	]
 
 
 func on_beat(n: int):
 	var beat = n % Conductor.BEATS_PER_BAR
 	var bar = n / Conductor.BEATS_PER_BAR
-	match beat:
+	match card:
 		0:
-			if phase == 1:
-				fan(5, 11.0, 320.0)
-			else:
-				ring(10, 250.0, bar * 0.31)
+			if beat == 0:
+				ring(14, 160.0, bar * 0.11)
+			if beat == 2:
+				if bar % 2 == 0:
+					arc(5, 14.0, 190.0)
+				else:
+					rose(12, 170.0, 4, bar * 0.5)
 		1:
-			if phase == 1 and bar % 2 == 0:
-				move_to_y(200.0 if (bar / 2) % 2 == 0 else 520.0)
-			elif phase == 2 and bar % 2 == 0:
-				_summon_guards()
-		3:
-			telegraph()
-			if phase == 2:
-				move_to_y(player_position().y, 0.3)
+			spiral(1, 150.0, 31.0)
+			_counter_spiral()
+			if beat == 0 and bar % 2 == 0:
+				freeze_ring(12, 170.0, 210.0, EnemyShot.Kind.ORB, bar * 0.25)
+			if beat == 2 and bar % 2 == 1:
+				galaxy(4, 260.0, 23.0)   # the royal galaxy: slow, then fast
+		_:
+			if beat == 0:
+				flower(3, 12, 180.0, EnemyShot.Kind.RICE, bar * 0.17)
+			if beat == 1 or beat == 3:
+				sun(1, 150.0, 31.0, bar)
+				_counter_spiral()
+			if beat == 2 and bar % 2 == 0:
+				split_orbs(3, 120.0)
+	if beat == 0 and bar % 2 == 0:
+		drift_to(360.0 + 150.0 * sin(bar * 0.8), Conductor.seconds_per_beat * 8.0)
+	if beat == 3:
+		telegraph()
+
+
+# The second arm turns the other way, so the two arms cross in a readable lattice.
+func _counter_spiral():
+	if Game.assist >= 2:
+		return
+	fire_shot(Vector2.from_angle(PI + counter_angle), 150.0, EnemyShot.Kind.RICE)
+	counter_angle -= deg_to_rad(31.0)
 
 
 func on_lead_note(pitch: int, length: int):
-	if phase == 1:
-		melody_shot(pitch, 270.0, 3 if length >= 2 else 1, 4.0)
-	else:
-		melody_shot(pitch, 280.0, 2, 6.0)
-
-
-func on_phase_2():
-	_summon_guards()
-
-
-func _summon_guards():
-	summon(SHIELD_MOUSE, [Vector2(position.x - 180, 200), Vector2(position.x - 180, 520)], 5.0)
+	staff_note(pitch, 205.0, 2 if length >= 2 and card == 2 else 1)

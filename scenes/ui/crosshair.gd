@@ -38,17 +38,30 @@ func _on_beat(n: int):
 	create_tween().tween_property(sprite, "scale", Vector2.ONE * BASE_SCALE, 0.15)
 
 
+const MAX_POPUPS = 2
+var popups: Array = []
+
+
 func _show_judgement(judgement: int):
+	var main = get_tree().current_scene
+	if main and "transition_card" in main and main.transition_card and is_instance_valid(main.transition_card):
+		return   # not on top of the planet map card
+	popups = popups.filter(func(p): return is_instance_valid(p))
+	while popups.size() >= MAX_POPUPS:
+		popups.pop_front().queue_free()
 	var label = Label.new()
 	label.text = JUDGEMENT_TEXT[judgement][0]
 	label.add_theme_font_size_override("font_size", 20)
 	label.add_theme_color_override("font_color", JUDGEMENT_TEXT[judgement][1])
 	label.add_theme_color_override("font_outline_color", Color.BLACK)
 	label.add_theme_constant_override("outline_size", 5)
-	label.position = sprite.position + Vector2(18, -34)
+	# PERFECT / GOOD / MISS appear in one fixed spot just above the beat bar (rhythm-game
+	# convention) - never on the score, the boss bar or the speech bubbles. Newest on top.
+	label.position = Vector2(640 - 50, 628 - 26 * popups.size())
+	popups.append(label)
 	add_child(label)
 	var tween = create_tween().set_parallel()
-	tween.tween_property(label, "position:y", label.position.y - 24, 0.45)
+	tween.tween_property(label, "position:y", label.position.y - 10, 0.45)
 	tween.tween_property(label, "modulate:a", 0.0, 0.45).set_delay(0.15)
 	tween.chain().tween_callback(label.queue_free)
 

@@ -15,72 +15,288 @@ const ENEMY_SCENES = {
 	"gunner": preload("res://scenes/enemies/gunner.tscn"),
 	"dasher": preload("res://scenes/enemies/dasher.tscn"),
 	"shield": preload("res://scenes/enemies/shield_mouse.tscn"),
+	"weaver": preload("res://scenes/enemies/weaver.tscn"),
+	"turret": preload("res://scenes/enemies/turret.tscn"),
+	"splitter": preload("res://scenes/enemies/splitter.tscn"),
+	"bomber": preload("res://scenes/enemies/bomber.tscn"),
 }
 
 const LEVELS = [
 	{
-		"title": "MOUSE FACTORY",
+		"title": "MOUSETRONICA",
+		"theme": "factory",
+		"planet": "Mousetronica, the factory planet",
+		"planet_color": Color(0.95, 0.6, 0.35),
 		"track": "level1",
 		"boss_track": "boss1",
 		"boss": "tank",
-		"par_seconds": 45.0,
+		"par_seconds": 55.0,   # playtest 2: slower BPM, tougher bosses (speedrunner median 51 s)
 		"volley_rate": 0.5,   # onboarding: grunt volleys half as often in level 1
-		"story": "The Rat King has taken the Queen!\nShmitten flies into the Mouse Factory to find her.",
+		"story": "Sho's robot mice are built on Mousetronica.\nShmitten and friends fly in to shut the factory down.",
 		"waves": [
 			[{"enemy": "grunt", "formation": "grid", "columns": 3, "rows": 3, "health": 2}],
 			[{"enemy": "grunt", "formation": "grid", "columns": 4, "rows": 4, "health": 2}],
+			[{"enemy": "weaver", "formation": "line", "count": 3, "health": 2, "x": 1100}],
 			[{"enemy": "gunner", "formation": "column", "count": 3, "health": 4}],
 			[{"enemy": "grunt", "formation": "grid", "columns": 3, "rows": 5, "health": 3, "x": 1000},
 			 {"enemy": "gunner", "formation": "column", "count": 2, "health": 4}],
+			[{"enemy": "grunt", "formation": "v", "count": 5, "health": 3},
+			 {"enemy": "weaver", "formation": "line", "count": 2, "health": 2, "x": 1120}],
+			[{"enemy": "gunner", "formation": "v", "count": 3, "health": 4},
+			 {"enemy": "weaver", "formation": "line", "count": 3, "health": 2, "x": 1150}],
 			[{"enemy": "gunner", "formation": "v", "count": 5, "health": 5}],
+			[{"enemy": "grunt", "formation": "grid", "columns": 4, "rows": 3, "health": 3},
+			 {"enemy": "gunner", "formation": "column", "count": 2, "health": 4, "x": 900}],
+			[{"enemy": "grunt", "formation": "grid", "columns": 3, "rows": 4, "health": 3},
+			 {"enemy": "splitter", "formation": "column", "count": 2, "health": 3, "x": 880}],
 		],
 	},
 	{
-		"title": "SEWER FLEET",
+		"title": "DRAINIA",
+		"theme": "sewer",
+		"planet": "Drainia, the sewer moon",
+		"planet_color": Color(0.4, 0.8, 0.6),
 		"track": "level2",
 		"boss_track": "boss2",
 		"boss": "mothership",
-		"par_seconds": 40.0,
-		"story": "The trail leads down into the sewers,\nwhere the mouse fleet guards the way.",
+		"par_seconds": 52.0,
+		"story": "The trail leads to Drainia, the sewer moon,\nwhere Sho's cheese fleet guards the way.",
 		"waves": [
 			[{"enemy": "dasher", "formation": "line", "count": 3, "health": 2}],
 			[{"enemy": "grunt", "formation": "grid", "columns": 4, "rows": 4, "health": 3}],
+			[{"enemy": "weaver", "formation": "line", "count": 4, "health": 3, "x": 1100},
+			 {"enemy": "splitter", "formation": "column", "count": 2, "health": 3, "x": 900}],
 			[{"enemy": "gunner", "formation": "column", "count": 3, "health": 5},
 			 {"enemy": "dasher", "formation": "line", "count": 2, "health": 2}],
+			[{"enemy": "midboss", "boss": "tanky_jr"}],
 			[{"enemy": "grunt", "formation": "v", "count": 7, "health": 3},
 			 {"enemy": "dasher", "formation": "line", "count": 3, "health": 3}],
+			[{"enemy": "bomber", "formation": "column", "count": 2, "health": 4, "x": 1180},
+			 {"enemy": "grunt", "formation": "v", "count": 5, "health": 3}],
 			[{"enemy": "gunner", "formation": "grid", "columns": 2, "rows": 4, "health": 5}],
+			[{"enemy": "dasher", "formation": "line", "count": 3, "health": 3},
+			 {"enemy": "weaver", "formation": "line", "count": 3, "health": 3, "x": 1000}],
+			[{"enemy": "dasher", "formation": "line", "count": 4, "health": 3},
+			 {"enemy": "splitter", "formation": "column", "count": 2, "health": 3, "x": 980}],
 		],
 	},
 	{
-		"title": "RAT KING'S CASTLE",
+		"title": "RATOPOLIS",
+		"theme": "castle",
+		"planet": "Ratopolis, the castle planet",
+		"planet_color": Color(0.65, 0.5, 0.9),
 		"track": "level3",
 		"boss_track": "boss3",
 		"boss": "rat_king",
-		"par_seconds": 60.0,
-		"story": "At last, the Rat King's castle.\nThe Queen is somewhere inside...",
+		"par_seconds": 52.0,
+		"story": "King Ratbert, Sho's loyal general, rules Ratopolis.\nHe knows the way to Sho's planet...",
 		"waves": [
-			[{"enemy": "shield", "formation": "grid", "columns": 3, "rows": 3, "health": 4}],
-			[{"enemy": "shield", "formation": "column", "count": 4, "health": 4, "x": 1000},
+			[{"enemy": "shield", "formation": "grid", "columns": 3, "rows": 3, "health": 3}],
+			[{"enemy": "turret", "formation": "line", "count": 2, "health": 6, "x": 1190},
+			 {"enemy": "grunt", "formation": "grid", "columns": 3, "rows": 3, "health": 4, "x": 1000}],
+			[{"enemy": "shield", "formation": "column", "count": 4, "health": 3, "x": 1000},
 			 {"enemy": "gunner", "formation": "column", "count": 3, "health": 5}],
 			[{"enemy": "dasher", "formation": "line", "count": 4, "health": 3},
 			 {"enemy": "grunt", "formation": "grid", "columns": 3, "rows": 4, "health": 4}],
-			[{"enemy": "shield", "formation": "v", "count": 7, "health": 5}],
-			[{"enemy": "shield", "formation": "grid", "columns": 2, "rows": 4, "health": 5, "x": 1020},
+			[{"enemy": "midboss", "boss": "saucer_scout"}],
+			[{"enemy": "shield", "formation": "v", "count": 7, "health": 4}],
+			[{"enemy": "splitter", "formation": "column", "count": 3, "health": 4, "x": 1000},
+			 {"enemy": "gunner", "formation": "column", "count": 2, "health": 5, "x": 1180}],
+			[{"enemy": "shield", "formation": "grid", "columns": 2, "rows": 4, "health": 4, "x": 1020},
 			 {"enemy": "gunner", "formation": "column", "count": 3, "health": 6},
 			 {"enemy": "dasher", "formation": "line", "count": 2, "health": 3}],
+			[{"enemy": "weaver", "formation": "line", "count": 5, "health": 4, "x": 1100},
+			 {"enemy": "shield", "formation": "column", "count": 3, "health": 4, "x": 950},
+			 {"enemy": "bomber", "formation": "column", "count": 2, "health": 4, "x": 1180}],
+			[{"enemy": "shield", "formation": "grid", "columns": 2, "rows": 3, "health": 4, "x": 1060},
+			 {"enemy": "weaver", "formation": "line", "count": 3, "health": 4, "x": 880}],
+		],
+	},
+	{
+		"title": "FLEXOR",
+		"princess": true,   # world 1 finale: the Princess's cage
+		"theme": "fortress",
+		"planet": "Flexor, Sho's fortress planet",
+		"planet_color": Color(0.9, 0.3, 0.45),
+		"track": "level4",
+		"boss_track": "boss4",
+		"boss": "sho",
+		"par_seconds": 60.0,
+		"story": "Flexor: Sho's own planet. The Princess is held here.\nEverything Sho has is waiting for you!",
+		"waves": [
+			[{"enemy": "grunt", "formation": "grid", "columns": 4, "rows": 4, "health": 4},
+			 {"enemy": "dasher", "formation": "line", "count": 2, "health": 2}],
+			[{"enemy": "turret", "formation": "line", "count": 3, "health": 10, "x": 1190},
+			 {"enemy": "weaver", "formation": "line", "count": 3, "health": 4, "x": 1000},
+			 {"enemy": "bomber", "formation": "column", "count": 2, "health": 5, "x": 880}],
+			[{"enemy": "shield", "formation": "column", "count": 4, "health": 5, "x": 1000},
+			 {"enemy": "gunner", "formation": "v", "count": 5, "health": 5}],
+			[{"enemy": "dasher", "formation": "line", "count": 5, "health": 3},
+			 {"enemy": "gunner", "formation": "column", "count": 3, "health": 6}],
+			[{"enemy": "midboss", "boss": "royal_guard"}],
+			[{"enemy": "shield", "formation": "grid", "columns": 3, "rows": 4, "health": 5, "x": 1040},
+			 {"enemy": "grunt", "formation": "v", "count": 7, "health": 4}],
+			[{"enemy": "bomber", "formation": "column", "count": 3, "health": 5, "x": 1180},
+			 {"enemy": "dasher", "formation": "line", "count": 3, "health": 4}],
+			[{"enemy": "gunner", "formation": "grid", "columns": 2, "rows": 4, "health": 6},
+			 {"enemy": "dasher", "formation": "line", "count": 3, "health": 3},
+			 {"enemy": "shield", "formation": "column", "count": 3, "health": 5, "x": 960}],
+			[{"enemy": "grunt", "formation": "grid", "columns": 4, "rows": 4, "health": 5},
+			 {"enemy": "turret", "formation": "line", "count": 2, "health": 12, "x": 1190},
+			 {"enemy": "splitter", "formation": "column", "count": 3, "health": 4, "x": 760}],
+			[{"enemy": "splitter", "formation": "column", "count": 3, "health": 5, "x": 1000},
+			 {"enemy": "gunner", "formation": "v", "count": 5, "health": 6}],
+		],
+	},
+	{
+		"title": "CHEDDARIA",
+		"theme": "cheese",
+		"planet": "Cheddaria, the cheese-dune planet",
+		"planet_color": Color(1, 0.85, 0.35),
+		"track": "level5",
+		"boss_track": "boss5",
+		"boss": "big_cheese",
+		"par_seconds": 60.0,
+		"story": "But Sho escaped - with the STAR OF PISITANIA, the heart of our planet!\\nHis trail leads to Cheddaria, where the dunes are made of cheese.",
+		"waves": [
+			[{"enemy": "grunt", "formation": "grid", "columns": 4, "rows": 4, "health": 5}],
+			[{"enemy": "splitter", "formation": "column", "count": 3, "health": 5, "x": 1000},
+			 {"enemy": "weaver", "formation": "line", "count": 3, "health": 4, "x": 1150}],
+			[{"enemy": "gunner", "formation": "v", "count": 5, "health": 6},
+			 {"enemy": "bomber", "formation": "column", "count": 2, "health": 5, "x": 1180}],
+			[{"enemy": "turret", "formation": "line", "count": 2, "health": 10, "x": 1190},
+			 {"enemy": "grunt", "formation": "grid", "columns": 3, "rows": 4, "health": 5, "x": 1000}],
+			[{"enemy": "midboss", "boss": "tanky_jr", "health": 220}],
+			[{"enemy": "dasher", "formation": "line", "count": 4, "health": 4},
+			 {"enemy": "splitter", "formation": "column", "count": 3, "health": 5, "x": 950}],
+			[{"enemy": "shield", "formation": "grid", "columns": 2, "rows": 4, "health": 6, "x": 1060},
+			 {"enemy": "gunner", "formation": "column", "count": 3, "health": 6, "x": 1180}],
+			[{"enemy": "weaver", "formation": "line", "count": 5, "health": 5, "x": 1100},
+			 {"enemy": "bomber", "formation": "column", "count": 2, "health": 5, "x": 900}],
+			[{"enemy": "grunt", "formation": "v", "count": 7, "health": 6},
+			 {"enemy": "turret", "formation": "line", "count": 2, "health": 10, "x": 1190}],
+			[{"enemy": "splitter", "formation": "column", "count": 4, "health": 6, "x": 1000},
+			 {"enemy": "gunner", "formation": "v", "count": 5, "health": 6}],
+		],
+	},
+	{
+		"title": "NEON NIBBLE",
+		"theme": "disco",
+		"planet": "Neon Nibble, the party planet",
+		"planet_color": Color(0.95, 0.4, 0.85),
+		"track": "level6",
+		"boss_track": "boss6",
+		"boss": "dj_squeak",
+		"par_seconds": 60.0,
+		"story": "Sho's goons are partying on Neon Nibble.\\nDJ Squeak is spinning - and guarding the way.",
+		"waves": [
+			[{"enemy": "weaver", "formation": "line", "count": 5, "health": 5, "x": 1100}],
+			[{"enemy": "grunt", "formation": "grid", "columns": 4, "rows": 4, "health": 6},
+			 {"enemy": "dasher", "formation": "line", "count": 2, "health": 4}],
+			[{"enemy": "bomber", "formation": "column", "count": 3, "health": 6, "x": 1180},
+			 {"enemy": "splitter", "formation": "column", "count": 2, "health": 6, "x": 950}],
+			[{"enemy": "gunner", "formation": "grid", "columns": 2, "rows": 4, "health": 7},
+			 {"enemy": "weaver", "formation": "line", "count": 3, "health": 5, "x": 900}],
+			[{"enemy": "midboss", "boss": "saucer_scout", "health": 260}],
+			[{"enemy": "dasher", "formation": "line", "count": 5, "health": 5},
+			 {"enemy": "turret", "formation": "line", "count": 2, "health": 11, "x": 1190}],
+			[{"enemy": "shield", "formation": "v", "count": 7, "health": 6},
+			 {"enemy": "bomber", "formation": "column", "count": 2, "health": 6, "x": 1180}],
+			[{"enemy": "splitter", "formation": "column", "count": 4, "health": 6, "x": 1050},
+			 {"enemy": "weaver", "formation": "line", "count": 4, "health": 5, "x": 880}],
+			[{"enemy": "grunt", "formation": "grid", "columns": 4, "rows": 4, "health": 6},
+			 {"enemy": "gunner", "formation": "column", "count": 3, "health": 7, "x": 1180}],
+			[{"enemy": "turret", "formation": "line", "count": 3, "health": 11, "x": 1190},
+			 {"enemy": "dasher", "formation": "line", "count": 3, "health": 5},
+			 {"enemy": "weaver", "formation": "line", "count": 3, "health": 5, "x": 950}],
+		],
+	},
+	{
+		"title": "FROSTWHISKER",
+		"theme": "ice",
+		"planet": "Frostwhisker, the ice planet",
+		"planet_color": Color(0.6, 0.85, 1.0),
+		"track": "level7",
+		"boss_track": "boss7",
+		"boss": "frostbite",
+		"par_seconds": 60.0,
+		"story": "On icy Frostwhisker, Captain Frostbite blocks the road\\nto Sho's mountain. Keep your paws warm!",
+		"waves": [
+			[{"enemy": "shield", "formation": "grid", "columns": 3, "rows": 3, "health": 6}],
+			[{"enemy": "weaver", "formation": "line", "count": 4, "health": 5, "x": 1100},
+			 {"enemy": "gunner", "formation": "column", "count": 3, "health": 7, "x": 1180}],
+			[{"enemy": "turret", "formation": "line", "count": 3, "health": 11, "x": 1190},
+			 {"enemy": "grunt", "formation": "grid", "columns": 3, "rows": 4, "health": 6, "x": 1000}],
+			[{"enemy": "dasher", "formation": "line", "count": 5, "health": 5},
+			 {"enemy": "bomber", "formation": "column", "count": 2, "health": 6, "x": 1180}],
+			[{"enemy": "midboss", "boss": "royal_guard", "health": 320}],
+			[{"enemy": "splitter", "formation": "column", "count": 4, "health": 6, "x": 1050},
+			 {"enemy": "shield", "formation": "column", "count": 3, "health": 6, "x": 900}],
+			[{"enemy": "gunner", "formation": "v", "count": 7, "health": 7},
+			 {"enemy": "weaver", "formation": "line", "count": 3, "health": 5, "x": 900}],
+			[{"enemy": "bomber", "formation": "column", "count": 3, "health": 6, "x": 1180},
+			 {"enemy": "grunt", "formation": "grid", "columns": 4, "rows": 4, "health": 6}],
+			[{"enemy": "turret", "formation": "line", "count": 2, "health": 12, "x": 1190},
+			 {"enemy": "splitter", "formation": "column", "count": 3, "health": 6, "x": 950},
+			 {"enemy": "dasher", "formation": "line", "count": 2, "health": 5}],
+			[{"enemy": "shield", "formation": "grid", "columns": 2, "rows": 4, "health": 7, "x": 1060},
+			 {"enemy": "gunner", "formation": "column", "count": 3, "health": 7, "x": 1180},
+			 {"enemy": "weaver", "formation": "line", "count": 3, "health": 5, "x": 880}],
+		],
+	},
+	{
+		"title": "MOUNT FLEXMORE",
+		"theme": "summit",
+		"planet": "Mount Flexmore, Sho's summit",
+		"planet_color": Color(1.0, 0.6, 0.3),
+		"track": "level8",
+		"boss_track": "boss8",
+		"boss": "sho_max",
+		"par_seconds": 70.0,
+		"story": "The summit of Mount Flexmore. Sho, at MAXIMUM FLEX,\\nholds the Star of Pisitania. This is it!",
+		"waves": [
+			[{"enemy": "grunt", "formation": "grid", "columns": 4, "rows": 4, "health": 7},
+			 {"enemy": "weaver", "formation": "line", "count": 3, "health": 5, "x": 880}],
+			[{"enemy": "turret", "formation": "line", "count": 3, "health": 12, "x": 1190},
+			 {"enemy": "splitter", "formation": "column", "count": 3, "health": 7, "x": 1000}],
+			[{"enemy": "dasher", "formation": "line", "count": 5, "health": 6},
+			 {"enemy": "bomber", "formation": "column", "count": 3, "health": 7, "x": 1180}],
+			[{"enemy": "shield", "formation": "v", "count": 7, "health": 7},
+			 {"enemy": "gunner", "formation": "column", "count": 3, "health": 8, "x": 1180}],
+			[{"enemy": "midboss", "boss": "royal_guard", "health": 380}],
+			[{"enemy": "weaver", "formation": "line", "count": 6, "health": 6, "x": 1100},
+			 {"enemy": "splitter", "formation": "column", "count": 3, "health": 7, "x": 900}],
+			[{"enemy": "gunner", "formation": "grid", "columns": 2, "rows": 4, "health": 8},
+			 {"enemy": "bomber", "formation": "column", "count": 2, "health": 7, "x": 880}],
+			[{"enemy": "turret", "formation": "line", "count": 3, "health": 12, "x": 1190},
+			 {"enemy": "dasher", "formation": "line", "count": 4, "health": 6},
+			 {"enemy": "shield", "formation": "column", "count": 3, "health": 7, "x": 950}],
+			[{"enemy": "grunt", "formation": "v", "count": 7, "health": 7},
+			 {"enemy": "splitter", "formation": "column", "count": 4, "health": 7, "x": 1000},
+			 {"enemy": "weaver", "formation": "line", "count": 3, "health": 6, "x": 880}],
+			[{"enemy": "gunner", "formation": "v", "count": 5, "health": 8},
+			 {"enemy": "turret", "formation": "line", "count": 2, "health": 12, "x": 1190},
+			 {"enemy": "bomber", "formation": "column", "count": 2, "health": 7, "x": 950}],
 		],
 	},
 ]
 
 const BOSS_SCRIPTS = {
+	"sho": preload("res://scenes/enemies/bosses/sho.gd"),
+	"tanky_jr": preload("res://scenes/enemies/bosses/tanky_jr.gd"),
+	"saucer_scout": preload("res://scenes/enemies/bosses/saucer_scout.gd"),
+	"royal_guard": preload("res://scenes/enemies/bosses/royal_guard.gd"),
+	"big_cheese": preload("res://scenes/enemies/bosses/big_cheese.gd"),
+	"dj_squeak": preload("res://scenes/enemies/bosses/dj_squeak.gd"),
+	"frostbite": preload("res://scenes/enemies/bosses/frostbite.gd"),
+	"sho_max": preload("res://scenes/enemies/bosses/sho_max.gd"),
 	"tank": preload("res://scenes/enemies/bosses/mecha_tank.gd"),
 	"mothership": preload("res://scenes/enemies/bosses/mothership.gd"),
 	"rat_king": preload("res://scenes/enemies/bosses/rat_king.gd"),
 }
 const BOSS_SLOT = Vector2(1060, 360)
 
-const SPACING = Vector2(78, 70)
+const SPACING = Vector2(86, 74)   # playtest 2: the cute mice are rounder
 const DEFAULT_RIGHT_X = 1180.0
 const SPAWN_X = 1380.0
 
@@ -94,6 +310,8 @@ static func formation_slots(group: Dictionary) -> Array:
 	var right = group.get("x", DEFAULT_RIGHT_X)
 	var mid_y = Game.SCREEN.get_center().y
 	var slots = []
+	if group.enemy == "midboss":
+		return [BOSS_SLOT]
 	match group.formation:
 		"grid":
 			var rows = group.rows
@@ -122,8 +340,28 @@ static func formation_slots(group: Dictionary) -> Array:
 	return slots
 
 
+# Mid-boss group (playtest 7 content): {"enemy": "midboss", "boss": "tank", "name": "...",
+# "health": 140, "card": "Card name", "seconds": 25, "weak": "laser"} - a boss script with one
+# spell card and less health, flying in mid-level.
+static func create_midboss(group: Dictionary) -> Boss:
+	var boss = BOSS_SCRIPTS[group.boss].new()
+	boss.is_midboss = true
+	# dedicated mid-boss scripts bring their own name, health and 2 cards; a group may override
+	if group.has("name"):
+		boss.boss_name = group.name
+	if group.has("health"):
+		boss.max_health = group.health
+	if group.has("card"):
+		boss.cards = [{"name": group.card, "share": 1.0, "seconds": group.get("seconds", 25.0), "armored": false, "weak": group.get("weak", "")}]
+	boss.slot_position = BOSS_SLOT
+	boss.position = Vector2(SPAWN_X + 80, BOSS_SLOT.y)
+	return boss
+
+
 # Instantiates the enemies of one group (not yet added to the tree).
 static func create_group(group: Dictionary, volley_rate: float = 1.0) -> Array:
+	if group.enemy == "midboss":
+		return [create_midboss(group)]
 	var enemies = []
 	var slots = formation_slots(group)
 	for i in slots.size():

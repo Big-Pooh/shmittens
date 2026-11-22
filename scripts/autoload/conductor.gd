@@ -14,6 +14,7 @@ signal bar(n: int)
 signal track_started(track_name: String)
 # A note of the lead melody starts now (pitch = scale index 0..7, length in 8th notes).
 signal lead_note(pitch: int, length: int)
+signal eighth(n: int)   # every 8th note (odd n = the off-beat hi-hat)
 
 enum Judgement { MISS, GOOD, PERFECT }
 
@@ -23,8 +24,12 @@ const PERFECT_WINDOW = 0.05
 const GOOD_WINDOW = 0.10
 const ASSIST_GOOD_WINDOW = 0.14   # beginner care: wider GOOD window while assisted
 const TRACK_BPM = {
-	"level1": 110, "level2": 125, "level3": 140,
-	"boss1": 120, "boss2": 135, "boss3": 150,
+	# playtest 2: slower to start (was 110/125/140, bosses 120/135/150); keep in sync with tools/gen_audio.py
+	"level1": 92, "level2": 104, "level3": 116,
+	"boss1": 100, "boss2": 112, "boss3": 124,
+	"level4": 120, "boss4": 128,
+	"level5": 108, "boss5": 116, "level6": 124, "boss6": 132,
+	"level7": 112, "boss7": 120, "level8": 128, "boss8": 136,
 }
 const SETTINGS_PATH = "user://settings.cfg"
 const SILENT_DB = -60.0
@@ -160,16 +165,29 @@ func beat_error(t: float = song_time()) -> float:
 	return (p - round(p)) * seconds_per_beat
 
 
+# Browsers add audio jitter: the PERFECT window is WEB_EXTRA s wider in the web build.
+const WEB_EXTRA = 0.015
+
+func perfect_window() -> float:
+	return PERFECT_WINDOW + (WEB_EXTRA if OS.has_feature("web") else 0.0)
+
+
 func judge(t: float = song_time()) -> Judgement:
 	var error = absf(beat_error(t))
-	if error <= PERFECT_WINDOW:
+	if error <= perfect_window():
 		return Judgement.PERFECT
 	if error <= (ASSIST_GOOD_WINDOW if Game.assist > 0 else GOOD_WINDOW):
 		return Judgement.GOOD
 	return Judgement.MISS
 
 
+# Sprint 7 performance: the beat phase computed ONCE per frame for every bullet that pulses
+# (calling beat_phase() per bullet queried the audio clock hundreds of times a frame).
+var frame_phase = 0.0
+
+
 func _process(_delta):
+	frame_phase = beat_phase() if playing or time_override >= 0.0 else 0.0
 	# While the game is paused: pause the music and freeze the clock; on resume, shift the
 	# start time by the paused duration so beats continue exactly where they left off.
 	if get_tree().paused:
@@ -204,9 +222,10 @@ func _process(_delta):
 		_last_eighth += 1
 		if _last_eighth < 0:
 			continue
+		eighth.emit(_last_eighth)
 		var bar_index = (_last_eighth / 8) % MusicPatterns.BARS
 		var step = _last_eighth % 8
-		for note in MusicPatterns.LEAD[bar_index]:
+		for note in MusicPatterns.lead(track)[bar_index]:
 			if note[0] == step:
 				lead_note.emit(note[1], note[2])
 		if _generation != generation:

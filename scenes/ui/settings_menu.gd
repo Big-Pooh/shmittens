@@ -13,17 +13,19 @@ var sfx: HSlider
 var fullscreen: CheckButton
 var reduce: CheckButton
 var relaxed: CheckButton
+var meows: CheckButton
+var contrast: CheckButton
 
 
 func _ready():
 	layer = 95
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	panel = PanelContainer.new()
-	panel.position = Vector2(420, 150)
+	panel.position = Vector2(420, 24)   # tall enough for every option (sprint 5)
 	panel.custom_minimum_size = Vector2(440, 0)
 	add_child(panel)
 	var box = VBoxContainer.new()
-	box.add_theme_constant_override("separation", 10)
+	box.add_theme_constant_override("separation", 6)
 	panel.add_child(box)
 	var title = Label.new()
 	title.text = "SETTINGS"
@@ -32,9 +34,25 @@ func _ready():
 	box.add_child(title)
 	music = _slider(box, "Music volume", Game.music_volume, func(v): Game.music_volume = v; _changed())
 	sfx = _slider(box, "Sound effects volume", Game.sfx_volume, func(v): Game.sfx_volume = v; _changed())
+	meows = _check(box, "Cat meows", Game.meows_enabled, func(on): Game.meows_enabled = on; _changed())
+	contrast = _check(box, "High-contrast bullets (colour-blind friendly)", Game.high_contrast, func(on): Game.high_contrast = on; _changed())
+	var controls = Button.new()
+	controls.text = "Controls (rebind keys)..."
+	controls.pressed.connect(func(): get_tree().root.add_child(ControlsMenu.new()))
+	box.add_child(controls)
 	fullscreen = _check(box, "Fullscreen", Game.fullscreen, func(on): Game.fullscreen = on; _changed())
 	reduce = _check(box, "Reduce effects (no screen shake, softer flashes)", Game.reduce_effects, func(on): Game.reduce_effects = on; _changed())
 	relaxed = _check(box, "Relaxed mode (slower shots, +1 life, guardian bubble)", Game.relaxed_mode, func(on): _set_relaxed(on))
+	var row = HBoxContainer.new()
+	var label = Label.new()
+	label.text = "Difficulty"
+	row.add_child(label)
+	difficulty = OptionButton.new()
+	for d in DIFFICULTIES:
+		difficulty.add_item("BULLET HELL" if d == "touhou" else d.to_upper())
+	difficulty.item_selected.connect(_on_difficulty)
+	row.add_child(difficulty)
+	box.add_child(row)
 	var back = Button.new()
 	back.text = "Back"
 	back.pressed.connect(close)
@@ -68,8 +86,27 @@ func _check(box: VBoxContainer, text: String, value: bool, on_toggle: Callable) 
 func _set_relaxed(on: bool):
 	Game.relaxed_mode = on
 	if on:
+		Game.challenge = Game.Challenge.NORMAL
 		Game.assist = max(Game.assist, 1)
+	_sync_difficulty()
 	_changed()
+
+
+const DIFFICULTIES = ["relaxed", "normal", "hard", "touhou"]
+var difficulty: OptionButton
+
+
+func _on_difficulty(index: int):
+	Game.set_difficulty(DIFFICULTIES[index])
+	_sync_difficulty()
+	_changed()
+
+
+func _sync_difficulty():
+	var current = "relaxed" if Game.relaxed_mode else DIFFICULTIES[1 + Game.challenge]
+	difficulty.select(DIFFICULTIES.find(current))
+	difficulty.set_item_disabled(3, not Game.hard_cleared)
+	relaxed.set_pressed_no_signal(Game.relaxed_mode)
 
 
 func _changed():
@@ -85,8 +122,9 @@ func open():
 	music.set_value_no_signal(Game.music_volume)
 	sfx.set_value_no_signal(Game.sfx_volume)
 	fullscreen.set_pressed_no_signal(Game.fullscreen)
+	meows.set_pressed_no_signal(Game.meows_enabled)
 	reduce.set_pressed_no_signal(Game.reduce_effects)
-	relaxed.set_pressed_no_signal(Game.relaxed_mode)
+	_sync_difficulty()
 	panel.show()
 
 

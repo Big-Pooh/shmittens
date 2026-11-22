@@ -7,7 +7,10 @@ class_name LevelRunner
 #   WAVES      - each wave spawns on a bar; when it's cleared the next one waits for the next bar
 #   BOSS_INTRO - "WARNING" + boss name, boss music starts, BOSS_INTRO_BARS bars
 #   BOSS       - until the boss dies
-#   CLEARED    - CLEARED_BARS bars, then the next level (or DONE after the last one)
+#   CLEARED    - CLEARED_BARS bars (the transition card), then the next level (or DONE)
+# Dance breaks (playtest 2: "dead time between waves"): during the intro, between a cleared
+# wave and the next one, and during the boss warning, Game.dancing is on - the cat dances,
+# pickups fly to her, and on-beat taps earn cheese (see main.gd).
 
 signal level_started(index: int)
 signal wave_started(index: int, total: int)
@@ -15,13 +18,15 @@ signal boss_incoming(boss_name: String)
 signal boss_spawned(boss: Boss)
 signal level_cleared(index: int)
 signal all_levels_cleared
+signal halfway_1up
 
 enum State { IDLE, INTRO, WAVES, BOSS_INTRO, BOSS, CLEARED, DONE }
 
 const INTRO_BARS = 3
 const RETRY_INTRO_BARS = 1
 const BOSS_INTRO_BARS = 2
-const CLEARED_BARS = 2
+const DEMO_LEVELS = 4   # the demo build is world 1 (planets 1-4)
+const CLEARED_BARS = 4   # the transition card (Space skips ahead)
 
 var state = State.IDLE
 var level_index = 0
@@ -55,6 +60,7 @@ func start_level(index: int, resume_wave: int = 0):
 	bars_to_wait = RETRY_INTRO_BARS if from_wave > 0 else INTRO_BARS
 	Game.set_level(level_index, level().waves.size())
 	Conductor.play(level().track, Game.multiplier() + 1)
+	Game.set_dancing(true)
 	level_started.emit(level_index)
 
 
@@ -81,6 +87,13 @@ func start_endless():
 
 func stop():
 	state = State.IDLE
+	Game.set_dancing(false)
+
+
+# The transition card was dismissed: move on at the next bar.
+func skip_transition():
+	if state == State.CLEARED and bars_to_wait > 1:
+		bars_to_wait = 1
 
 
 func _on_bar(_n: int):
@@ -102,12 +115,14 @@ func _on_bar(_n: int):
 		State.BOSS_INTRO:
 			_spawn_boss()
 		State.CLEARED:
-			if level_index + 1 < Levels.count():
+			if level_index + 1 < Levels.count() and not (Game.is_demo() and level_index + 1 >= DEMO_LEVELS):
 				Game.carry_assist()   # struggling players keep one level less of help
 				start_level(level_index + 1)
 			else:
 				state = State.DONE
 				Game.story_complete = true
+				if Game.challenge != Game.Challenge.NORMAL:
+					Game.hard_cleared = true   # unlocks TOUHOU
 				Game.save_settings()
 				all_levels_cleared.emit()
 
@@ -122,11 +137,20 @@ func _next_wave():
 		_start_boss_intro()
 		return
 	Game.set_wave(wave_index + 1)
+	Game.set_dancing(false)
+	# HALFWAY 1UP (beginner care): reaching the middle of a planet refills one lost life
+	if wave_index == waves.size() / 2 and Game.lives < Game.START_LIVES:
+		Game.lives += 1
+		Game.lives_changed.emit(Game.lives)
+		Game.track("halfway_1ups")
+		halfway_1up.emit()
 	for group in waves[wave_index]:
-		for enemy in Levels.create_group(group, level().get("volley_rate", 1.0)):
+		for enemy in Levels.create_group(group, level().get("volley_rate", 1.0) * Game.density()):
 			enemy.tree_exited.connect(_on_enemy_gone)
 			alive += 1
 			get_tree().current_scene.add_child.call_deferred(enemy)
+			if enemy is Boss:
+				boss_spawned.emit.call_deferred(enemy)   # mid-boss: health bar, banter
 	wave_started.emit(wave_index, waves.size())
 
 
@@ -142,6 +166,8 @@ func checkpoint() -> int:
 
 func _on_enemy_gone():
 	alive -= 1
+	if alive <= 0 and state == State.WAVES and is_inside_tree():
+		Game.set_dancing(true)
 	# the next wave starts on the next bar (handled in _on_bar)
 
 
@@ -159,6 +185,7 @@ const BOSS_MIN_LIVES = 2   # lives are topped up to at least this when a boss ap
 
 func _spawn_boss():
 	state = State.BOSS
+	Game.set_dancing(false)
 	if Game.lives < BOSS_MIN_LIVES:
 		Game.lives = BOSS_MIN_LIVES
 		Game.lives_changed.emit(Game.lives)
@@ -173,6 +200,7 @@ func _next_endless_wave():
 		Game.level = stage
 		Conductor.play(Endless.TRACKS[stage], Game.multiplier() + 1)
 	Game.set_wave(wave_index + 1)
+	Game.set_dancing(false)
 	if Endless.is_boss_wave(wave_index):
 		state = State.BOSS
 		boss = Levels.create_boss(stage)
@@ -195,7 +223,9 @@ func _on_boss_died(_boss):
 	var ratio = float(Game.level_perfects) / max(Game.level_judged, 1)
 	last_rank = Levels.rank(level_seconds, level().par_seconds, ratio, Game.assist > 0 or from_wave > 0)
 	Game.ranks.append(last_rank)
+	Game.record_planet(level_index, last_rank)
 	Game.record_level_clear(level_index)
 	state = State.CLEARED
 	bars_to_wait = CLEARED_BARS
+	Game.set_dancing(false)
 	level_cleared.emit(level_index)

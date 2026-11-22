@@ -1,4 +1,4 @@
-# Smittens: uniqueness and differentiation
+# Shmittens!: uniqueness and differentiation
 
 ## Is there a Steam game with 90%+ similarity?
 **No match found.** This comes from web searches done on 2026-11-22. Search can't see every Steam title, so it isn't exhaustive.
@@ -26,8 +26,9 @@ Every neighbour shares at most 2 of the 4 pillars, so similarity is around 50% a
 - **Empowered spells:** release a drawn spell on the beat → +50%.
 - **Spell Chains:** cast on consecutive bars → up to ×1.75, and each link plays a rising note in the song's key. Your drawings become part of the music.
 - **Bosses play the melody:** their bullets follow the lead melody, with aim tilted by pitch. You can *hear* the next attack.
-- **FEVER:** 16 on-beat hits in a row → piercing shots and full music.
-- **Character:** a superhero cat rescuing her queen, unlike the abstract or sci-fi identity of most rhythm shmups.
+- **Spell Break:** only drawn spells shatter a boss's beat armour at once.
+- **Spells land where you draw them** (since playtest 3): circle the swarm, slash through the row.
+- **Character:** a superhero cat and three tiny friends rescuing the Princess of Pisitania from a buff demon-lord mouse. That's a warm, funny identity, unlike the abstract or sci-fi look of most rhythm shmups.
 
 ## How strong is it?
 
@@ -36,9 +37,9 @@ Every neighbour shares at most 2 of the 4 pillars, so similarity is around 50% a
 | Uniqueness of the combination | **Strong** | No neighbour combines drawing and rhythm; Spell Chains make the fusion audible |
 | Rhythm-shmup half alone | Weak (crowded) | At least 7 Steam titles already do "shoot to the beat" |
 | Communicability | **Medium → strong** | "Draw spells to the beat" fits in a 5-second GIF; it needs a trailer showing a chain |
-| Defensibility | Medium | The mechanic could be copied; the cat-hero identity, art and music are what make it hard to copy, and they're still placeholders |
+| Defensibility | Medium | The mechanic could be copied; the cat-hero cast, humour and the cohesive procedural pastel style are what make it hard to copy |
 
 ## Recommendations for go-to-market
 - **Lead with "draw spells to the beat",** not "rhythm shooter", which puts it in the crowded category.
 - **Make Spell Chains visible on screen:** a chain counter, and a trail coloured by the note.
-- **Commission distinctive art and music.** That's the biggest lever for defensibility, and the placeholders cap the critic and market scores.
+- **Art and music stay procedural (owner decision).** Win on cohesion and motion: one style guide (`marketing/STYLE_GUIDE.md`), readable capsules, and GIFs that show the drawing.

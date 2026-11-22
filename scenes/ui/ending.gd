@@ -20,12 +20,37 @@ func _ready():
 	var stars = Node2D.new()
 	stars.set_script(preload("res://scenes/levels/starfield.gd"))
 	add_child(stars)
-	add_child(_label("THE QUEEN IS FREE!", 72, GOLD, 120))
-	add_child(_label("Shmitten defeated the Rat King and brought the Queen home.", 26, Color(0.9, 0.9, 1), 220))
+	if Game.is_demo():
+		add_child(_label("THE PRINCESS IS FREE!", 72, GOLD, 120))
+		add_child(_label("...but Sho escaped with the Star of Pisitania. The chase continues in the full game!", 24, Color(0.9, 0.9, 1), 220))
+	else:
+		add_child(_label("THE STAR SHINES AGAIN!", 72, GOLD, 120))
+		add_child(_label("Shmitten, Pip, Nori, Kiwi and the Princess brought the Star of Pisitania home.", 24, Color(0.9, 0.9, 1), 220))
+	add_child(_label("Sho has been sentenced to 1000 hours of cardio.", 20, Color(1, 0.75, 0.85), 470))
+	# the last planet's captured spell cards, small, under the heroes
+	var won = Game.level_cards_won.slice(0, 6)
+	for i in won.size():
+		var v = SpellCardView.make(won[i][0], won[i][1])
+		v.scale = Vector2(0.55, 0.55)
+		v.position = Vector2(640 - won.size() * 36.0 + i * 72.0, 268)
+		add_child(v)
 	add_child(_label("FINAL SCORE  %06d" % Game.score, 34, GOLD, 520))
 	if not Game.ranks.is_empty():
 		add_child(_label("RANKS   " + "  ".join(Game.ranks.map(func(r): return r)), 26, Color(0.9, 0.9, 1), 570))
-	add_child(_label("Thanks for playing!  -  click to return to the title", 18, Color(0.7, 0.7, 0.8), 640))
+	if Game.is_demo():
+		add_child(_label("Thanks for playing the DEMO! Sho will be back - wishlist Shmittens! to follow the full journey.", 20, Color(1, 0.85, 0.6), 600))
+		var row = HBoxContainer.new()
+		row.position = Vector2(470, 640)
+		row.add_theme_constant_override("separation", 16)
+		add_child(row)
+		for b in [["WISHLIST", func(): OS.shell_open(Game.STEAM_URL)], ["FEEDBACK", func(): Game.open_feedback()]]:
+			var btn = Button.new()
+			btn.text = b[0]
+			btn.custom_minimum_size = Vector2(160, 40)
+			btn.pressed.connect(b[1])
+			row.add_child(btn)
+	else:
+		add_child(_label("Thanks for playing!  -  click to return to the title", 18, Color(0.7, 0.7, 0.8), 640))
 	cat = Sprite2D.new()
 	cat.texture = CAT_SHEET
 	cat.hframes = 10

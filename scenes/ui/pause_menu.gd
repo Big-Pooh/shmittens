@@ -57,6 +57,14 @@ func _build():
 	settings_button.text = "Settings"
 	settings_button.pressed.connect(func(): settings.open())
 	box.add_child(settings_button)
+	var feedback = Button.new()
+	feedback.text = "Send feedback"
+	feedback.pressed.connect(func(): Game.open_feedback())
+	box.add_child(feedback)
+	var bug = Button.new()
+	bug.text = "Report a bug"
+	bug.pressed.connect(func(): Game.open_bug_report())
+	box.add_child(bug)
 	var quit = Button.new()
 	quit.text = "Quit to title"
 	quit.pressed.connect(quit_to_title)

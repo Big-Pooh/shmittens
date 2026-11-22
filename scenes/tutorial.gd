@@ -15,11 +15,12 @@ const BEAT_CLICKS_NEEDED = 3
 const HELD_BEATS_NEEDED = 4
 const GESTURE_ORDER = ["shockwave", "laser", "lightning", "shield"]
 const GESTURE_HINTS = {
-	"shockwave": "Draw a CIRCLE  ->  SHOCKWAVE",
-	"laser": "Draw a straight LINE (its direction aims the beam)  ->  LASER",
-	"lightning": "Draw a ZIGZAG  ->  CHAIN LIGHTNING",
-	"shield": "Draw a TRIANGLE  ->  SHIELD",
+	"shockwave": "Draw a CIRCLE around the mice  ->  CIRCLE BURST right there",
+	"laser": "Draw a LINE through the mice  ->  LINE SLASH along your line",
+	"lightning": "Draw a ZIGZAG over the mice  ->  ZIGZAG BOLT strikes along it",
+	"shield": "Draw a TRIANGLE anywhere  ->  TRIANGLE SHIELD around you",
 }
+const SHAPE_FOR_SKILL = {"shockwave": "circle", "laser": "line", "lightning": "zigzag", "shield": "triangle"}
 const GRUNT = preload("res://scenes/enemies/grunt.tscn")
 const GOLD = Color(1, 0.82, 0.25)
 
@@ -29,7 +30,23 @@ var last_cat_position: Vector2
 var beat_clicks = 0
 var held_beats = 0
 var gesture_index = 0
+var weapons_tried = {}
 var done = false
+var guide: GestureGuide
+# steps: 0 move, 1 beat clicks, 2 held fire, 3 weapons, 4 practice mice, 5 gestures,
+#        6 spell card (practice boss), 7 ready
+const STEP_WEAPONS = 3
+const STEP_MICE = 4
+const STEP_GESTURES = 5
+const STEP_CARD = 6
+const STEP_READY = 7
+# Spell-card step (playtest 5: "I still didn't figure out the cards"): a practice boss with
+# one short card. You must CAPTURE it (clear it without getting hit or bombing) to finish;
+# after CARD_ATTEMPTS_BEFORE_PASS failed attempts, simply clearing it is enough.
+const CARD_ATTEMPTS_BEFORE_PASS = 3
+const PRACTICE_HEALTH = 60.0
+var card_attempts = 0
+var practice_boss: Boss
 
 var panel_label: Label
 var hint_label: Label
@@ -62,6 +79,7 @@ func _ready():
 	Conductor.beat.connect(_on_beat)
 	Game.judged.connect(_on_judged)
 	_gestures().cast.connect(_on_cast)
+	Game.weapon_changed.connect(_on_weapon)
 	var cat = _cat()
 	cat.is_invulnerable = true   # nothing can hurt you in the tutorial
 	last_cat_position = cat.global_position
@@ -89,27 +107,41 @@ func _build_ui():
 	hint_label.add_theme_color_override("font_color", Color(0.75, 0.75, 0.85))
 	hint_label.text = "TUTORIAL  -  press TAB to skip"
 	layer.add_child(hint_label)
+	guide = GestureGuide.new()
+	layer.add_child(guide)
 
 
 func _show_step():
 	step_changed.emit(step)
+	guide.show_focus("")
 	match step:
 		0:
-			panel_label.text = "STEP 1/5   Fly around with  W A S D"
+			panel_label.text = "STEP 1/7   Fly around with  W A S D\n(hold SHIFT to FOCUS: slower, and shows your tiny hitbox)"
 		1:
-			panel_label.text = "STEP 2/5   Watch the beat bar and the sparkles...\nthen press SPACE exactly on the beat (%d/%d)   (the mouse aims)" % [beat_clicks, BEAT_CLICKS_NEEDED]
+			panel_label.text = "STEP 2/7   Watch the beat bar and the sparkles...\nthen press SPACE exactly on the beat (%d/%d)   (the mouse aims)" % [beat_clicks, BEAT_CLICKS_NEEDED]
 		2:
-			panel_label.text = "STEP 3/5   HOLD SPACE: Shmitten fires on every beat by itself (%d/%d)" % [held_beats, HELD_BEATS_NEEDED]
-		3:
-			panel_label.text = "STEP 4/5   Shoot the practice mice ON THE BEAT.\nOn-beat kills drop cheese; streaks give batteries. Earn a skill charge!"
+			panel_label.text = "STEP 3/7   HOLD SPACE: Shmitten keeps firing to the beat by herself (%d/%d)" % [held_beats, HELD_BEATS_NEEDED]
+		STEP_WEAPONS:
+			weapons_tried[Game.weapon] = true   # the one you're holding counts
+			var names = []
+			for w in Game.WEAPON_NAMES.size():
+				names.append(("[%s]" if weapons_tried.has(w) else "%s") % Game.WEAPON_NAMES[w])
+			panel_label.text = "STEP 4/7   Try all three weapons: press 1, 2, 3 (or Q / E, or the mouse wheel)\nFISH home in by themselves, the LASER hits hardest if you aim, SPREAD is a close-range blast\n%s" % "   ".join(names)
+		STEP_MICE:
+			panel_label.text = "STEP 5/7   Shoot the practice mice ON THE BEAT.\nOn-beat kills drop cheese; streaks give batteries. Earn a skill charge!"
 			_spawn_practice_mice()
-		4:
+		STEP_GESTURES:
 			Game.add_charge(Game.MAX_CHARGES)   # free charges for practice
-			panel_label.text = "STEP 5/5   HOLD RIGHT-CLICK and draw (time slows down), release to cast:\n%s   (%d/%d)" % [GESTURE_HINTS[GESTURE_ORDER[gesture_index]], gesture_index + 1, GESTURE_ORDER.size()]
+			var skill = GESTURE_ORDER[gesture_index]
+			panel_label.text = "STEP 6/7   HOLD RIGHT-CLICK and trace the shape (time slows down), release to cast:\n%s   (%d/%d)" % [GESTURE_HINTS[skill], gesture_index + 1, GESTURE_ORDER.size()]
+			guide.show_focus(SHAPE_FOR_SKILL[skill], Vector2(640, 400), 110.0)
 			if get_tree().get_nodes_in_group("enemies").size() < 3:
 				_spawn_practice_mice()
-		5:
-			panel_label.text = "YOU'RE READY!\nTip: release a gesture ON THE BEAT for an EMPOWERED skill.\nNow go save the Queen!"
+		STEP_CARD:
+			panel_label.text = "STEP 7/7   BOSS SPELL CARDS!\nBosses attack in named SPELL CARDS: a pattern + a timer + a slice of their health bar (top of the screen).\nDodge, shoot it and hit it with spells until the slice is empty. If you aren't hit and don't bomb (X),\nyou CAPTURE the card: big bonus + a battery.   CAPTURE this practice card to finish!" + ("" if card_attempts == 0 else "\n(attempt %d)" % (card_attempts + 1))
+			_spawn_practice_boss()
+		STEP_READY:
+			panel_label.text = "YOU'RE READY!\nRelease a spell ON THE BEAT to empower it.  X = emergency CATNIP BOMB (uses all charges).\n50 on-beat hits in a row = OVERDRIVE (press F).  Between waves: DANCE on the beat!\nNow go save the Princess!"
 
 
 func _spawn_practice_mice():
@@ -132,7 +164,7 @@ func _process(_delta):
 		last_cat_position = cat.global_position
 		if moved >= MOVE_DISTANCE:
 			advance()
-	elif step == 3 and Game.charges >= 1:
+	elif step == STEP_MICE and Game.charges >= 1:
 		advance()
 
 
@@ -157,7 +189,7 @@ func _on_beat(_n: int):
 
 
 func _on_cast(skill: String, _empowered: bool):
-	if step != 4 or skill != GESTURE_ORDER[gesture_index]:
+	if step != STEP_GESTURES or skill != GESTURE_ORDER[gesture_index]:
 		return
 	gesture_index += 1
 	if gesture_index >= GESTURE_ORDER.size():
@@ -166,10 +198,59 @@ func _on_cast(skill: String, _empowered: bool):
 		_show_step()
 
 
+func _spawn_practice_boss():
+	for e in get_tree().get_nodes_in_group("enemies"):
+		e.queue_free()
+	var cat = _cat()
+	cat.is_invulnerable = false      # hits count for the capture...
+	Game.lives = 9                   # ...but you can't run out of lives here
+	Game.lives_changed.emit(Game.lives)
+	Game.add_charge(Game.MAX_CHARGES)
+	practice_boss = load("res://scenes/enemies/bosses/mecha_tank.gd").new()
+	practice_boss.cards = [{"name": "Practice Card: Gentle Parade", "share": 1.0, "seconds": 30.0, "armored": false}]
+	practice_boss.max_health = PRACTICE_HEALTH
+	practice_boss.boss_name = "TRAINING TANKY"
+	practice_boss.drops = false
+	practice_boss.slot_position = Vector2(1060, 360)
+	practice_boss.position = Vector2(1400, 360)
+	practice_boss.card_ended.connect(_on_practice_card)
+	get_tree().current_scene.add_child(practice_boss)
+	var hud = get_tree().current_scene.get_node_or_null("HUD")
+	if hud:
+		hud.show_boss(practice_boss)
+
+
+func _on_practice_card(_index: int, captured: bool):
+	if step != STEP_CARD:
+		return
+	card_attempts += 1
+	if captured or card_attempts >= CARD_ATTEMPTS_BEFORE_PASS:
+		Game.track("tutorial_card_captured" if captured else "tutorial_card_cleared")
+		if is_instance_valid(practice_boss) and not practice_boss.is_dead:
+			practice_boss.die()
+		_cat().is_invulnerable = true
+		advance()
+	else:
+		# not captured: try again with a fresh practice boss
+		if is_instance_valid(practice_boss):
+			practice_boss.queue_free()
+		_show_step.call_deferred()
+
+
+func _on_weapon(w: int):
+	if step != STEP_WEAPONS:
+		return
+	weapons_tried[w] = true
+	if weapons_tried.size() >= Game.WEAPON_NAMES.size():
+		advance()
+	else:
+		_show_step()
+
+
 func advance():
 	step += 1
 	_show_step()
-	if step == 5:
+	if step == STEP_READY:
 		_finish_later()
 
 

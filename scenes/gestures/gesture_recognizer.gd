@@ -17,8 +17,8 @@ const HALF_DIAGONAL = 0.5 * sqrt(2.0 * SQUARE * SQUARE)
 const ANGLE_RANGE = PI / 4.0
 const ANGLE_PRECISION = PI / 90.0
 const PHI = 0.6180339887
-const MIN_SCORE = 0.80          # below this the stroke fizzles
-const LINE_STRAIGHTNESS = 0.92  # start-end distance / path length for a line
+const MIN_SCORE = 0.76          # below this the stroke fizzles (go-live: 31% fizzles in play -> more forgiving)
+const LINE_STRAIGHTNESS = 0.90  # start-end distance / path length for a line
 const MIN_LENGTH = 60.0         # pixels; shorter strokes are ignored
 
 var templates: Array = []   # [[name, normalised points], ...]
@@ -79,6 +79,7 @@ func recognize(points: PackedVector2Array) -> Dictionary:
 			best = d
 			result.name = template[0]
 	result.score = 1.0 - best / HALF_DIAGONAL
+	result["best"] = result.name   # closest shape even when below the threshold (snap assist)
 	if result.score < MIN_SCORE:
 		result.name = ""
 	return result

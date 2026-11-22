@@ -20,7 +20,19 @@ func take_hit(amount: float, direction: Vector2, judgement: int = -1):
 	take_damage(amount, judgement)
 
 
+# ZIGZAG lightning is the armour breaker (playtest 7): x3 against shield mice.
+func take_skill_damage(amount: float, spell: String = ""):
+	super(amount * (3.0 if spell == "lightning" else 1.0), spell)
+
+
+# SPREAD's job (go-live: it was 3.5% of weapon time): pellets slip around the plate
+# (never blocked) and hit shield mice 1.5x harder.
+var _hit_by_pellet = false
+
+
 func is_blocking(direction: Vector2, judgement: int = -1) -> bool:
+	if _hit_by_pellet:
+		return false
 	if judgement == Conductor.Judgement.GOOD or judgement == Conductor.Judgement.PERFECT:
 		return false
 	return absf(direction.angle_to(Vector2.RIGHT)) <= BLOCK_ANGLE

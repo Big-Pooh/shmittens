@@ -34,13 +34,15 @@ ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
 GODOT = os.environ.get("GODOT", os.path.expanduser("~/Desktop/Godot_v4.7.2.app/Contents/MacOS/Godot"))
 OUT = os.path.join(ROOT, "montecarlo")
 RUNS = os.path.join(OUT, "panel_runs")
-LEVELS = 3
-PAR = [45.0, 40.0, 60.0]
+LEVELS = 8
+PAR = [55.0, 52.0, 52.0, 60.0, 60.0, 60.0, 60.0, 70.0]
 
 # Presentation quality of the current assets (0-1). Fixed judgement, NOT computable from code:
 # generated placeholder pixel art (the cat is hand-made) and generated chiptune loops/sfx.
 # Raise these only when real art / music replace the placeholders.
-ART_QUALITY = 0.5
+# Playtest 2: one cohesive cute (chibi) style for every enemy, boss, pickup and shot, replacing
+# mismatched robot sprites -> 0.55. Still generated placeholders; real art is the big lever.
+ART_QUALITY = 0.55
 AUDIO_QUALITY = 0.5
 ORIGINALITY = 0.85   # rhythm + drawn-gesture skills + shmup is an unusual combination
 
@@ -62,6 +64,26 @@ CHECKLIST = [
     ("mastery: ranks / FEVER", 0.5, lambda: 1.0 if _grep("scripts/autoload/game.gd", "FEVER_EVERY") else 0.0),
     ("replay mode after the story", 1.0, lambda: 1.0 if _exists("scenes", "levels", "endless.gd") else 0.0),
     ("high scores saved", 0.5, lambda: 1.0 if _grep("scripts/autoload/game.gd", "best_scores") else 0.0),
+    # playtest 2
+    ("weapon variety + switching", 1.0, lambda: 1.0 if _grep("scripts/autoload/game.gd", "WEAPON_NAMES") else 0.0),
+    ("boss design: readable patterns + beat-armour phase", 1.0, lambda: 1.0 if _grep("scenes/enemies/bosses/boss.gd", "ARMOR_PIPS") else 0.0),
+    ("story cards between levels", 0.5, lambda: 1.0 if _exists("scenes", "ui", "transition_card.gd") else 0.0),
+    ("spell-shape guides", 0.5, lambda: 1.0 if _exists("scenes", "gestures", "gesture_guide.gd") else 0.0),
+    ("no dead time between waves (dance breaks)", 0.5, lambda: 1.0 if _grep("scenes/levels/level_runner.gd", "set_dancing") else 0.0),
+    # playtest 3
+    ("spells land where drawn + real impact", 1.0, lambda: 1.0 if _grep("scenes/gestures/gesture_input.gd", "cancel_bullets") else 0.0),
+    ("boss spell cards (names, timers, captures)", 1.0, lambda: 1.0 if _grep("scenes/enemies/bosses/boss.gd", "card_started") else 0.0),
+    ("bullet variety + graze", 0.5, lambda: 1.0 if _grep("scenes/enemies/enemy_shot.gd", "GRAZE_RADIUS") else 0.0),
+    ("mastery goal: overdrive", 0.5, lambda: 1.0 if _exists("scenes", "player", "overdrive_beam.gd") else 0.0),
+    ("playtest telemetry (local session stats)", 0.5, lambda: 1.0 if _grep("scripts/autoload/game.gd", "save_session") else 0.0),
+    # playtest 4
+    ("story intro + planet journey map", 1.0, lambda: 1.0 if _exists("scenes", "ui", "intro_story.gd") else 0.0),
+    ("difficulty modes (hard / touhou)", 1.0, lambda: 1.0 if _grep("scripts/autoload/game.gd", "Challenge") else 0.0),
+    ("companions", 0.5, lambda: 1.0 if _exists("scenes", "player", "companions.gd") else 0.0),
+    # playtest 5
+    ("humour / personality (banter)", 1.0, lambda: 1.0 if _exists("scenes", "ui", "banter.gd") else 0.0),
+    ("rare aspirational power-up (mech)", 0.5, lambda: 1.0 if _grep("scenes/player/shmitten.gd", "start_mech") else 0.0),
+    ("tutorial teaches every system (incl. spell cards)", 1.0, lambda: 1.0 if _grep("scenes/tutorial.gd", "STEP_CARD") else 0.0),
 ]
 
 
@@ -81,12 +103,15 @@ def make_panel(n, seed=2026):
             "challenge": min(max(rng.gauss(skill, 0.2), 0.0), 1.0), "aesthetic": rng.random(),
         })
         panel[-1]["relaxed"] = panel[-1]["challenge"] < 0.3 and rng.random() < 0.7
+        # playtest 4: the first-start prompt now offers HARD; assume half of the testers who
+        # want a real challenge (challenge > 0.75) pick it
+        panel[-1]["hard"] = not panel[-1]["relaxed"] and panel[-1]["challenge"] > 0.75 and rng.random() < 0.5
     return panel
 
 
 def run_tester(t):
     cmd = [GODOT, "--headless", "--fixed-fps", "60", "--path", ROOT, "-s", "tests/playthrough.gd", "--",
-           "skill:%.3f" % t["skill"], str(t["id"]), "relaxed" if t["relaxed"] else "normal"]
+           "skill:%.3f" % t["skill"], str(t["id"]), "relaxed" if t["relaxed"] else ("hard" if t.get("hard") else "normal")]
     out = subprocess.run(cmd, capture_output=True, text=True, timeout=900).stdout
     for line in out.splitlines():
         if line.startswith("RESULT "):

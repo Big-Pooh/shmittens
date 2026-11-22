@@ -2,37 +2,94 @@ extends EnemyBase
 
 class_name Boss
 
-# Shared boss behaviour:
-# - Armour (Revision 1): off-beat and held shots do OFFBEAT_ARMOR (50%); on-beat clicks and
-#   skills do full damage. Rhythm is the key way through, not the only one.
-# - Phase 2 below half health (on_phase_2 hook).
-# - Guaranteed reward on death: 5 cheese + a battery + a yarn.
-# - Attack helpers: fan (aimed spread), ring (all directions), melody_shot (follows the lead melody).
-# - Bosses "play" the music: on_lead_note() fires on each note of the lead melody
-#   (Conductor.lead_note); the drums (beats/bars) drive the big attacks in on_beat().
-# Subclasses call build() in _init and script their attacks in on_beat(n).
+# Shared boss behaviour (playtest 2: closer to bullet hell - you dodge readable patterns while
+# keeping a steady aim; bosses drift slowly instead of jumping to your height).
+#
+# Phase 1 - armour: off-beat and held shots do OFFBEAT_ARMOR (50%); on-beat clicks and skills
+#   do full damage.
+# Phase 2 (below half health) - BEAT ARMOUR: ARMOR_PIPS pips around the boss. While any pip is
+#   left, only PERFECT shots hurt (full damage); everything else just pings off. Each hit chips
+#   the armour by CRACK[judgement] (PERFECT a whole pip; GOOD half - a whole one when assisted;
+#   off-beat/held a little, so the beat is the key way through, not the only one). When the last
+#   pip breaks the boss is STUNNED for STUN_BEATS beats: it stops firing and takes STUN_DAMAGE x
+#   damage from everything. Then the armour comes back.
+# Guaranteed reward on death: 5 cheese + a battery + a yarn.
+# Patterns (all fixed geometry, no aiming randomness):
+#   staff_note - the lead melody as bullets: each note flies straight left at a height set by
+#                its pitch, like notes on a stave. You can hear where the gap will be.
+#   arc        - an evenly spaced fan pointing left (not aimed).
+#   spiral     - rotating arms; the angle advances every call.
+#   wall       - a column of bullets across the screen with a gap that moves predictably.
+#   ring       - all directions.
+# SPELL CARDS (playtest 3, Touhou): a boss fight is a sequence of named cards (`cards`), each
+# owning a share of the health bar and a timer. Damage can't spill into the next card, so a
+# card can't be skipped by burst damage; each card opens with CARD_INTRO_BEATS beats where the
+# boss is invulnerable and silent while its name shows. Clear a card before the timer runs out
+# without being hit or bombing -> CAPTURED: bonus score + a battery + cheese. Timer out -> the
+# card ends anyway (no bonus). Armoured cards use the BEAT ARMOUR rules above (phase 2).
+# When a card ends, its bullets turn into cheese.
+# Subclasses call build() in _init, set `cards`, and script attacks in on_beat(n) /
+# on_lead_note() using `card` (the current card index).
 
 signal health_changed(health: float, max_health: float)
 signal phase_changed(phase: int)
+signal armor_changed(pips: float, stunned: bool)
+signal card_started(index: int, card_name: String, seconds: float)
+signal card_ended(index: int, captured: bool)
 
 const OFFBEAT_ARMOR = 0.5
 const ASSIST_OFFBEAT_ARMOR = 0.75   # beginner care: with any assist, off-beat shots do 75%
 const ASSIST_HEALTH_CUT = 0.15      # beginner care: boss health -15% per assist level
+const ARMOR_PIPS = 5.0
+const CRACK = {
+	Conductor.Judgement.PERFECT: 1.0,
+	Conductor.Judgement.GOOD: 0.5,
+	Conductor.Judgement.MISS: 0.15,
+	-1: 0.1,   # held fire
+}
+const SKILL_CRACK = 1.0
+const STUN_BEATS = 8
+const STUN_DAMAGE = 1.5
+const STAFF_SPACING = 30.0   # pixels per scale step for staff notes
+const DRIFT_RANGE = Vector2(170.0, 550.0)
+const CARD_INTRO_BEATS = 2
+const CARD_ASSIST_TIME = 1.25          # beginner care: longer timers after a game over
+const CAPTURE_SCORE = 3000
+const SKILL_MIN_FRACTION = 0.05        # a spell always takes at least 5% of a boss's health
+const SKILL_ARMOR_CRACK = 2.0
+const BOMB_FRACTION = 0.04             # per charge spent on a bomb
+const CARD_END_CHEESE = 8
 
 var boss_name = "BOSS"
+var is_midboss = false   # one-card mid-level boss (no Princess cage, normal wave flow)
 var phase = 1
+var armor = 0.0          # pips left (phase 2)
+var stunned_beats = 0
+var spiral_angle = 0.0
 var _note_count = 0
+var hit_radius = 80.0
+# spell cards: [{"name", "share" (of max health), "seconds", "armored"}]
+var cards: Array = []
+var card = -1
+var card_floor = 0.0
+var card_time = 0.0
+var card_intro = 0
+var card_clean = true
+var captures = 0
+var spell_this_card = false   # a drawn spell hit during the current card (mech part on capture)
 
 
-func build(texture: Texture2D, sprite_scale: float, hit_radius: float, health: float):
+func build(texture: Texture2D, sprite_scale: float, radius: float, health: float):
 	var s = Sprite2D.new()
 	s.name = "Sprite2D"
 	s.texture = texture
 	s.scale = Vector2.ONE * sprite_scale
+	base_scale = s.scale
 	add_child(s)
 	var shape = CollisionShape2D.new()
 	var circle = CircleShape2D.new()
-	circle.radius = hit_radius
+	circle.radius = radius
+	hit_radius = radius
 	shape.shape = circle
 	add_child(shape)
 	max_health = health
@@ -41,65 +98,560 @@ func build(texture: Texture2D, sprite_scale: float, hit_radius: float, health: f
 
 
 func _ready():
-	max_health *= 1.0 - ASSIST_HEALTH_CUT * Game.assist
+	max_health *= (1.0 - ASSIST_HEALTH_CUT * Game.assist) * Game.CHALLENGE_BOSS_HEALTH[Game.challenge]
 	super()
 	add_to_group("bosses")
 	health_changed.emit(health, max_health)
+	# sprint 2: a bouncy entrance
+	sprite.scale = base_scale * 0.3
+	create_tween().tween_property(sprite, "scale", base_scale, 0.6).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_flash(Color(2, 2, 2.5))
 	Conductor.lead_note.connect(_on_lead_note)
+	Conductor.eighth.connect(_on_eighth)
+	if cards.is_empty():
+		cards = [{"name": "", "share": 0.5, "seconds": 60.0, "armored": false},
+				 {"name": "", "share": 0.5, "seconds": 60.0, "armored": true}]
+	Game.player_hit.connect(func(_c): card_clean = false)
+	var gestures = get_tree().current_scene.get_node_or_null("GestureInput")
+	if gestures:
+		gestures.bombed.connect(func(): card_clean = false)
+
+
+func _process(delta):
+	if is_dead:
+		return
+	if card == -1 and not entering:
+		_start_card(0)
+	elif card >= 0 and card_intro == 0:
+		card_time -= delta
+		if card_time <= 0.0:
+			_timeout()
+	queue_redraw()
+
+
+func is_last_card() -> bool:
+	return card >= cards.size() - 1
+
+
+func _start_card(index: int):
+	card = index
+	Game.level_cards_met += 1
+	var used = 0.0
+	for i in index + 1:
+		used += cards[i].share
+	card_floor = 0.0 if is_last_card() else max_health * (1.0 - used)
+	card_time = cards[index].seconds * (CARD_ASSIST_TIME if Game.assist > 0 else 1.0)
+	card_intro = CARD_INTRO_BEATS
+	card_clean = true
+	spell_this_card = false
+	stunned_beats = 0
+	if cards[index].armored:
+		if phase == 1:
+			phase = 2
+			phase_changed.emit(phase)
+			_flash(Color(3, 1, 1))
+			Game.shake(10.0)
+			on_phase_2()
+		armor = ARMOR_PIPS
+		armor_changed.emit(armor, false)
+	else:
+		armor = 0.0
+	card_started.emit(index, cards[index].name, card_time)
+
+
+func _end_card(captured: bool):
+	var ended = card
+	Game.hit_pause()
+	Game.track("cards_captured" if captured else "cards_missed")
+	if captured:
+		captures += 1
+		Game.level_cards_captured += 1
+		Game.collect_card(cards[ended].name, boss_name, cards[ended].get("weak", ""), get_script().resource_path)
+		Game.add_score(CAPTURE_SCORE)
+		if spell_this_card:
+			Game.add_mech_part("spell_capture")
+		Sfx.play("jingle")
+		Sfx.meow("capture")
+		var scene = get_tree().current_scene
+		scene.add_child.call_deferred(Pickup.create(Pickup.Type.BATTERY, global_position + Vector2(-70, 0)))
+	_bullets_to_cheese()
+	card_ended.emit(ended, captured)
+	if not is_last_card():
+		_start_card(ended + 1)
+
+
+func _timeout():
+	if is_last_card():
+		_end_card(false)
+		die()
+		return
+	health = card_floor
+	health_changed.emit(health, max_health)
+	_end_card(false)
+
+
+func _bullets_to_cheese():
+	var scene = get_tree().current_scene
+	var n = 0
+	for shot in get_tree().get_nodes_in_group("enemy_shots"):
+		if n < CARD_END_CHEESE and Game.SCREEN.has_point(shot.global_position):
+			scene.add_child.call_deferred(Pickup.create(Pickup.Type.CHEESE, shot.global_position))
+			n += 1
+		shot.queue_free()
+
+
+func is_armored() -> bool:
+	return phase == 2 and armor > 0.0 and stunned_beats == 0
+
+
+func is_stunned() -> bool:
+	return stunned_beats > 0
+
+
+func _crack_for(judgement: int) -> float:
+	var crack = CRACK.get(judgement, 0.1)
+	if Game.assist > 0:
+		# beginner care: GOOD cracks a whole pip, off-beat/held shots crack twice as fast
+		crack = 1.0 if judgement == Conductor.Judgement.GOOD else crack * 2.0
+	return crack
 
 
 func take_hit(amount: float, _direction: Vector2, judgement: int = -1):
+	if card_intro > 0:
+		_ping()
+		return
+	if is_armored():
+		_crack(_crack_for(judgement))
+		if judgement == Conductor.Judgement.PERFECT:
+			take_damage(amount, judgement)
+		else:
+			_ping()
+		return
 	var on_beat = judgement == Conductor.Judgement.GOOD or judgement == Conductor.Judgement.PERFECT
-	var armor = ASSIST_OFFBEAT_ARMOR if Game.assist > 0 else OFFBEAT_ARMOR
-	take_damage(amount * (1.0 if on_beat else armor), judgement)
+	var factor = 1.0 if on_beat else (ASSIST_OFFBEAT_ARMOR if Game.assist > 0 else OFFBEAT_ARMOR)
+	if is_stunned():
+		factor = STUN_DAMAGE
+	take_damage(amount * factor, judgement)
+
+
+# Spells (playtest 3: they barely scratched bosses): at least SKILL_MIN_FRACTION of the boss's
+# health per cast; against beat armour they crack SKILL_ARMOR_CRACK pips (and do half damage);
+# STUN_DAMAGE x while stunned.
+const WEAK_MULTIPLIER = 2.0
+const SPELL_NAMES = {"shockwave": "○ CIRCLE BURST", "laser": "― LINE SLASH", "lightning": "ϟ ZIGZAG BOLT"}
+
+
+# The spell this card is weak to ("shockwave" / "laser" / "lightning"), or "".
+func weak_spell() -> String:
+	return cards[card].get("weak", "") if card >= 0 and card < cards.size() else ""
+
+
+func take_skill_damage(amount: float, spell: String = ""):
+	if card_intro > 0:
+		return
+	Game.track("spell_hits_boss")
+	spell_this_card = true
+	amount = max(amount, max_health * SKILL_MIN_FRACTION)
+	if spell != "" and spell == weak_spell():
+		amount *= WEAK_MULTIPLIER   # each card shows which spell it's weak to
+		Game.track("weak_hits")
+	if is_armored():
+		if spell == "lightning":
+			# SPELL BREAK: ZIGZAG lightning shatters ALL the remaining beat armour and stuns
+			Game.track("spell_breaks")
+			_crack(armor)
+		else:
+			_crack(SKILL_ARMOR_CRACK)
+		take_damage(amount * 0.5)
+		return
+	take_damage(amount * (STUN_DAMAGE if is_stunned() else 1.0))
+
+
+# Catnip bomb: BOMB_FRACTION of max health per charge spent, cracks armour, fails the capture.
+func take_bomb(charges: int):
+	card_clean = false
+	if card_intro > 0:
+		return
+	if is_armored():
+		_crack(1.5 * charges)
+	take_damage(max_health * BOMB_FRACTION * charges)
 
 
 func take_damage(amount: float, judgement: int = -1):
-	if is_dead:
+	if is_dead or card_intro > 0:
 		return
+	if card >= 0 and not is_last_card():
+		amount = min(amount, health - card_floor)   # damage never spills into the next card
 	super(amount, judgement)
 	health_changed.emit(max(health, 0.0), max_health)
-	if phase == 1 and not is_dead and health <= max_health * 0.5:
-		phase = 2
-		phase_changed.emit(phase)
-		_flash(Color(3, 1, 1))
-		Game.shake(10.0)
-		on_phase_2()
+	if not is_dead and card >= 0 and not is_last_card() and health <= card_floor + 0.001:
+		_end_card(card_clean)
+	elif is_dead and card >= 0:
+		Game.track("cards_captured" if card_clean else "cards_missed")
+		if card_clean:
+			captures += 1
+			Game.level_cards_captured += 1
+			Game.collect_card(cards[card].name, boss_name, cards[card].get("weak", ""), get_script().resource_path)
+			Game.add_score(CAPTURE_SCORE)
+			if spell_this_card:
+				Game.add_mech_part("spell_capture")
+		card_ended.emit(card, card_clean)
+
+
+func _crack(amount: float):
+	var before = ceil(armor)
+	armor = max(armor - amount, 0.0)
+	if armor <= 0.0:
+		stunned_beats = STUN_BEATS
+		Game.hit_pause()
+		Sfx.play("armor_break")
+		Game.shake(14.0)
+		_flash(Color(1, 3, 3))
+		armor_changed.emit(0.0, true)
+	elif ceil(armor) < before:
+		Sfx.play("armor_crack", -4.0)
+		armor_changed.emit(armor, false)
+
+
+var _last_ping_msec = 0
+
+func _ping():
+	if Time.get_ticks_msec() - _last_ping_msec > 90:
+		_last_ping_msec = Time.get_ticks_msec()
+		Sfx.play("armor_ping", -12.0)
+
+
+func _on_conductor_beat(n: int):
+	if entering or is_dead or not is_inside_tree():
+		return
+	if card < 0:
+		return
+	if card_intro > 0:
+		card_intro -= 1   # the card's name is showing: no attacks yet
+		return
+	mirror = 1.0 if (n / (Conductor.BEATS_PER_BAR * MusicPatterns.BARS)) % 2 == 0 else -1.0
+	if n % 2 == 0 and stunned_beats == 0:
+		# bounce on the kick drum
+		sprite.scale = base_scale * 1.08
+		create_tween().tween_property(sprite, "scale", base_scale, 0.15)
+	if stunned_beats > 0:
+		stunned_beats -= 1
+		beats_alive += 1
+		if stunned_beats == 0:
+			armor = ARMOR_PIPS
+			armor_changed.emit(armor, false)
+		return
+	super(n)
 
 
 func _on_lead_note(pitch: int, length: int):
-	if entering or is_dead or not is_inside_tree():
+	if entering or is_dead or stunned_beats > 0 or card_intro > 0 or card < 0 or not is_inside_tree():
 		return
 	_note_count += 1
-	if Game.assist >= 2 and _note_count % 2 == 0:
-		return   # beginner care: only every other note when heavily assisted
+	if Game.assist >= 1 and _note_count % 2 == 0:
+		return   # beginner care: only every other melody note after a game over
 	on_lead_note(pitch, length)
 
 
-# Override: what to fire on each lead-melody note (default: one melody shot).
+# Override: what to fire on each lead-melody note (default: one staff note).
 func on_lead_note(pitch: int, _length: int):
-	melody_shot(pitch, 280.0)
+	staff_note(pitch, 200.0)
 
 
-# Aimed at the cat, tilted by the note's pitch: higher notes aim higher.
-func melody_shot(pitch: int, speed: float, count: int = 1, spread_degrees: float = 5.0):
-	var aim = (player_position() - global_position).angle()
-	# tilt toward the top of the screen for higher notes, whichever way the boss is aiming
-	var up_sign = 1.0 if cos(aim) < 0.0 else -1.0
-	var tilt = (pitch - (MusicPatterns.SCALE_STEPS - 1) / 2.0) * 6.0 * up_sign
-	var base = aim + deg_to_rad(tilt)
+# The melody as a stave: a note flies straight left at a height set by its pitch
+# (higher note = higher on screen). `count` > 1 stacks a chord (tight vertical pair/triple).
+func staff_note(pitch: int, speed: float, count: int = 1):
+	var y = global_position.y - (pitch - (MusicPatterns.SCALE_STEPS - 1) / 2.0) * STAFF_SPACING
 	for i in count:
-		fire_shot(Vector2.from_angle(base + deg_to_rad((i - (count - 1) / 2.0) * spread_degrees)), speed)
+		var at = Vector2(global_position.x - hit_radius * 0.6, y + (i - (count - 1) / 2.0) * 16.0)
+		_spawn_shot(at, Vector2.LEFT, speed)
 
 
-# Override for a phase-2 entrance (summons etc.).
+# Evenly spaced fan around `center_degrees` (180 = straight left). Not aimed.
+# Bullet counts scale with the challenge mode (HARD x1.4, TOUHOU x2).
+static func dense(n: int) -> int:
+	return int(round(n * Game.density()))
+
+
+func arc(count: int, spread_degrees: float, speed: float, center_degrees: float = 180.0):
+	center_degrees = 180.0 + (center_degrees - 180.0) * mirror   # flips every 4-bar phrase
+	if Game.density() > 1.0:
+		spread_degrees /= Game.density()
+		count = dense(count)
+	if Game.assist >= 1:
+		count = max(count - Game.assist, 3)
+		spread_degrees *= 1.2
+	for i in count:
+		var angle = deg_to_rad(center_degrees + (i - (count - 1) / 2.0) * spread_degrees)
+		fire_shot(Vector2.from_angle(angle), speed)
+
+
+# Rotating arms: each call fires one shot per arm and turns the spiral by step_degrees.
+func spiral(arms: int, speed: float, step_degrees: float, kind: int = EnemyShot.Kind.RICE):
+	arms = dense(arms)
+	if Game.assist >= 2 and arms > 1:
+		arms -= 1
+	for i in arms:
+		fire_shot(Vector2.from_angle(spiral_angle + TAU * i / arms), speed, kind)
+	spiral_angle += deg_to_rad(step_degrees)
+
+
+# A column of bullets across the screen at the boss's front, leaving a gap of gap_size pixels
+# centred on gap_y. Bullets travel straight left.
+func wall(gap_y: float, gap_size: float, speed: float, spacing: float = 46.0):
+	spacing /= sqrt(Game.density())
+	if Game.assist > 0:
+		gap_size *= 1.25
+	var x = global_position.x - hit_radius
+	var y = 70.0
+	while y < 660.0:
+		if absf(y - gap_y) > gap_size / 2.0:
+			_spawn_shot(Vector2(x, y), Vector2.LEFT, speed)
+		y += spacing
+
+
+# Aimed spread (only used by endless-mode extras now).
+func fan(count: int, spread_degrees: float, speed: float):
+	if Game.assist >= 2:
+		count = max(count - 2, 3)
+	var base = (player_position() - global_position).angle()
+	for i in count:
+		var angle = base + deg_to_rad((i - (count - 1) / 2.0) * spread_degrees)
+		fire_shot(Vector2.from_angle(angle), speed)
+
+
+func ring(count: int, speed: float, offset_angle: float = 0.0, kind: int = 0):
+	count = dense(count)
+	if Game.assist >= 2:
+		count = max(count - 4, 6)
+	for i in count:
+		fire_shot(Vector2.from_angle(offset_angle + TAU * i / count), speed, kind)
+
+
+# Touhou-style helpers -------------------------------------------------------------------
+# A "flower": `petals` rings fired at once at slightly different speeds, so the burst opens
+# into layered petals. Kind ORB/RICE/CANDY.
+func flower(petals: int, count: int, speed: float, kind: int = EnemyShot.Kind.RICE, offset: float = 0.0):
+	if Game.assist >= 1:
+		petals = max(petals - 1, 1)
+	for p in petals:
+		ring(count, speed * (1.0 - 0.18 * p), offset + p * PI / count, kind)
+
+
+# Freeze-and-scatter: a ring that flies out, stops dead on the next beat, holds for a beat,
+# then every bullet re-aims at the cat (with `then_turn` radians of fan per bullet).
+func freeze_ring(count: int, speed: float, then_speed: float, kind: int = EnemyShot.Kind.ORB, offset: float = 0.0):
+	count = dense(count)
+	if Game.assist >= 1:
+		count = max(count - 4, 4)
+	var spb = Conductor.seconds_per_beat
+	for i in count:
+		var shot = fire_shot(Vector2.from_angle(offset + TAU * i / count), speed, kind)
+		shot.freeze(spb * 0.9, spb, then_speed, true, (i - (count - 1) / 2.0) * 0.06)
+
+
+# ROSE (playtest 4: "closer to Touhou"): a ring whose bullet speeds follow a rose curve,
+# so it blooms into `petals` petals as it expands.
+func rose(count: int, speed: float, petals: int, offset: float = 0.0, kind: int = EnemyShot.Kind.RICE):
+	count = dense(count)
+	if Game.assist >= 1:
+		count = max(count - 6, 8)
+	for i in count:
+		var a = offset + TAU * i / count
+		var k = 0.45 + 0.55 * absf(cos(petals * a / 2.0))
+		fire_shot(Vector2.from_angle(a), speed * k, kind)
+
+
+# CURTAIN ("rain"): bullets drop from the top edge across the screen in columns, with a
+# gentle sideways drift; `gap_x` leaves a safe column you can sit in.
+func curtain(columns: int, speed: float, gap_x: float, kind: int = EnemyShot.Kind.ORB, drift: float = 0.0):
+	columns = dense(columns)
+	var gap = 150.0 * (1.25 if Game.assist > 0 else 1.0)
+	for i in columns:
+		var x = 60.0 + (global_position.x - 140.0) * (i + 0.5) / columns
+		if absf(x - gap_x) < gap / 2.0:
+			continue
+		_spawn_shot(Vector2(x, 24.0), Vector2(drift, 1.0).normalized(), speed, kind)
+
+
+# SUN: a spiral that reverses its spin every bar, drawing a zigzag lattice.
+var spin_dir = 1.0
+var _sun_bar = -1
+
+func sun(arms: int, speed: float, step_degrees: float, bar: int, kind: int = EnemyShot.Kind.RICE):
+	if bar != _sun_bar:
+		_sun_bar = bar
+		spin_dir = -spin_dir
+	arms = dense(arms)
+	if Game.assist >= 2 and arms > 1:
+		arms -= 1
+	for i in arms:
+		fire_shot(Vector2.from_angle(spiral_angle + TAU * i / arms), speed, kind)
+	spiral_angle += deg_to_rad(step_degrees) * spin_dir
+
+
+# AIMED: `count` bullets in a tight fan straight at the cat (the classic "move or die" stream).
+func aimed(count: int, speed: float, spread_degrees: float = 6.0, kind: int = EnemyShot.Kind.CANDY):
+	var base = (player_position() - global_position).angle()
+	for i in count:
+		fire_shot(Vector2.from_angle(base + deg_to_rad((i - (count - 1) / 2.0) * spread_degrees)), speed, kind)
+
+
+# --- pattern-diversity pass (generic danmaku archetypes) ---------------------------------
+# BUTTERFLY: two mirrored fans of rice that curve in opposite directions, opening like wings.
+func butterfly(count: int, speed: float, curve_rad: float):
+	count = dense(count)
+	for side in [-1.0, 1.0]:
+		for i in count:
+			var a = PI + side * deg_to_rad(15.0 + i * 12.0)
+			var shot = fire_shot(Vector2.from_angle(a), speed, EnemyShot.Kind.RICE)
+			shot.curve = -side * curve_rad
+
+
+# GALAXY: a spiral that starts crawling and then accelerates outward.
+func galaxy(arms: int, accel: float, step_degrees: float):
+	arms = dense(arms)
+	if Game.assist >= 2 and arms > 1:
+		arms -= 1
+	for i in arms:
+		var shot = fire_shot(Vector2.from_angle(spiral_angle + TAU * i / arms), 40.0, EnemyShot.Kind.RICE)
+		shot.accel = accel
+		shot.max_speed = 300.0 * Game.shot_speed_factor()
+	spiral_angle += deg_to_rad(step_degrees) * mirror
+
+
+# BOUNCE FAN: a wide fan toward the top and bottom edges that bounces once - the screen edges
+# become part of the pattern.
+func bounce_fan(count: int, speed: float):
+	count = dense(count)
+	for i in count:
+		var a = PI + deg_to_rad(lerp(-70.0, 70.0, float(i) / max(count - 1, 1)))
+		var shot = fire_shot(Vector2.from_angle(a), speed, EnemyShot.Kind.CANDY)
+		shot.bounces = 1
+
+
+# SPLIT ORBS: slow orbs that burst into a small cross of rice on the next off-beat hi-hat.
+func split_orbs(count: int, speed: float, pieces: int = 4):
+	count = dense(count)
+	if Game.assist >= 1:
+		pieces = 3
+	for i in count:
+		var shot = fire_shot(Vector2.from_angle(PI + deg_to_rad((i - (count - 1) / 2.0) * 22.0)), speed, EnemyShot.Kind.ORB)
+		shot.split = pieces
+
+
+# SNAKE: one rice bullet aimed at the cat with a sinusoidal wobble - called on every hi-hat it
+# draws a wriggling stream that follows you (step = the call counter).
+func snake(step: int, speed: float, wobble_degrees: float = 18.0):
+	var aim = (player_position() - global_position).angle()
+	fire_shot(Vector2.from_angle(aim + deg_to_rad(sin(step * 0.8) * wobble_degrees)), speed, EnemyShot.Kind.RICE)
+
+
+# SEARCHLIGHT: a short fan of `count` bullets whose centre sweeps up and down over a bar
+# (angle from `phase` 0..1) - a moving beam made of bullets.
+func searchlight(phase: float, count: int, speed: float):
+	var center = PI + sin(phase * TAU) * deg_to_rad(55.0)
+	for i in dense(count):
+		fire_shot(Vector2.from_angle(center + deg_to_rad((i - (count - 1) / 2.0) * 3.0)), speed, EnemyShot.Kind.CANDY)
+
+
+# PINCER: bullets drop from the top and rise from the bottom in matching columns, closing on
+# the middle; `gap_x` leaves a safe column.
+func pincer(columns: int, speed: float, gap_x: float):
+	columns = dense(columns)
+	for i in columns:
+		var x = 80.0 + (global_position.x - 180.0) * (i + 0.5) / columns
+		if absf(x - gap_x) < 90.0 * (1.25 if Game.assist > 0 else 1.0):
+			continue
+		_spawn_shot(Vector2(x, 24.0), Vector2.DOWN, speed, EnemyShot.Kind.RICE)
+		_spawn_shot(Vector2(x, 696.0), Vector2.UP, speed, EnemyShot.Kind.RICE)
+
+
+# A few loose random shots toward the left half of the screen (spice, not the main pattern).
+func spray(count: int, speed: float, kind: int = EnemyShot.Kind.CANDY):
+	if Game.assist >= 1:
+		count = max(count / 2, 1)
+	for i in dense(count):
+		fire_shot(Vector2.from_angle(PI + randf_range(-0.9, 0.9)), speed * randf_range(0.7, 1.2), kind)
+
+
+# Music ties (playtest 5): every boss bullet pulses with the beat; the boss bounces on the
+# kick drum; in armoured cards the spiral streams on the off-beat hi-hats; and patterns
+# mirror every 4-bar phrase (one loop of the song): `mirror` is +1 / -1.
+var mirror = 1.0
+var base_scale = Vector2.ONE
+
+
+func fire_shot(direction: Vector2, speed: float = 320.0, kind: int = 0) -> EnemyShot:
+	var shot = super(direction, speed, kind)
+	shot.pulse = true
+	return shot
+
+
+func _on_eighth(n: int):
+	if entering or is_dead or card < 0 or card_intro > 0 or stunned_beats > 0 or not is_inside_tree():
+		return
+	if n % 2 == 1:
+		on_hat(n)
+
+
+# Override: what to fire on the off-beat hi-hat. Default: armoured cards stream one rice
+# bullet along the spiral, turning the spiral into a continuous rhythmic stream.
+func on_hat(_n: int):
+	if cards[card].armored and Game.assist < 2:
+		spiral(1, 140.0, 13.0 * mirror)
+
+
+func _spawn_shot(at: Vector2, direction: Vector2, speed: float, kind: int = 0):
+	var shot = EnemyShot.create(at, direction, speed * Game.shot_speed_factor(), kind)
+	shot.pulse = true
+	shot.volley = "%d:%d" % [get_instance_id(), Engine.get_physics_frames()]
+	get_tree().current_scene.add_child(shot)
+
+
+# Slow, predictable vertical drift (keeps the boss easy to aim at).
+func drift_to(y: float, seconds: float):
+	create_tween().tween_property(self, "position:y", clamp(y, DRIFT_RANGE.x, DRIFT_RANGE.y), seconds).set_trans(Tween.TRANS_SINE)
+
+
+# Override for a phase-2 entrance.
 func on_phase_2():
 	pass
+
+
+func _draw():
+	if is_dead:
+		return
+	if card_intro > 0:
+		# invulnerable while the card's name shows: a soft white halo
+		draw_arc(Vector2.ZERO, hit_radius + 10.0, 0, TAU, 48, Color(1, 1, 1, 0.5), 4.0)
+	if not is_armored() and not is_stunned():
+		return
+	if stunned_beats > 0:
+		# dizzy stars while stunned
+		var t = Time.get_ticks_msec() / 1000.0
+		for i in 3:
+			var p = Vector2.from_angle(t * 4.0 + TAU * i / 3.0) * Vector2(50, 16) + Vector2(0, -hit_radius - 10)
+			draw_circle(p, 6.0, Color(1, 0.9, 0.3))
+		return
+	# beat armour: one glowing pip per remaining point, around the boss, pulsing on the beat
+	var pips = int(ceil(armor))
+	var pulse = 0.6 + 0.4 * (1.0 - Conductor.beat_phase())
+	for i in int(ARMOR_PIPS):
+		var a = -PI / 2.0 + TAU * i / ARMOR_PIPS
+		var p = Vector2.from_angle(a) * (hit_radius + 18.0)
+		if i < pips:
+			draw_circle(p, 11.0, Color(1, 0.85, 0.3, pulse))
+			draw_circle(p, 6.0, Color(1, 1, 1, pulse))
+		else:
+			draw_arc(p, 9.0, 0, TAU, 12, Color(1, 1, 1, 0.25), 2.0)
+	draw_arc(Vector2.ZERO, hit_radius + 18.0, 0, TAU, 48, Color(1, 0.85, 0.3, 0.35 * pulse), 3.0)
 
 
 func die():
 	if not is_dead:
 		Game.shake(18.0)
+		Sfx.meow("boss_defeat")
 	super()
 
 
@@ -119,27 +671,6 @@ func _drop():
 func player_position() -> Vector2:
 	var player = get_tree().get_first_node_in_group("player") as Node2D
 	return player.global_position if player else global_position + Vector2.LEFT * 500
-
-
-# `count` shots spread over `spread_degrees` between each, centred on the cat.
-func fan(count: int, spread_degrees: float, speed: float):
-	if Game.assist >= 2:
-		count = max(count - 2, 3)   # beginner care: thinner fans after repeated game overs
-	var base = (player_position() - global_position).angle()
-	for i in count:
-		var angle = base + deg_to_rad((i - (count - 1) / 2.0) * spread_degrees)
-		fire_shot(Vector2.from_angle(angle), speed)
-
-
-func ring(count: int, speed: float, offset_angle: float = 0.0):
-	if Game.assist >= 2:
-		count = max(count - 4, 6)   # beginner care: thinner rings after repeated game overs
-	for i in count:
-		fire_shot(Vector2.from_angle(offset_angle + TAU * i / count), speed)
-
-
-func move_to_y(y: float, seconds: float = 0.3):
-	create_tween().tween_property(self, "position:y", clamp(y, 120.0, 600.0), seconds).set_trans(Tween.TRANS_SINE)
 
 
 # Spawns helper enemies that fly in from the boss.

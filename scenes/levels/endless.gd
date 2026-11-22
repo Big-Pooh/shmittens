@@ -23,7 +23,8 @@ static func wave_groups(wave: int) -> Array:
 	var pool = []
 	for level in Levels.LEVELS:
 		for w in level.waves:
-			pool.append(w)
+			if not w.any(func(g): return g.enemy == "midboss"):
+				pool.append(w)   # endless has its own boss waves
 	var base = pool[(wave * 7) % pool.size()]   # deterministic tour of all waves
 	var scale = 1.0 + HEALTH_GROWTH * wave
 	var groups = []

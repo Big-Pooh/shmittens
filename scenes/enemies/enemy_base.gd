@@ -34,9 +34,39 @@ func _ready():
 	add_to_group("enemies")
 	collision_layer = Game.LAYER_ENEMY
 	collision_mask = 0
+	if not tutorial_exempt():
+		max_health *= Game.rank_health(self is Boss)
+		if not self is Boss:
+			max_health *= 1.0 - 0.15 * min(Game.assist, 2)   # beginner care after a game over
 	health = max_health
 	entering = slot_position != Vector2.INF
 	Conductor.beat.connect(_on_conductor_beat)
+	Conductor.beat.connect(_anim_beat)
+	_load_anim_frames()
+
+
+# SPRINT 2 animation: every character has a blink/bob frame (<sprite>_b.png); frames swap on
+# every beat so the whole cast bobs to the music.
+var _frame_a: Texture2D
+var _frame_b: Texture2D
+
+func _load_anim_frames():
+	if sprite == null or sprite.texture == null:
+		return
+	_frame_a = sprite.texture
+	var alt = _frame_a.resource_path.replace(".png", "_b.png")
+	if alt != _frame_a.resource_path and ResourceLoader.exists(alt):
+		_frame_b = load(alt)
+
+
+func _anim_beat(n: int):
+	if _frame_b == null or is_dead or not is_inside_tree():
+		return
+	sprite.texture = _frame_b if n % 2 == 1 else _frame_a
+
+
+func tutorial_exempt() -> bool:
+	return Game.tutorial_mode
 
 
 func _physics_process(delta):
@@ -75,7 +105,13 @@ func take_hit(amount: float, _direction: Vector2, judgement: int = -1):
 	take_damage(amount, judgement)
 
 
-# Skills call this directly (judgement -1).
+# Skills call this (bosses override it for beat armour).
+# spell: "shockwave" (circle), "laser" (line), "lightning" (zigzag), "" (bomb / other)
+func take_skill_damage(amount: float, _spell: String = ""):
+	Game.track("spell_hits")
+	take_damage(amount)
+
+
 func take_damage(amount: float, judgement: int = -1):
 	if is_dead:
 		return
@@ -120,9 +156,11 @@ func _explode():
 	particles.initial_velocity_max = 260.0 + explosion_amount * 2.0
 	particles.scale_amount_min = 3.0
 	particles.scale_amount_max = 6.0
+	# sprint 2: a cute pastel "poof" (pink -> mint) instead of fiery debris
 	var ramp = Gradient.new()
-	ramp.set_color(0, Color(1, 0.85, 0.4))
-	ramp.set_color(1, Color(1, 0.3, 0.2, 0))
+	ramp.set_color(0, Color(1, 0.8, 0.92))
+	ramp.add_point(0.5, Color(1, 0.7, 0.85, 0.9))
+	ramp.set_color(1, Color(0.65, 1, 0.9, 0))
 	particles.color_ramp = ramp
 	particles.emitting = true
 	get_tree().current_scene.add_child.call_deferred(particles)
@@ -158,10 +196,12 @@ func _drop():
 		get_tree().current_scene.add_child.call_deferred(pickup)
 
 
-func fire_shot(direction: Vector2, speed: float = 320.0):
-	var shot = EnemyShot.create(global_position + direction.normalized() * 24, direction, speed * Game.shot_speed_factor())
+func fire_shot(direction: Vector2, speed: float = 320.0, kind: int = 0) -> EnemyShot:
+	var shot = EnemyShot.create(global_position + direction.normalized() * 24, direction, speed * Game.shot_speed_factor(), kind)
+	shot.volley = "%d:%d" % [get_instance_id(), Engine.get_physics_frames()]
 	get_tree().current_scene.add_child(shot)
 	Sfx.play("enemy_shoot", -10.0)
+	return shot
 
 
 func is_off_screen_left() -> bool:

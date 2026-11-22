@@ -1,0 +1,44 @@
+name: Playtest feedback
+description: Tell us how the Shmittens! demo felt (takes 2 minutes)
+title: "[Feedback] "
+labels: ["playtest"]
+body:
+  - type: checkboxes
+    id: age
+    attributes:
+      label: Age and consent
+      options:
+        - label: I am 13 or older and I agree that this feedback is posted publicly on GitHub.
+          required: true
+  - type: dropdown
+    id: fun
+    attributes:
+      label: How fun was it? (1 = not at all, 5 = loved it)
+      options: ["1", "2", "3", "4", "5"]
+    validations:
+      required: true
+  - type: dropdown
+    id: wishlist
+    attributes:
+      label: Would you wishlist it on Steam?
+      options: ["Yes", "Maybe", "No"]
+    validations:
+      required: true
+  - type: input
+    id: one_sentence
+    attributes:
+      label: Describe the game in one sentence
+  - type: dropdown
+    id: input
+    attributes:
+      label: What did you play with?
+      options: ["Mouse", "Trackpad", "Gamepad", "Other"]
+  - type: textarea
+    id: notes
+    attributes:
+      label: What was best / worst / confusing?
+  - type: textarea
+    id: stats
+    attributes:
+      label: (Optional) session stats
+      description: Desktop builds save them in the game's user folder under sessions/. Paste the newest file if you like.

@@ -17,7 +17,18 @@ var wave_label: Label
 var charge_icons: Array[TextureRect] = []
 var cheese_bar: ProgressBar
 var gun_label: Label
-var message: Label
+var message: VBoxContainer
+var message_title: Label
+var message_body: Label
+var weapon_icons: Array[Label] = []
+var weapon_hint: Label
+var dance_label: Label
+var armor_label: Label
+var card_label: Label
+var overdrive_label: Label
+var current_boss: Boss
+var mech_label: Label
+var challenge_label: Label
 var combo_label: Label
 var fever_label: Label
 var wind_label: Label
@@ -34,7 +45,7 @@ func _ready():
 	Game.wave_changed.connect(func(_w): _update_wave_label())
 	Game.level_changed.connect(func(_l): _update_wave_label())
 	Game.charges_changed.connect(_on_charges)
-	Game.gun_level_changed.connect(func(l): gun_label.text = "GUN Lv %d" % l)
+	Game.gun_level_changed.connect(func(l): gun_label.text = "Lv %d" % l)
 	Game.combo_changed.connect(_on_combo)
 	Game.fever_changed.connect(_on_fever)
 	Game.second_wind_changed.connect(func(on): wind_label.visible = on)
@@ -43,7 +54,26 @@ func _ready():
 	score_label.text = "SCORE  %06d" % Game.score
 	_update_wave_label()
 	_on_charges(Game.charges, Game.cheese)
-	gun_label.text = "GUN Lv %d" % Game.gun_level
+	gun_label.text = "Lv %d" % Game.gun_level
+	_on_weapon(Game.weapon)
+	Game.weapon_changed.connect(_on_weapon)
+	Game.dance_changed.connect(_on_dance)
+	boss_box.add_child(card_label)
+	boss_box.add_child(armor_label)
+	Game.overdrive_changed.connect(func(state):
+		overdrive_label.visible = state == 1
+		if state == 1 and Game.first_time("overdrive"):
+			show_tip("CATNIP OVERDRIVE READY!\n50 on-beat hits in a row. Press F for 5 seconds of a giant rainbow beam - save it for a boss!"))
+	Game.combo_changed.connect(func(combo, _m):
+		if combo >= 10 and Game.level >= 1 and Game.first_time("companions"):
+			show_tip("FRIENDS JOIN YOUR COMBO!\nEvery 10 on-beat hits in a row a companion flies in: PIP zaps, NORI shields you, KIWI shockwaves.\nThey leave if your combo breaks - keep the beat!"))
+	Game.mech_parts_changed.connect(func(parts):
+		if parts > 0 and Game.first_time("mech"):
+			show_tip("MECH PART!\nCollect 4 mech parts (capture a spell card you hit with a spell, or reach a 75 combo)\nto pilot the PAWFRAME MK-IX: beam rifle, beam saber, armour. One per planet."))
+	Game.charges_changed.connect(func(charges, _cheese):
+		if charges >= 2 and Game.first_time("bomb"):
+			show_tip("You have spell charges!\nDraw a spell with RIGHT-CLICK over the mice - or press X for an emergency CATNIP BOMB (uses all charges)."))
+	overdrive_label.visible = Game.overdrive == 1
 
 
 func _label(text: String, size: int, color := Color.WHITE) -> Label:
@@ -78,8 +108,8 @@ func _build():
 	add_child(score_label)
 
 	wave_label = _label("", 24)
-	wave_label.position = Vector2(960, 14)
-	wave_label.size = Vector2(300, 40)
+	wave_label.position = Vector2(800, 14)
+	wave_label.size = Vector2(460, 40)   # fits "BULLET HELL  RATOPOLIS  WAVE 10/10"
 	wave_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	add_child(wave_label)
 
@@ -103,13 +133,22 @@ func _build():
 	cheese_bar.add_theme_stylebox_override("fill", fill)
 	bottom.add_child(cheese_bar)
 
+	# weapons: 1 2 3 slots (equipped one highlighted) + gun level
 	var gun_box = HBoxContainer.new()
-	gun_box.position = Vector2(1080, 664)
-	gun_box.add_theme_constant_override("separation", 8)
+	gun_box.position = Vector2(905, 664)
+	gun_box.add_theme_constant_override("separation", 6)
 	add_child(gun_box)
-	gun_box.add_child(_icon(YARN, Vector2(36, 36)))
-	gun_label = _label("", 24)
+	for i in Game.WEAPON_NAMES.size():
+		var slot = _label("%d %s" % [i + 1, ["SPREAD", "LASER", "FISH"][i]], 16)
+		slot.custom_minimum_size = Vector2(74, 0)
+		gun_box.add_child(slot)
+		weapon_icons.append(slot)
+	gun_box.add_child(_icon(YARN, Vector2(28, 28)))
+	gun_label = _label("", 20)
 	gun_box.add_child(gun_label)
+	weapon_hint = _label("", 15, Color(0.8, 0.85, 1))
+	weapon_hint.position = Vector2(905, 640)
+	add_child(weapon_hint)
 
 	combo_label = _label("", 22, Color(0.6, 1, 0.7))
 	combo_label.position = Vector2(490, 46)
@@ -149,12 +188,55 @@ func _build():
 	boss_bar.add_theme_stylebox_override("fill", boss_fill)
 	boss_box.add_child(boss_bar)
 
-	message = _label("", 48, GOLD)
-	message.position = Vector2(0, 280)
-	message.size = Vector2(1280, 160)
-	message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	# centre message: a big first line + smaller wrapped lines, so long text never leaves
+	# the screen (playtest 2: a long message ran off the edges in fullscreen)
+	message = VBoxContainer.new()
+	message.position = Vector2(80, 250)
+	message.size = Vector2(1120, 0)
+	message.alignment = BoxContainer.ALIGNMENT_CENTER
+	message.add_theme_constant_override("separation", 6)
 	message.hide()
 	add_child(message)
+	message_title = _label("", 46, GOLD)
+	message_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	message_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	message_title.custom_minimum_size = Vector2(1120, 0)
+	message.add_child(message_title)
+	message_body = _label("", 24, Color(0.92, 0.92, 1))
+	message_body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	message_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	message_body.custom_minimum_size = Vector2(1120, 0)
+	message.add_child(message_body)
+
+	dance_label = _label("DANCE BREAK!  tap SPACE on the beat", 26, Color(1, 0.6, 0.85))
+	dance_label.position = Vector2(0, 560)
+	dance_label.size = Vector2(1280, 40)
+	dance_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	dance_label.hide()
+	add_child(dance_label)
+
+	armor_label = _label("", 18, Color(1, 0.85, 0.3))
+	armor_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	card_label = _label("", 20, Color(1, 0.75, 0.95))
+	card_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+
+	overdrive_label = _label("OVERDRIVE READY - press F!", 22, Color(1, 0.6, 0.9))
+	overdrive_label.position = Vector2(0, 574)   # clear of the timing popups (602-628)
+	overdrive_label.size = Vector2(1280, 30)
+	overdrive_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	overdrive_label.hide()
+	add_child(overdrive_label)
+
+	# MECH PARTS meter (rare power-up goal), bottom-left above the skills
+	mech_label = _label("", 16, Color(1, 0.85, 0.4))
+	mech_label.position = Vector2(20, 606)
+	mech_label.size = Vector2(420, 24)
+	add_child(mech_label)
+	challenge_label = _label("", 15, Color(1, 0.92, 0.6))
+	challenge_label.position = Vector2(20, 586)
+	add_child(challenge_label)
+	_on_mech_parts(Game.mech_parts)
+	Game.mech_parts_changed.connect(_on_mech_parts)
 
 
 func _update_wave_label():
@@ -163,9 +245,38 @@ func _update_wave_label():
 	elif Game.endless_mode:
 		wave_label.text = "ENDLESS   WAVE %d" % Game.wave
 	elif Game.wave < 0:
-		wave_label.text = "LEVEL %d   BOSS" % (Game.level + 1)
+		wave_label.text = "%s   BOSS" % _planet()
 	else:
-		wave_label.text = "LEVEL %d   WAVE %d/%d" % [Game.level + 1, Game.wave, Game.wave_total]
+		wave_label.text = "%s   WAVE %d/%d" % [_planet(), Game.wave, Game.wave_total]
+	if Game.challenge != Game.Challenge.NORMAL and not Game.tutorial_mode:
+		wave_label.text = Game.CHALLENGE_NAMES[Game.challenge] + "   " + wave_label.text
+
+
+func _on_mech_parts(parts: int):
+	var gears = ""
+	for i in Game.MECH_PARTS_NEEDED:
+		gears += "⚙" if i < parts else "·"
+	mech_label.text = "MECH PARTS %s   (capture a card using a spell, 75-combos)" % gears
+	if parts > 0:
+		mech_label.pivot_offset = Vector2(0, 12)
+		mech_label.scale = Vector2.ONE * 1.3
+		create_tween().tween_property(mech_label, "scale", Vector2.ONE, 0.2)
+
+
+# Live planet challenges (replay goal visible during play).
+func _update_challenges():
+	if challenge_label == null:
+		return
+	if Game.tutorial_mode or Game.endless_mode:
+		challenge_label.text = ""
+		return
+	var star = func(done): return "★" if done else "☆"
+	var cards_ok = Game.level_cards_met > 0 and Game.level_cards_captured >= Game.level_cards_met
+	challenge_label.text = "%s no hits   %s cards %d/%d   %s spells %d/4" % [star.call(Game.level_hits == 0), star.call(cards_ok), Game.level_cards_captured, Game.level_cards_met, star.call(Game.level_spells.size() >= 4), Game.level_spells.size()]
+
+
+func _planet() -> String:
+	return Levels.LEVELS[clamp(Game.level, 0, Levels.count() - 1)].title
 
 
 func _on_lives(lives: int):
@@ -186,7 +297,8 @@ func _on_charges(charges: int, cheese: int):
 
 func _on_combo(combo: int, multiplier: int):
 	combo_label.visible = combo > 0
-	combo_label.text = "COMBO %d   x%d" % [combo, multiplier]
+	combo_label.text = "COMBO %d   x%d" % [combo, multiplier] + ("   FEVER!" if Game.is_fever() else "")
+	combo_label.add_theme_color_override("font_color", Color(1, 0.75, 0.2) if Game.is_fever() else Color(0.6, 1, 0.7))
 	if combo > 0:
 		combo_label.pivot_offset = combo_label.size / 2
 		combo_label.scale = Vector2.ONE * 1.25
@@ -199,21 +311,174 @@ func show_boss(boss: Boss):
 	boss_bar.value = boss.max_health
 	boss_box.show()
 	boss.health_changed.connect(func(health, _max): boss_bar.value = health)
-	boss.phase_changed.connect(func(_p): boss_label.text = boss.boss_name + "  - ENRAGED!")
-	boss.died.connect(func(_b): boss_box.hide())
+	armor_label.text = ""
+	card_label.text = ""
+	current_boss = boss
+	boss.armor_changed.connect(_on_armor)
+	boss.card_started.connect(_on_card_started.bind(boss))
+	boss.card_ended.connect(_on_card_ended)
+	boss.died.connect(func(_b): boss_box.hide(); current_boss = null)
+
+
+func _on_card_started(index: int, card_name: String, _seconds: float, boss: Boss):
+	if not boss.cards[index].armored:
+		armor_label.text = ""
+	if card_name != "":
+		_flash_text("SPELL CARD  -  " + card_name.to_upper(), Color(1, 0.75, 0.95))
+	if boss.weak_spell() != "" and not Game.tips_seen.has("weakness") and Game.tips_seen.has("spell_cards"):
+		Game.first_time("weakness")
+		show_tip("WEAK TO %s!\nEvery spell card shows the spell it's weak to (under the health bar): that spell does DOUBLE damage.\nZIGZAG BOLT also shatters beat armour." % Boss.SPELL_NAMES.get(boss.weak_spell(), ""))
+	if index == 0 and Game.first_time("spell_cards"):
+		show_tip("BOSS SPELL CARDS\nEvery boss attacks in named SPELL CARDS. Each one owns a slice of its health bar and has a timer.\nEmpty the slice (or outlast the timer) to move on. Do it WITHOUT getting hit or bombing\nto CAPTURE the card: big bonus + a battery. Drawn spells hit bosses hard and SHATTER beat armour -\ncapture a card you hit with a spell to earn a MECH PART.")
+
+
+func _on_card_ended(_index: int, captured: bool):
+	_flash_text("SPELL CARD CAPTURED!  +BONUS" if captured else "CARD FAILED", GOLD if captured else Color(0.7, 0.7, 0.8))
+
+
+func flash_text(text: String, color: Color):
+	_flash_text(text, color)
+
+
+# BANNER QUEUE (presentation pass: banners were printing on top of each other): every big
+# centre line - spell card names, captures, spell names, MECH CORE - waits its turn and shows
+# for at least BANNER_MIN s. Duplicate texts already waiting are dropped.
+const BANNER_MIN = 0.6
+const BANNER_SHOW = 1.1
+var banner_queue: Array = []
+var banner_busy = 0.0
+
+
+func _flash_text(text: String, color: Color):
+	queue_banner(text, color)
+
+
+func queue_banner(text: String, color: Color, size: int = 32):
+	for b in banner_queue:
+		if b[0] == text:
+			return
+	banner_queue.append([text, color, size])
+
+
+func _pump_banners(delta: float):
+	banner_busy -= delta
+	if banner_busy > 0.0 or banner_queue.is_empty() or message.visible:
+		return   # (banners also wait while a centre message is up)
+	var b = banner_queue.pop_front()
+	var label = _label(b[0], b[2], b[1])
+	label.position = Vector2(0, 292)   # the banner lane, just below the HUD band (score, boss bar, card)
+	label.size = Vector2(1280, 50)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.name = "Banner"
+	add_child(label)
+	# the next banner may start once this one has had its minimum time on screen
+	var show = BANNER_MIN if not banner_queue.is_empty() else BANNER_SHOW
+	banner_busy = show + 0.25   # the next banner waits for this one's fade-out too
+	var tween = label.create_tween()
+	tween.tween_interval(show)
+	tween.tween_property(label, "modulate:a", 0.0, 0.25)
+	tween.tween_callback(label.queue_free)
+
+
+# Playtest 6: spells got forgotten -> while your charges sit full, a reminder pulses.
+const FULL_CHARGE_NAG = 6.0
+var full_time = 0.0
+var spell_nag: Label
+
+
+func _nag(delta: float):
+	if spell_nag == null:
+		spell_nag = _label("CHARGES FULL!  HOLD RIGHT-CLICK and draw a spell over the mice  (spells SHATTER boss armour)", 18, Color(0.6, 0.95, 1))
+		spell_nag.position = Vector2(0, 548)
+		spell_nag.size = Vector2(1280, 24)
+		spell_nag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		spell_nag.hide()
+		add_child(spell_nag)
+	if Game.charges >= Game.MAX_CHARGES and not Game.drawing and not Game.tutorial_mode:
+		full_time += delta
+	else:
+		full_time = 0.0
+	spell_nag.visible = full_time > FULL_CHARGE_NAG
+	if spell_nag.visible:
+		spell_nag.modulate.a = 0.6 + 0.4 * sin(full_time * 5.0)
+
+
+func _process(delta):
+	_nag(delta)
+	_pump_banners(delta)
+	_update_challenges()
+	if current_boss and is_instance_valid(current_boss) and current_boss.card >= 0:
+		var c = current_boss.cards[current_boss.card]
+		var name_part = ("~ " + c.name + " ~   ") if c.name != "" else ""
+		var weak = current_boss.weak_spell()
+		var weak_part = ("   weak to: " + Boss.SPELL_NAMES.get(weak, "")) if weak != "" else ""
+		card_label.text = "%s%ds   card %d/%d%s" % [name_part, int(ceil(max(current_boss.card_time, 0.0))), current_boss.card + 1, current_boss.cards.size(), weak_part]
+
+
+func _on_armor(pips: float, stunned: bool):
+	if stunned:
+		armor_label.text = "ARMOUR BROKEN - HIT IT WITH EVERYTHING!"
+		armor_label.add_theme_color_override("font_color", Color(0.5, 1, 1))
+	else:
+		armor_label.text = "ARMOUR %d - only PERFECT shots get through" % int(ceil(pips))
+		armor_label.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
+
+
+func _on_weapon(w: int):
+	for i in weapon_icons.size():
+		weapon_icons[i].add_theme_color_override("font_color", GOLD if i == w else Color(0.6, 0.6, 0.7))
+		weapon_icons[i].add_theme_font_size_override("font_size", 18 if i == w else 15)
+	weapon_hint.text = "%s - %s" % [Game.WEAPON_NAMES[w], Game.WEAPON_HINTS[w]]
+
+
+func _on_dance(active: bool):
+	dance_label.visible = active
+	dance_label.text = "DANCE BREAK!  tap %s on the beat" % Game.btn("SPACE", "A")
 
 
 func _on_fever(active: bool):
-	fever_label.visible = active
+	# FEVER is shown in the combo line (a big centre label collided with the timing popups)
+	fever_label.visible = false
+	_on_combo(Game.combo, Game.multiplier())
 	if active:
-		fever_label.pivot_offset = Vector2(640, 25)
-		fever_label.scale = Vector2.ONE * 1.4
-		create_tween().tween_property(fever_label, "scale", Vector2.ONE, 0.2)
 		Sfx.play("jingle")
 
 
+# A one-time tip box at the bottom-middle, gone after a few seconds.
+func show_tip(text: String):
+	var box = PanelContainer.new()
+	box.position = Vector2(140, 470)
+	box.custom_minimum_size = Vector2(1000, 0)
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.1, 0.05, 0.2, 0.88)
+	style.border_color = Color(1, 0.75, 0.95)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(8)
+	style.set_content_margin_all(12)
+	box.add_theme_stylebox_override("panel", style)
+	var label = _label(text, 18, Color(1, 0.95, 1))
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.custom_minimum_size = Vector2(970, 0)
+	box.add_child(label)
+	add_child(box)
+	var tween = box.create_tween()
+	tween.tween_interval(7.0)
+	tween.tween_property(box, "modulate:a", 0.0, 0.6)
+	tween.tween_callback(box.queue_free)
+
+
+# First line = big title, the rest = smaller body text (both wrap). A centre message clears any
+# banner on screen (they would overlap).
 func show_message(text: String):
-	message.text = text
+	for c in get_children():
+		if c.name.begins_with("Banner"):
+			c.queue_free()
+	var lines = text.split("\n", true, 1)
+	message_title.text = lines[0]
+	message_body.text = lines[1] if lines.size() > 1 else ""
+	message_body.visible = lines.size() > 1
+	message.reset_size()
 	message.show()
 
 
