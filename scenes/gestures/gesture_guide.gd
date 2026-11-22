@@ -18,7 +18,9 @@ const COLORS = {
 	"zigzag": Color(1.0, 0.95, 0.4),
 	"triangle": Color(0.4, 1.0, 0.6),
 }
-const PANEL_Y = 150.0
+const PANEL_Y_TOP = 150.0
+const PANEL_Y_BOTTOM = 480.0   # during boss fights, so it never covers the boss bar
+var PANEL_Y = PANEL_Y_TOP
 const PANEL_SIZE = 46.0
 const PANEL_X = [380.0, 553.0, 727.0, 900.0]
 
@@ -53,6 +55,7 @@ func _ready():
 
 func show_panel(on: bool):
 	panel = on
+	PANEL_Y = PANEL_Y_BOTTOM if on and not get_tree().get_nodes_in_group("bosses").is_empty() else PANEL_Y_TOP
 	if not on:
 		matched = ""
 	queue_redraw()

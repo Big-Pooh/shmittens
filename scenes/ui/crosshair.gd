@@ -45,7 +45,9 @@ func _show_judgement(judgement: int):
 	label.add_theme_color_override("font_color", JUDGEMENT_TEXT[judgement][1])
 	label.add_theme_color_override("font_outline_color", Color.BLACK)
 	label.add_theme_constant_override("outline_size", 5)
-	label.position = sprite.position + Vector2(18, -34)
+	# beside the cat, not the cursor (it used to land on the score when aiming high)
+	var cat = Game.player_ref
+	label.position = (cat.get_global_transform_with_canvas().origin + Vector2(30, -56)) if cat and is_instance_valid(cat) else sprite.position + Vector2(18, -34)
 	add_child(label)
 	var tween = create_tween().set_parallel()
 	tween.tween_property(label, "position:y", label.position.y - 24, 0.45)

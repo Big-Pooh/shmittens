@@ -2114,4 +2114,17 @@ func _designer7_tests():
 	check(pad_ok, "every action has a gamepad binding (sticks, buttons, LT to draw)")
 	check(game.FEEDBACK_URL.begins_with("https://github.com/") and game.BUG_URL.contains("bug_report"), "feedback and bug-report links point at the issue templates")
 	check(not game.is_demo(), "the desktop build is not the demo")
+	# presentation: banners queue up instead of overlapping; challenges are visible in play
+	await _start_main()
+	main.level_runner.stop()
+	main.hud.queue_banner("SPELL CARD - TEST", Color.WHITE)
+	main.hud.queue_banner("SPELL CARD CAPTURED!", Color.WHITE)
+	main.hud.queue_banner("SPELL CARD CAPTURED!", Color.WHITE)   # duplicate is dropped
+	await frames(3)
+	var shown = main.hud.get_children().filter(func(c): return c.name.begins_with("Banner"))
+	check(shown.size() == 1 and main.hud.banner_queue.size() == 1, "banners show one at a time (no overlaps)")
+	await wait(1.0)
+	shown = main.hud.get_children().filter(func(c): return c.name.begins_with("Banner") and c.modulate.a > 0.5)
+	check(shown.size() <= 1 and main.hud.banner_queue.is_empty(), "the next banner follows once the first has had its time")
+	check(main.hud.challenge_label.text.contains("spells"), "planet challenges are shown during play")
 

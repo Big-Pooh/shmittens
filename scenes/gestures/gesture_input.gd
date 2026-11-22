@@ -318,6 +318,10 @@ func scene_flash(color: Color):
 
 # Spell-card style name banner across the top of the screen.
 func _banner(text: String, color: Color):
+	var hud = get_tree().current_scene.get_node_or_null("HUD")
+	if hud and hud.has_method("queue_banner"):
+		hud.queue_banner("~  " + text + "  ~", color, 30)
+		return
 	var layer = CanvasLayer.new()
 	layer.layer = 8
 	var label = Label.new()

@@ -28,6 +28,7 @@ var card_label: Label
 var overdrive_label: Label
 var current_boss: Boss
 var mech_label: Label
+var challenge_label: Label
 var combo_label: Label
 var fever_label: Label
 var wind_label: Label
@@ -231,6 +232,9 @@ func _build():
 	mech_label.position = Vector2(20, 606)
 	mech_label.size = Vector2(420, 24)
 	add_child(mech_label)
+	challenge_label = _label("", 15, Color(1, 0.92, 0.6))
+	challenge_label.position = Vector2(20, 586)
+	add_child(challenge_label)
 	_on_mech_parts(Game.mech_parts)
 	Game.mech_parts_changed.connect(_on_mech_parts)
 
@@ -257,6 +261,18 @@ func _on_mech_parts(parts: int):
 		mech_label.pivot_offset = Vector2(0, 12)
 		mech_label.scale = Vector2.ONE * 1.3
 		create_tween().tween_property(mech_label, "scale", Vector2.ONE, 0.2)
+
+
+# Live planet challenges (replay goal visible during play).
+func _update_challenges():
+	if challenge_label == null:
+		return
+	if Game.tutorial_mode or Game.endless_mode:
+		challenge_label.text = ""
+		return
+	var star = func(done): return "★" if done else "☆"
+	var cards_ok = Game.level_cards_met > 0 and Game.level_cards_captured >= Game.level_cards_met
+	challenge_label.text = "%s no hits   %s cards %d/%d   %s spells %d/4" % [star.call(Game.level_hits == 0), star.call(cards_ok), Game.level_cards_captured, Game.level_cards_met, star.call(Game.level_spells.size() >= 4), Game.level_spells.size()]
 
 
 func _planet() -> String:
@@ -323,16 +339,42 @@ func flash_text(text: String, color: Color):
 	_flash_text(text, color)
 
 
-# A big line across the middle that fades (spell card names, captures).
+# BANNER QUEUE (presentation pass: banners were printing on top of each other): every big
+# centre line - spell card names, captures, spell names, MECH CORE - waits its turn and shows
+# for at least BANNER_MIN s. Duplicate texts already waiting are dropped.
+const BANNER_MIN = 0.6
+const BANNER_SHOW = 1.1
+var banner_queue: Array = []
+var banner_busy = 0.0
+
+
 func _flash_text(text: String, color: Color):
-	var label = _label(text, 32, color)
+	queue_banner(text, color)
+
+
+func queue_banner(text: String, color: Color, size: int = 32):
+	for b in banner_queue:
+		if b[0] == text:
+			return
+	banner_queue.append([text, color, size])
+
+
+func _pump_banners(delta: float):
+	banner_busy -= delta
+	if banner_busy > 0.0 or banner_queue.is_empty() or message.visible:
+		return   # (banners also wait while a centre message is up)
+	var b = banner_queue.pop_front()
+	var label = _label(b[0], b[2], b[1])
 	label.position = Vector2(0, 230)
 	label.size = Vector2(1280, 50)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.name = "Banner"
 	add_child(label)
+	# the next banner may start once this one has had its minimum time on screen
+	banner_busy = BANNER_MIN if not banner_queue.is_empty() else BANNER_SHOW
 	var tween = label.create_tween()
-	tween.tween_interval(1.2)
-	tween.tween_property(label, "modulate:a", 0.0, 0.5)
+	tween.tween_interval(banner_busy)
+	tween.tween_property(label, "modulate:a", 0.0, 0.25)
 	tween.tween_callback(label.queue_free)
 
 
@@ -361,6 +403,8 @@ func _nag(delta: float):
 
 func _process(delta):
 	_nag(delta)
+	_pump_banners(delta)
+	_update_challenges()
 	if current_boss and is_instance_valid(current_boss) and current_boss.card >= 0:
 		var c = current_boss.cards[current_boss.card]
 		var name_part = ("~ " + c.name + " ~   ") if c.name != "" else ""
