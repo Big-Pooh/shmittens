@@ -112,7 +112,7 @@ func _on_boss_spawned(boss: Boss):
 	boss.armor_changed.connect(func(_p, stunned): if stunned: banter.boss_stunned(boss))
 	boss.died.connect(func(_b): banter.boss_defeated(boss))
 	# the final boss (Sho) keeps the Princess caged in the corner
-	if level_runner.level_index == Levels.count() - 1:
+	if level_runner.level_index == Levels.count() - 1 and not boss.is_midboss:
 		queen_cage = QueenCage.new()
 		queen_cage.position = QUEEN_CAGE_POSITION
 		add_child(queen_cage)

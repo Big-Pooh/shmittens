@@ -24,7 +24,7 @@ Status: v0.10.0 is a public pre-release. Web demo: https://big-pooh.github.io/sh
 ## 3. Product and pricing
 - **Platforms:** Windows and macOS on Steam (Steam Deck check later). A free web demo on GitHub Pages / itch.io for reach.
 - **Price:** $7.99 in Early Access, $9.99 at 1.0, with a 10–15% launch discount. Regional pricing uses Steam's suggested pricing.
-- **Demo (single scope):** planets 1–3 at 8 waves each, with mid-bosses on planets 2–3, plus the tutorial. About 15 min for a first clear, with HARD and ranks as the replay hook (target median session ≥ 15 min). Saves carry into the full game.
+- **Demo (single scope, updated after the content pass):** all of **world 1**: 4 planets × 8 waves, 3 mid-bosses, Sho as the world-1 finale (he escapes; the rematch opens world 2 in Early Access), plus the tutorial. Simulated average player: about 7.5 min; real players die more, so expect 12–15 min for a first clear, with HARD, ranks and BULLET HELL as replay hooks. Saves carry into the full game.
 - **Art and audio:** generated in code (owner decision). Mitigation: one cohesive style guide (`marketing/STYLE_GUIDE.md`), readable capsules, sound design over realism.
 
 ## 4. Funnel and channels

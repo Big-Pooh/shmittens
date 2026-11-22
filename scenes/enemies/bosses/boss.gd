@@ -61,6 +61,7 @@ const BOMB_FRACTION = 0.04             # per charge spent on a bomb
 const CARD_END_CHEESE = 8
 
 var boss_name = "BOSS"
+var is_midboss = false   # one-card mid-level boss (no Princess cage, normal wave flow)
 var phase = 1
 var armor = 0.0          # pips left (phase 2)
 var stunned_beats = 0

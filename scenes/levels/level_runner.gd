@@ -141,6 +141,8 @@ func _next_wave():
 			enemy.tree_exited.connect(_on_enemy_gone)
 			alive += 1
 			get_tree().current_scene.add_child.call_deferred(enemy)
+			if enemy is Boss:
+				boss_spawned.emit.call_deferred(enemy)   # mid-boss: health bar, banter
 	wave_started.emit(wave_index, waves.size())
 
 

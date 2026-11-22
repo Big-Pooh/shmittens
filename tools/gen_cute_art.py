@@ -531,11 +531,44 @@ def mech_core():
     c.save("mech_core.png")
 
 
+def weaver_bits(c):
+    # propeller beanie
+    c.ellipse(8, 3.0, 4.2, 2.0, (255, 120, 160, 255))
+    c.rect(7, 0, 9, 0, GOLD)
+    c.rect(4, 0, 6, 0, (140, 200, 255, 255))
+    c.rect(10, 0, 12, 0, (140, 200, 255, 255))
+    wind_key(c, 20, 6)
+
+
+def turret():
+    # a sturdy dome turret with a mouse peeking out (faces left)
+    c = Canvas(24, 20)
+    c.rect(2, 15, 21, 19, (120, 110, 150, 255))                # base
+    c.ellipse(12, 13, 9.5, 7.5, (190, 200, 230, 255))          # dome
+    c.ellipse(12, 11, 6.0, 4.0, GLASS)
+    c.rect(0, 11, 5, 13, STEEL)                                 # cannon
+    c.ellipse(0.8, 12, 1.3, 1.8, PINK)
+    c.ellipse(11, 4.5, 2.2, 2.2, GREY)                          # mouse ears in the dome
+    c.ellipse(11, 4.5, 1.1, 1.1, PINK)
+    c.ellipse(15, 4.5, 2.2, 2.2, GREY)
+    c.ellipse(15, 4.5, 1.1, 1.1, PINK)
+    c.ellipse(13, 9.5, 3.2, 2.8, GREY)
+    c.set(11, 9, EYE)
+    c.set(10, 10, PINK_D)
+    c.set(14, 11, BLUSH)
+    for x in (5, 12, 19):
+        c.set(x, 17, GOLD)
+    c.outline()
+    c.save("turret.png")
+
+
 def main():
     mouse("grunt.png", LILAC, LILAC_L, accessory=grunt_bits)
     mouse("gunner.png", PEACH, PEACH_L, accessory=gunner_bits)
     mouse("dasher.png", MINT, MINT_L, w=26, h=19, accessory=dasher_bits, stretch=1.2)
     mouse("shield_mouse.png", SKY, SKY_L, accessory=shield_bits)
+    mouse("weaver.png", (255, 236, 160, 255), (255, 248, 210, 255), accessory=weaver_bits)
+    turret()
     plate()
     tank()
     mothership()

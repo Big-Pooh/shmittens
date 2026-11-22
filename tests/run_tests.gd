@@ -613,6 +613,17 @@ func _level_tests():
 					if not Rect2(40, 40, 1240, 640).has_point(slot):
 						all_inside = false
 	check(all_inside, "all formation slots are on screen")
+	var wave_counts = Levels.LEVELS.map(func(l): return l.waves.size())
+	var midbosses = 0
+	for level in Levels.LEVELS:
+		for wave in level.waves:
+			for group in wave:
+				if group.enemy == "midboss":
+					midbosses += 1
+					var mb = Levels.create_midboss(group)
+					check(mb.is_midboss and mb.cards.size() == 1, "mid-boss %s has one spell card" % group.name)
+					mb.free()
+	check(wave_counts.all(func(n): return n == 8) and midbosses == 3, "every planet has 8 waves; planets 2-4 have a mid-boss (%s, %d)" % [wave_counts, midbosses])
 
 	# drive the music bar by bar and clear each wave by force
 	var spb = conductor.seconds_per_beat

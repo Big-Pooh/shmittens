@@ -1,0 +1,17 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scenes/enemies/weaver.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://Art/Generated/weaver.png" id="2_tex"]
+
+[sub_resource type="CircleShape2D" id="body"]
+radius = 15.0
+
+[node name="Weaver" type="Area2D"]
+script = ExtResource("1_script")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(3, 3)
+texture = ExtResource("2_tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("body")

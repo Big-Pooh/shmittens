@@ -15,6 +15,8 @@ const ENEMY_SCENES = {
 	"gunner": preload("res://scenes/enemies/gunner.tscn"),
 	"dasher": preload("res://scenes/enemies/dasher.tscn"),
 	"shield": preload("res://scenes/enemies/shield_mouse.tscn"),
+	"weaver": preload("res://scenes/enemies/weaver.tscn"),
+	"turret": preload("res://scenes/enemies/turret.tscn"),
 }
 
 const LEVELS = [
@@ -31,10 +33,15 @@ const LEVELS = [
 		"waves": [
 			[{"enemy": "grunt", "formation": "grid", "columns": 3, "rows": 3, "health": 2}],
 			[{"enemy": "grunt", "formation": "grid", "columns": 4, "rows": 4, "health": 2}],
+			[{"enemy": "weaver", "formation": "line", "count": 3, "health": 2, "x": 1100}],
 			[{"enemy": "gunner", "formation": "column", "count": 3, "health": 4}],
 			[{"enemy": "grunt", "formation": "grid", "columns": 3, "rows": 5, "health": 3, "x": 1000},
 			 {"enemy": "gunner", "formation": "column", "count": 2, "health": 4}],
+			[{"enemy": "grunt", "formation": "v", "count": 5, "health": 3},
+			 {"enemy": "weaver", "formation": "line", "count": 2, "health": 2, "x": 1120}],
 			[{"enemy": "gunner", "formation": "v", "count": 5, "health": 5}],
+			[{"enemy": "grunt", "formation": "grid", "columns": 4, "rows": 3, "health": 3},
+			 {"enemy": "gunner", "formation": "column", "count": 2, "health": 4, "x": 900}],
 		],
 	},
 	{
@@ -49,11 +56,15 @@ const LEVELS = [
 		"waves": [
 			[{"enemy": "dasher", "formation": "line", "count": 3, "health": 2}],
 			[{"enemy": "grunt", "formation": "grid", "columns": 4, "rows": 4, "health": 3}],
+			[{"enemy": "weaver", "formation": "line", "count": 4, "health": 3, "x": 1100}],
 			[{"enemy": "gunner", "formation": "column", "count": 3, "health": 5},
 			 {"enemy": "dasher", "formation": "line", "count": 2, "health": 2}],
+			[{"enemy": "midboss", "boss": "tank", "name": "TANKY JR.", "health": 140, "card": "Junior Parade", "seconds": 25.0, "weak": "laser"}],
 			[{"enemy": "grunt", "formation": "v", "count": 7, "health": 3},
 			 {"enemy": "dasher", "formation": "line", "count": 3, "health": 3}],
 			[{"enemy": "gunner", "formation": "grid", "columns": 2, "rows": 4, "health": 5}],
+			[{"enemy": "dasher", "formation": "line", "count": 3, "health": 3},
+			 {"enemy": "weaver", "formation": "line", "count": 3, "health": 3, "x": 1000}],
 		],
 	},
 	{
@@ -67,14 +78,19 @@ const LEVELS = [
 		"story": "King Ratbert, Sho's loyal general, rules Ratopolis.\nHe knows the way to Sho's planet...",
 		"waves": [
 			[{"enemy": "shield", "formation": "grid", "columns": 3, "rows": 3, "health": 4}],
+			[{"enemy": "turret", "formation": "line", "count": 2, "health": 8, "x": 1190},
+			 {"enemy": "grunt", "formation": "grid", "columns": 3, "rows": 3, "health": 4, "x": 1000}],
 			[{"enemy": "shield", "formation": "column", "count": 4, "health": 4, "x": 1000},
 			 {"enemy": "gunner", "formation": "column", "count": 3, "health": 5}],
 			[{"enemy": "dasher", "formation": "line", "count": 4, "health": 3},
 			 {"enemy": "grunt", "formation": "grid", "columns": 3, "rows": 4, "health": 4}],
+			[{"enemy": "midboss", "boss": "mothership", "name": "SAUCER SCOUT", "health": 180, "card": "Scout Drizzle", "seconds": 25.0, "weak": "shockwave"}],
 			[{"enemy": "shield", "formation": "v", "count": 7, "health": 5}],
 			[{"enemy": "shield", "formation": "grid", "columns": 2, "rows": 4, "health": 5, "x": 1020},
 			 {"enemy": "gunner", "formation": "column", "count": 3, "health": 6},
 			 {"enemy": "dasher", "formation": "line", "count": 2, "health": 3}],
+			[{"enemy": "weaver", "formation": "line", "count": 5, "health": 4, "x": 1100},
+			 {"enemy": "shield", "formation": "column", "count": 3, "health": 5, "x": 950}],
 		],
 	},
 	{
@@ -89,15 +105,20 @@ const LEVELS = [
 		"waves": [
 			[{"enemy": "grunt", "formation": "grid", "columns": 4, "rows": 4, "health": 4},
 			 {"enemy": "dasher", "formation": "line", "count": 2, "health": 2}],
+			[{"enemy": "turret", "formation": "line", "count": 3, "health": 12, "x": 1190},
+			 {"enemy": "weaver", "formation": "line", "count": 3, "health": 4, "x": 1000}],
 			[{"enemy": "shield", "formation": "column", "count": 4, "health": 5, "x": 1000},
 			 {"enemy": "gunner", "formation": "v", "count": 5, "health": 5}],
 			[{"enemy": "dasher", "formation": "line", "count": 5, "health": 3},
 			 {"enemy": "gunner", "formation": "column", "count": 3, "health": 6}],
+			[{"enemy": "midboss", "boss": "rat_king", "name": "ROYAL GUARD", "health": 220, "card": "Halt! Who Goes There?", "seconds": 28.0, "weak": "laser"}],
 			[{"enemy": "shield", "formation": "grid", "columns": 3, "rows": 4, "health": 5, "x": 1040},
 			 {"enemy": "grunt", "formation": "v", "count": 7, "health": 4}],
 			[{"enemy": "gunner", "formation": "grid", "columns": 2, "rows": 4, "health": 6},
 			 {"enemy": "dasher", "formation": "line", "count": 3, "health": 3},
 			 {"enemy": "shield", "formation": "column", "count": 3, "health": 5, "x": 960}],
+			[{"enemy": "grunt", "formation": "grid", "columns": 4, "rows": 4, "health": 5},
+			 {"enemy": "turret", "formation": "line", "count": 2, "health": 12, "x": 1190}],
 		],
 	},
 ]
@@ -124,6 +145,8 @@ static func formation_slots(group: Dictionary) -> Array:
 	var right = group.get("x", DEFAULT_RIGHT_X)
 	var mid_y = Game.SCREEN.get_center().y
 	var slots = []
+	if group.enemy == "midboss":
+		return [BOSS_SLOT]
 	match group.formation:
 		"grid":
 			var rows = group.rows
@@ -152,8 +175,24 @@ static func formation_slots(group: Dictionary) -> Array:
 	return slots
 
 
+# Mid-boss group (playtest 7 content): {"enemy": "midboss", "boss": "tank", "name": "...",
+# "health": 140, "card": "Card name", "seconds": 25, "weak": "laser"} - a boss script with one
+# spell card and less health, flying in mid-level.
+static func create_midboss(group: Dictionary) -> Boss:
+	var boss = BOSS_SCRIPTS[group.boss].new()
+	boss.is_midboss = true
+	boss.boss_name = group.name
+	boss.max_health = group.health
+	boss.cards = [{"name": group.card, "share": 1.0, "seconds": group.get("seconds", 25.0), "armored": false, "weak": group.get("weak", "")}]
+	boss.slot_position = BOSS_SLOT
+	boss.position = Vector2(SPAWN_X + 80, BOSS_SLOT.y)
+	return boss
+
+
 # Instantiates the enemies of one group (not yet added to the tree).
 static func create_group(group: Dictionary, volley_rate: float = 1.0) -> Array:
+	if group.enemy == "midboss":
+		return [create_midboss(group)]
 	var enemies = []
 	var slots = formation_slots(group)
 	for i in slots.size():

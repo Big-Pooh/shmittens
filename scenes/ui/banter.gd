@@ -21,6 +21,9 @@ const BOSS_CARD = {
 	"KING RATBERT": ["Bow before King Ratbert! ...please?", "Rat race! I'm winning! Am I winning?", "Long live ME! (Sho said I could say that)"],
 	"SHOCIREL, DEMON LORD OF THE MICE": ["Do you even lift, kitty?", "PROTEIN RAIN! Stay hydrated!", "Waltz with my MUSCLES!", "Behold my FINAL FORM! (it's the same, but shinier)"],
 	"TRAINING TANKY": ["I'm just a practice tank. Please be gentle."],
+	"TANKY JR.": ["My dad is a TANK! ...a bigger one."],
+	"SAUCER SCOUT": ["Scout report: one cat. Very fluffy. Send cheese."],
+	"ROYAL GUARD": ["Halt! Nobody sees Sho without an appointment!"],
 }
 const BOSS_STUNNED = ["My armour! I JUST polished it!", "Ow! My beat! You broke my beat!", "That's... not fair... it was on the beat...", "Seeing stars. And cheese."]
 const BOSS_DEFEAT = {

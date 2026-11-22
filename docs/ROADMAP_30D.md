@@ -12,7 +12,7 @@ After each release, the `senior-game-designer` and `gtm-lead` agents review it, 
   - circle cancels bullets in its area and magnets cheese;
   - zigzag does heavy damage to shield plates and armour;
   - each boss card shows a "weak to" icon.
-- [ ] **Content per planet:** 8 waves (was 5), a mid-boss on planets 2–4, and 2 new enemy types (Weaver mouse, Turret mouse)
+- [x] **Content per planet:** 8 waves (was 5), a mid-boss on planets 2–4, and 2 new enemy types (Weaver mouse, Turret mouse)
 - [x] **Introduce systems gradually:** companions from planet 2, the mech from planet 3
 - [ ] **Web rhythm calibration:** a 16-tap test on first launch; the PERFECT window +15 ms on web
 - [x] **Alternative draw input:** the left button draws too (trackpads, browsers)

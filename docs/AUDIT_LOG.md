@@ -1018,3 +1018,52 @@ You approved fixes 1–3.
 **Monte Carlo, beginner in Normal mode (no Relaxed):** drop 5 / 17 / 22 / 27%. Still the open beginner item; the Relaxed offer is the safety net.
 
 **Tests:** 289 passing.
+
+## Phase 15: GTM programme kick-off (iteration 11, v0.10.0 → v0.11.0)
+**Why:** you asked for:
+- a full go-to-market, acting end to end as the forward-deployed engineer;
+- a Gundam-like (non-infringing) mech;
+- iterative deploys;
+- content in line with competitors;
+- standing reviewer agents for design and GTM;
+- meows, if the reviewers agreed.
+
+**Your answers:** Steam, demo first; generated art and music; public GitHub repo; a strong demo plus an Early Access plan.
+
+### What was done
+- **Deploy pipeline:**
+  - public repo https://github.com/Big-Pooh/shmittens, with `main` (last approved) and the development branch;
+  - export presets for Web, Windows and macOS (ETC2/ASTC enabled for the universal Mac build);
+  - `tools/release.sh` runs tests → stamps the version → exports → tags → pushes → deploys the web demo to GitHub Pages → creates a GitHub pre-release;
+  - **v0.10.0** live; demo at https://big-pooh.github.io/shmittens/.
+  - The CI workflow sits in `docs/ci/` until the GitHub token gets the `workflow` scope.
+- **Reviewer agents** (`.claude/agents/`): `senior-game-designer` and `gtm-lead`. Both reviewed v0.10.
+  - **Designer:** content 3/10, GTM readiness 3/10; one spell dominates; too many systems; trackpad drawing; web latency; the "Touhou" trademark.
+  - **GTM lead:** put the Steam page up now; a 45 s hook-first trailer; one audience; no unshipped claims; a press@ alias; a 13+ consent gate; one demo scope.
+- **Mech:** PAWFRAME MK-IX, a real-robot silhouette following the designer's checklist (cat-ear antennae instead of a V-fin, a visor instead of a twin-eye face, pastel lilac/mint with gold trim instead of the tricolour). Beam rifle (×3 damage, piercing) and a beam saber slash every bar.
+- **Meows:** both reviewers said yes, sparingly.
+  - On spell casts, captures, companions joining, hits ("mrrp"), boss defeats, the mech (growl), and petting the cat.
+  - Max 1 every 3 s, the same event 1 every 8 s.
+  - 5 synthesized variants, tuned to the song's key, snapped to the 8th note, −6 dB; on/off in Settings.
+- **Spell roles:**
+  - line slash 600 px (was full-screen);
+  - circle magnets cheese for 3 s;
+  - zigzag shatters beat armour (Spell Break) and does ×3 to shield mice, while other spells crack 2 pips;
+  - every boss card is weak to one spell (×2), shown in the HUD.
+- **Accessibility and onboarding:** left-button drawing (trackpads, browsers); companions from planet 2, the mech from planet 3.
+- **Trademark:** the TOUHOU mode is now BULLET HELL in the UI and materials.
+- **Content:**
+  - 8 waves per planet (was 5);
+  - mid-bosses: TANKY JR. (Drainia), SAUCER SCOUT (Ratopolis), ROYAL GUARD (Flexor), each with one card and a quip;
+  - new enemies: **Weaver** (sine weave, fires on the hi-hats) and **Turret** (stationary orb fans on the downbeat; every other bar when assisted).
+- **Docs and marketing:** `docs/GTM_PLAN.md`, `docs/ROADMAP_30D.md`, `docs/PLAYER_GUIDE.md`, the refreshed `docs/DIFFERENTIATION.md`, and `marketing/` (Steam page copy, 45 s trailer script, press kit, social kit, style guide, devlog #1). All streamlined per the GTM lead's review.
+- **Bugs:**
+  - tests now always start on Normal (your saved Hard choice had failed 4 tests);
+  - session stats now keep the best run score (it saved 0 after resets).
+
+### Measurements
+- **Simulated story length:** average player 7.4 min (was about 5); beginner about 23 min.
+- **Demo scope** set to all of world 1 (4 planets): expect 12–15 min for real first-timers.
+- **Beginner who never picks Relaxed (Monte Carlo):** 7 / 13 / 28 / 22% drop by planet before the turret easing.
+
+**Tests:** 299 passing.
