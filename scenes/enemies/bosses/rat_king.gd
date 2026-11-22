@@ -39,9 +39,9 @@ func on_beat(n: int):
 
 func on_lead_note(pitch: int, length: int):
 	if phase == 1:
-		melody_shot(pitch, 330.0, 3 if length >= 2 else 1, 4.0)
+		melody_shot(pitch, 270.0, 3 if length >= 2 else 1, 4.0)
 	else:
-		melody_shot(pitch, 340.0, 2, 6.0)
+		melody_shot(pitch, 280.0, 2, 6.0)
 
 
 func on_phase_2():

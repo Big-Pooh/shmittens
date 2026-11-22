@@ -19,7 +19,7 @@ func _init():
 
 
 func on_lead_note(pitch: int, _length: int):
-	melody_shot(pitch, 260.0 if phase == 1 else 300.0)
+	melody_shot(pitch, 220.0 if phase == 1 else 250.0)
 
 
 func on_beat(n: int):
