@@ -54,6 +54,8 @@ func _ready():
 	level_runner.boss_spawned.connect(_on_boss_spawned)
 	level_runner.level_cleared.connect(_on_level_cleared)
 	level_runner.all_levels_cleared.connect(_on_all_levels_cleared)
+	level_runner.interlude_started.connect(_on_interlude_started)
+	level_runner.interlude_ended.connect(func(perfect): if perfect: hud.flash_text("PERFECT INTERLUDE!  +%d" % Interlude.ALL_BONUS, Color(1, 0.85, 0.4)))
 	level_runner.halfway_1up.connect(func(): hud.flash_text("HALFWAY THERE!  +1 LIFE", Color(0.6, 1, 0.7)); Sfx.play("power_up"))
 	if Game.tutorial_mode:
 		var tutorial = Tutorial.new()
@@ -132,6 +134,14 @@ func _on_level_cleared(index: int):
 		transition_card = TransitionCard.create(index, level_runner.last_rank, int(level_runner.level_seconds), int(ratio))
 		transition_card.dismissed.connect(level_runner.skip_transition)
 		add_child(transition_card)
+
+
+func _on_interlude_started(interlude: Interlude):
+	if transition_card and is_instance_valid(transition_card):
+		transition_card.close()
+		transition_card = null
+	hud.show_message("INTERLUDE ~ %s\n%s" % [interlude.title(), interlude.subtitle()])
+	get_tree().create_timer(Conductor.seconds_per_beat * 8.0, false).timeout.connect(func(): if level_runner.state == LevelRunner.State.INTERLUDE: hud.hide_message())
 
 
 # The rare MECH CORE appears right in front of the cat, with fanfare.

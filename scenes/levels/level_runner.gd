@@ -19,8 +19,10 @@ signal boss_spawned(boss: Boss)
 signal level_cleared(index: int)
 signal all_levels_cleared
 signal halfway_1up
+signal interlude_started(interlude: Interlude)
+signal interlude_ended(perfect: bool)
 
-enum State { IDLE, INTRO, WAVES, BOSS_INTRO, BOSS, CLEARED, DONE }
+enum State { IDLE, INTRO, WAVES, BOSS_INTRO, BOSS, CLEARED, INTERLUDE, DONE }
 
 const INTRO_BARS = 3
 const RETRY_INTRO_BARS = 1
@@ -38,6 +40,8 @@ var from_wave = 0
 var endless = false
 var level_seconds = 0.0   # game time spent fighting this level (waves + boss)
 var last_rank = ""
+var interlude: Interlude
+var interludes_enabled = true   # tests switch them off
 
 
 func _ready():
@@ -59,9 +63,24 @@ func start_level(index: int, resume_wave: int = 0):
 	level_seconds = 0.0
 	bars_to_wait = RETRY_INTRO_BARS if from_wave > 0 else INTRO_BARS
 	Game.set_level(level_index, level().waves.size())
-	Conductor.play(level().track, Game.multiplier() + 1)
+	if Conductor.track == level().track and Conductor.playing:
+		Conductor.set_layers(Game.multiplier() + 1)   # the interlude already plays this planet's song
+	else:
+		Conductor.play(level().track, Game.multiplier() + 1)
 	Game.set_dancing(true)
+	_set_safe(false)
+	for shot in get_tree().get_nodes_in_group("enemy_shots") if is_inside_tree() else []:
+		shot.queue_free()   # nothing left over from the last fight
 	level_started.emit(level_index)
+
+
+# SAFE PHASE (v0.12 playtest: "you can die in between levels"): the cleared card and the
+# interlude - the cat can't be hit, leftover bullets vanish, the combo is frozen.
+func _set_safe(on: bool):
+	Game.safe_phase = on
+	if on and is_inside_tree():
+		for shot in get_tree().get_nodes_in_group("enemy_shots"):
+			shot.queue_free()
 
 
 func _process(delta):
@@ -87,6 +106,7 @@ func start_endless():
 
 func stop():
 	state = State.IDLE
+	Game.safe_phase = false
 	Game.set_dancing(false)
 
 
@@ -106,6 +126,11 @@ func _on_bar(_n: int):
 		if bars_to_wait > 0:
 			return
 	match state:
+		State.INTERLUDE:
+			var perfect = interlude.finish() if interlude and is_instance_valid(interlude) else false
+			interlude = null
+			interlude_ended.emit(perfect)
+			start_level(level_index + 1)
 		State.INTRO:
 			state = State.WAVES
 			_next_wave()   # starts at from_wave (or the boss intro if past the last wave)
@@ -117,7 +142,10 @@ func _on_bar(_n: int):
 		State.CLEARED:
 			if level_index + 1 < Levels.count() and not (Game.is_demo() and level_index + 1 >= DEMO_LEVELS):
 				Game.carry_assist()   # struggling players keep one level less of help
-				start_level(level_index + 1)
+				if interludes_enabled:
+					_start_interlude()
+				else:
+					start_level(level_index + 1)
 			else:
 				state = State.DONE
 				Game.story_complete = true
@@ -125,6 +153,18 @@ func _on_bar(_n: int):
 					Game.hard_cleared = true   # unlocks TOUHOU
 				Game.save_settings()
 				all_levels_cleared.emit()
+
+
+# Travel between planets: a calm, silly, can't-get-hurt INTERLUDE (see interlude.gd).
+func _start_interlude():
+	state = State.INTERLUDE
+	bars_to_wait = Interlude.BARS
+	_set_safe(true)
+	Game.set_dancing(false)
+	Conductor.play(Levels.LEVELS[level_index + 1].track, 2)   # calm: drums + bass
+	interlude = Interlude.create(level_index)
+	get_tree().current_scene.add_child(interlude)
+	interlude_started.emit(interlude)
 
 
 func _next_wave():
@@ -227,5 +267,6 @@ func _on_boss_died(_boss):
 	Game.record_level_clear(level_index)
 	state = State.CLEARED
 	bars_to_wait = CLEARED_BARS
+	_set_safe(true)
 	Game.set_dancing(false)
 	level_cleared.emit(level_index)

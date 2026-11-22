@@ -300,7 +300,7 @@ func _on_pickup_area_entered(area):
 
 # Returns true if the hit counted.
 func hit(cause: String = "") -> bool:
-	if is_dead or is_invulnerable or has_shield():
+	if is_dead or is_invulnerable or has_shield() or Game.safe_phase:
 		return false
 	if mech_armor > 0:
 		mech_armor -= 1

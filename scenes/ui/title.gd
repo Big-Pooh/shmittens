@@ -16,14 +16,21 @@ func _ready():
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	Engine.time_scale = 1.0
 	Conductor.play("level1", 1)
-	var stars = Node2D.new()
-	stars.set_script(preload("res://scenes/levels/starfield.gd"))
-	add_child(stars)
+	# the space scene: nebulae, stars, shooting stars, the moon (title redesign)
+	add_child(TitleSpace.new())
 
-	var title = _label("SHMITTENS! ✰", 84, GOLD)
-	title.position = Vector2(0, 70)
+	var title = _label("SHMITTENS!", 84, GOLD)
+	title.position = Vector2(-30, 70)
 	add_child(title)
-	var subtitle = _label("Sho, the buff demon lord of the mice, has kidnapped the Princess of Pisitania.\nOnly one cat - and her friends - can bring her home.", 22, Color(0.85, 0.85, 1))
+	# ...followed by a glowing star
+	var star = TitleStar.new()
+	var font = title.get_theme_font("font")
+	var w = font.get_string_size("SHMITTENS!", HORIZONTAL_ALIGNMENT_LEFT, -1, 84).x
+	star.position = Vector2(640 - 30 + w / 2.0 + 52, 70 + 60)
+	add_child(star)
+	title.add_theme_color_override("font_outline_color", Color(0.85, 0.3, 0.6))
+	title.add_theme_constant_override("outline_size", 14)
+	var subtitle = _label("Sho, the buff demon lord of the mice, has kidnapped the Princess of Pisitania.\nOnly one cat - and her friends - can bring her home.", 22, UiTheme.PINK_LIGHT)
 	subtitle.position = Vector2(0, 185)
 	add_child(subtitle)
 
@@ -65,19 +72,13 @@ func _ready():
 		cont.custom_minimum_size = Vector2(200, 44)
 		cont.pressed.connect(func(): start_level(Game.unlocked_level))
 		buttons.add_child(cont)
-		var row = HBoxContainer.new()
-		var row2 = HBoxContainer.new()   # world 2 (sprint 6)
-		for i in Game.unlocked_level + 1:
-			var b = Button.new()
-			b.text = Levels.LEVELS[i].title.substr(0, 5)
-			var st = Game.stars(i)
-			b.text += " " + "★".repeat(st) + "☆".repeat(3 - st)
-			b.tooltip_text = "%s - best %d, rank %s" % [Levels.LEVELS[i].planet, Game.best_scores.get("level%d" % (i + 1), 0), Game.planet_records.get("level%d" % (i + 1), {}).get("rank", "-")]
-			b.pressed.connect(start_level.bind(i))
-			(row if i < 4 else row2).add_child(b)
-		buttons.add_child(row)
-		if row2.get_child_count() > 0:
-			buttons.add_child(row2)
+		# v0.12 playtest: the planet list moved to its own PLANETS screen
+		var planets = Button.new()
+		planets.name = "Planets"
+		planets.text = "PLANETS"
+		planets.custom_minimum_size = Vector2(200, 44)
+		planets.pressed.connect(open_planets)
+		buttons.add_child(planets)
 	if Game.story_complete:
 		var endless = Button.new()
 		endless.text = "ENDLESS (best %d)" % Game.best_scores.get("endless", 0)
@@ -192,10 +193,22 @@ func _relayout(grid: GridContainer):
 	layout.position = Vector2(640 - 380, 412 - 24 * max(middle.size() - 1, 0))
 
 
+func open_planets():
+	get_viewport().gui_release_focus()
+	var ls = LevelSelect.new()
+	ls.chosen.connect(start_level)
+	add_child(ls)
+
+
 # Easter egg: click the cat on the title screen to pet her.
-func _unhandled_input(event):
+# (v0.12 playtest: it didn't work - the menu layout swallowed the click; now checked in _input
+# unless a button is under the mouse)
+func _input(event):
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT and cat and event.position.distance_to(cat.position) < 80.0:
-		pet_cat()
+		if get_viewport().gui_get_hovered_control() is BaseButton:
+			return
+		if get_tree().get_nodes_in_group("overlay_menus").is_empty() and not (settings and settings.is_open()):
+			pet_cat()
 
 
 var pets = 0
@@ -205,6 +218,8 @@ func pet_cat():
 	Game.track("pets")
 	if not Sfx.meow("pet"):
 		Sfx.play("dance", -4.0)
+	cat.scale = Vector2(3.4, 2.7)   # squish!
+	create_tween().tween_property(cat, "scale", Vector2(3, 3), 0.25).set_trans(Tween.TRANS_BACK)
 	var heart = Label.new()
 	heart.text = "♥" if pets % 10 != 0 else "♥ purrrrrr x%d ♥" % pets
 	heart.add_theme_font_size_override("font_size", 30)

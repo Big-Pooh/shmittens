@@ -57,6 +57,7 @@ func _ready():
 	gun_label.text = "Lv %d" % Game.gun_level
 	_on_weapon(Game.weapon)
 	Game.weapon_changed.connect(_on_weapon)
+	Game.hint.connect(func(t): queue_banner(t, Color(0.6, 1, 0.75), 22))
 	Game.dance_changed.connect(_on_dance)
 	boss_box.add_child(card_label)
 	boss_box.add_child(armor_label)
@@ -325,11 +326,21 @@ func _on_card_started(index: int, card_name: String, _seconds: float, boss: Boss
 		armor_label.text = ""
 	if card_name != "":
 		_flash_text("SPELL CARD  -  " + card_name.to_upper(), Color(1, 0.75, 0.95))
+	# v0.12 playtest: weakness changes had no disclaimer
+	var weak = boss.weak_spell()
+	if weak != "":
+		queue_banner("NOW WEAK TO  %s %s  (x2 damage)" % [Game.SPELL_ICONS.get(weak, ""), Game.SPELL_TITLES.get(weak, weak)], Color(0.55, 0.95, 1), 26)
+		if weak != _last_weak:
+			Sfx.play("power_up", -8.0)
+		_last_weak = weak
 	if boss.weak_spell() != "" and not Game.tips_seen.has("weakness") and Game.tips_seen.has("spell_cards"):
 		Game.first_time("weakness")
 		show_tip("WEAK TO %s!\nEvery spell card shows the spell it's weak to (under the health bar): that spell does DOUBLE damage.\nZIGZAG BOLT also shatters beat armour." % Boss.SPELL_NAMES.get(boss.weak_spell(), ""))
 	if index == 0 and Game.first_time("spell_cards"):
 		show_tip("BOSS SPELL CARDS\nEvery boss attacks in named SPELL CARDS. Each one owns a slice of its health bar and has a timer.\nEmpty the slice (or outlast the timer) to move on. Do it WITHOUT getting hit or bombing\nto CAPTURE the card: big bonus + a battery. Drawn spells hit bosses hard and SHATTER beat armour -\ncapture a card you hit with a spell to earn a MECH PART.")
+
+
+var _last_weak = ""
 
 
 func _on_card_ended(_index: int, captured: bool):

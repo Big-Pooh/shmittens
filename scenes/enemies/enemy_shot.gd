@@ -19,7 +19,7 @@ const TEXTURES = {
 	Kind.ORB: preload("res://Art/Generated/shot_orb.png"),
 }
 const TEXTURE = preload("res://Art/Generated/enemy_shot.png")
-const SPRITE_SCALE = 3.0
+const SPRITE_SCALE = 2.2   # v0.12 playtest: bullets crowded the screen (was 3.0)
 const HIT_RADIUS = {Kind.CANDY: 5.0, Kind.RICE: 4.0, Kind.ORB: 9.0}
 const GRAZE_RADIUS = 30.0
 const BOUNDS = Rect2(-40, -40, 1360, 800)   # Game.SCREEN grown by 40 (precomputed)

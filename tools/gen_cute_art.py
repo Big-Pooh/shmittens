@@ -785,6 +785,33 @@ def sho_max():
     c.save("boss_sho_max.png")
 
 
+def interlude_props():
+    # v0.12 interludes: a big cheese wheel, a stripy sock, a rubber duck
+    c = Canvas(16, 16)
+    c.ellipse(8, 8, 7, 7, GOLD)
+    c.ellipse(8, 8, 5, 5, CREAM)
+    for x, y in ((6, 6), (10, 9), (7, 11)):
+        c.ellipse(x, y, 1.2, 1.2, GOLD_D)
+    c.outline()
+    c.save("cheese_wheel.png")
+    c = Canvas(12, 16)
+    c.rect(3, 1, 8, 10, WHITE)
+    c.rect(3, 9, 10, 13, WHITE)
+    for y in (2, 5, 8):
+        c.rect(3, y, 8, y, PINK)
+    c.rect(8, 11, 10, 13, PINK_D)
+    c.rect(3, 1, 8, 1, SKY)
+    c.outline()
+    c.save("sock.png")
+    c = Canvas(16, 14)
+    c.ellipse(8, 9, 6, 4, GOLD)
+    c.ellipse(5, 5, 3.2, 3.2, GOLD)
+    c.rect(1, 5, 2, 6, ORANGE)
+    c.set(4, 4, EYE)
+    c.outline()
+    c.save("rubber_duck.png")
+
+
 def main():
     mouse("grunt.png", LILAC, LILAC_L, accessory=grunt_bits)
     mouse("gunner.png", PEACH, PEACH_L, accessory=gunner_bits)
@@ -818,6 +845,7 @@ def main():
     dj_squeak()
     frostbite()
     sho_max()
+    interlude_props()
     mech()
     mech_core()
     hats()

@@ -154,6 +154,7 @@ func add_point(p: Vector2):
 
 
 func _stop_drawing():
+	Game.freeze_combo()   # the combo survives the cast (+ a short grace to get back on the beat)
 	drawing = false
 	Game.drawing = false
 	Engine.time_scale = 1.0

@@ -1180,3 +1180,26 @@ You approved fixes 1–3.
 - **CI fix:** tests always start outside the tutorial (CI has no saved settings).
 
 **Tests:** 341 passing.
+
+## Phase 18: v0.12 playtest fixes (branch `feedback/v012-playtest`)
+**Owner's verdict:** 6/10. Most annoying: the gameplay doesn't change and the mice never get stronger. Mandatory: funny interludes like Chicken Invaders.
+- **Combo:** it is frozen while drawing and for 1.2 s after a cast. The bug was that a click right after a spell was judged off-beat and reset the combo.
+- **Between levels:** a safe phase on the cleared card and during interludes. The cat can't be hit, leftover bullets are cleared, and the combo is frozen.
+- **Interludes** (`scenes/levels/interlude.gd`, `interlude_target.gd`): 8 calm, can't-get-hurt bars between planets. Three silly scenes rotate:
+  - **Cheese Meteor Shower:** spinning cheese wheels that drop cheese, plus a surfing rubber duck;
+  - **Mouse Conga Night:** 14 party-hat mice in a conga line;
+  - **Space Laundry Day:** flying socks and a mouse in a towel.
+  
+  Popping everything gives +5000.
+- **Elite mice:** from planet 2 on, every Nth mouse is a crowned elite (×2 health, ×3 points, bursts into 6 slow rice). N goes from 8 down to 3 by planet 8.
+- **Bullets:** drawn 27% smaller (sprite scale 3.0 → 2.2). Hitboxes are unchanged.
+- **Pink poof:** mice burst into pink cloud puffs with sparkles. Every enemy squashes, stretches and sways on each beat.
+- **Weakness:** a "NOW WEAK TO X" banner and a chime on every spell-card change.
+- **Spread:** a hint appears when armoured mice or turrets show up (every 25 s at most), until you've used Spread for 2 min.
+- **Meows:** +10 dB louder. Petting now works over the menu layout and gives a squish.
+- **Menus:**
+  - a PLANETS screen (one row per world) replaces the level rows on the title screen;
+  - click a card in the album to inspect it;
+  - a bubblegum-pink theme with a raspberry backdrop and dark berry text on buttons.
+
+**Tests:** 354 passing (13 new).
