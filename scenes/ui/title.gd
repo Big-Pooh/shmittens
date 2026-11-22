@@ -105,6 +105,29 @@ func _label(text: String, size: int, color: Color) -> Label:
 	return label
 
 
+# Easter egg: click the cat on the title screen to pet her.
+func _unhandled_input(event):
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT and cat and event.position.distance_to(cat.position) < 80.0:
+		pet_cat()
+
+
+var pets = 0
+
+func pet_cat():
+	pets += 1
+	Sfx.play("dance", -4.0)
+	var heart = Label.new()
+	heart.text = "♥" if pets % 10 != 0 else "♥ purrrrrr x%d ♥" % pets
+	heart.add_theme_font_size_override("font_size", 30)
+	heart.add_theme_color_override("font_color", Color(1, 0.5, 0.7))
+	heart.position = cat.position + Vector2(randf_range(-40, 30), -70)
+	add_child(heart)
+	var tween = heart.create_tween()
+	tween.tween_property(heart, "position:y", heart.position.y - 60, 0.9)
+	tween.parallel().tween_property(heart, "modulate:a", 0.0, 0.9)
+	tween.tween_callback(heart.queue_free)
+
+
 func _process(delta):
 	time += delta
 	cat.frame = int(time * 12.0) % 10

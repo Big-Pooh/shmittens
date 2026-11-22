@@ -1896,3 +1896,21 @@ func _playtest5_tests():
 	game.aim_override = null
 	cat.is_invulnerable = false
 	await _clear_world()
+	# gags: bosses quip at every spell card, mice and the cat chat
+	var banter = main.banter
+	var quip_boss = await _make_boss("res://scenes/enemies/bosses/sho.gd")
+	var bubbles = banter.bubbles.size()
+	banter.boss_card(quip_boss, 0)
+	check(banter.bubbles.size() == bubbles + 1 and banter.bubbles[-1][0].text == "Do you even lift, kitty?", "Sho quips at his first spell card")
+	quip_boss.queue_free()
+	game.reset_combo()
+	bubbles = banter.bubbles.size()
+	for i in 10:
+		game.register_judgement(conductor.Judgement.PERFECT)
+	check(banter.bubbles.size() > bubbles and Banter_lines_has(banter.bubbles[-1][0].text), "the cat makes a pun every 10 combo")
+	game.reset_combo()
+	await _clear_world()
+
+
+func Banter_lines_has(text: String) -> bool:
+	return load("res://scenes/ui/banter.gd").CAT_COMBO.has(text)

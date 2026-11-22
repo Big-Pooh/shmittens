@@ -25,6 +25,7 @@ var dance_hits = 0
 var transition_card: TransitionCard
 var companions: Companions
 var backdrop: PlanetBackdrop
+var banter: Banter
 
 
 func _ready():
@@ -34,6 +35,9 @@ func _ready():
 	Game.judged.connect(_on_judged)
 	Game.grazed.connect(_on_grazed)
 	Game.mech_core_ready.connect(_on_mech_core)
+	banter = Banter.new()
+	banter.name = "Banter"
+	add_child(banter)
 	backdrop = PlanetBackdrop.new()
 	backdrop.name = "PlanetBackdrop"
 	add_child(backdrop)
@@ -45,7 +49,7 @@ func _ready():
 	Game.dance_changed.connect(func(on): if on: dance_hits = 0)
 	Game.shake_requested.connect(func(s): shake_strength = max(shake_strength, s))
 	level_runner.level_started.connect(_on_level_started)
-	level_runner.wave_started.connect(func(_i, _total): hud.hide_message())
+	level_runner.wave_started.connect(func(_i, _total): hud.hide_message(); banter.wave_chatter())
 	level_runner.boss_incoming.connect(_on_boss_incoming)
 	level_runner.boss_spawned.connect(_on_boss_spawned)
 	level_runner.level_cleared.connect(_on_level_cleared)
@@ -104,6 +108,9 @@ func _on_boss_incoming(boss_name: String):
 func _on_boss_spawned(boss: Boss):
 	hud.hide_message()
 	hud.show_boss(boss)
+	boss.card_started.connect(func(i, _n, _s): banter.boss_card(boss, i))
+	boss.armor_changed.connect(func(_p, stunned): if stunned: banter.boss_stunned(boss))
+	boss.died.connect(func(_b): banter.boss_defeated(boss))
 	# the final boss (Sho) keeps the Princess caged in the corner
 	if level_runner.level_index == Levels.count() - 1:
 		queen_cage = QueenCage.new()
@@ -191,7 +198,7 @@ func _on_game_over():
 	var relax = ""
 	if offers_relaxed():
 		relax = "\nT - switch to RELAXED and try again (slower shots, +1 life, a guardian bubble)"
-	hud.show_message("GAME OVER\nscore %d\nR - try again from here     Esc - title%s" % [Game.score, relax])
+	hud.show_message("GAME OVER\n%s\nscore %d\nR - try again from here     Esc - title%s" % [Banter.pick(Banter.GAME_OVER), Game.score, relax])
 
 
 # Beginner care (playtest 3): from the 2nd game over on, offer Relaxed in one key press.

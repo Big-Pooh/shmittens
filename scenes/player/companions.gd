@@ -19,9 +19,9 @@ const KIWI_DAMAGE = 2.0
 const KIWI_RADIUS = 150.0
 var rings: Array = []     # [center, time_left] Kiwi's mini shockwaves (drawn)
 const CREW = [
-	{"name": "PIP", "texture": preload("res://Art/Generated/companion_pip.png"), "offset": Vector2(-20, -70), "color": Color(1, 0.85, 0.4)},
-	{"name": "NORI", "texture": preload("res://Art/Generated/companion_nori.png"), "offset": Vector2(-20, 70), "color": Color(0.7, 0.8, 1)},
-	{"name": "KIWI", "texture": preload("res://Art/Generated/companion_kiwi.png"), "offset": Vector2(-80, 0), "color": Color(0.6, 1, 0.6)},
+	{"name": "PIP", "line": "PIP: Pip's on the beat! Pew pew!", "texture": preload("res://Art/Generated/companion_pip.png"), "offset": Vector2(-20, -70), "color": Color(1, 0.85, 0.4)},
+	{"name": "NORI", "line": "NORI: Shields up, meow!", "texture": preload("res://Art/Generated/companion_nori.png"), "offset": Vector2(-20, 70), "color": Color(0.7, 0.8, 1)},
+	{"name": "KIWI", "line": "KIWI: Tweet tweet... BOOM!", "texture": preload("res://Art/Generated/companion_kiwi.png"), "offset": Vector2(-80, 0), "color": Color(0.6, 1, 0.6)},
 ]
 
 var members: Array = []   # [{sprite, index}]
@@ -63,7 +63,7 @@ func _join(index: int):
 	members.append({"sprite": sprite, "index": index})
 	Sfx.play("jingle", -8.0)
 	Game.track("companions_joined")
-	_say(sprite.position + Vector2(0, -30), CREW[index].name + " joins!", CREW[index].color)
+	_say(sprite.position + Vector2(0, -30), CREW[index].line, CREW[index].color)
 
 
 func _leave_all():

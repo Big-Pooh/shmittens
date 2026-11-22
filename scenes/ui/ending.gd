@@ -22,6 +22,7 @@ func _ready():
 	add_child(stars)
 	add_child(_label("THE PRINCESS IS FREE!", 72, GOLD, 120))
 	add_child(_label("Shmitten, Pip, Nori and Kiwi defeated Sho and brought the Princess home to Pisitania.", 24, Color(0.9, 0.9, 1), 220))
+	add_child(_label("Sho has been sentenced to 1000 hours of cardio.", 20, Color(1, 0.75, 0.85), 470))
 	add_child(_label("FINAL SCORE  %06d" % Game.score, 34, GOLD, 520))
 	if not Game.ranks.is_empty():
 		add_child(_label("RANKS   " + "  ".join(Game.ranks.map(func(r): return r)), 26, Color(0.9, 0.9, 1), 570))
