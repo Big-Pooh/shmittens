@@ -61,18 +61,21 @@ func _ready():
 	map.draw.connect(_draw_map.bind(map))
 	map.queue_redraw()
 	for i in _stops():
-		_text(_stop_name(i), 16, Color(1, 1, 1) if i <= cleared_index + 2 else Color(0.6, 0.6, 0.7), MAP_Y + 42, MAP_X0 + i * MAP_DX - 100, 200)
+		_text(_stop_name(i), 16, Color(1, 1, 1) if i <= cleared_index - _base() + 2 else Color(0.6, 0.6, 0.7), MAP_Y + 42, MAP_X0 + i * MAP_DX - 100, 200)
 	var princess = Sprite2D.new()
 	princess.texture = QUEEN
 	princess.scale = Vector2(2.5, 2.5)
 	princess.position = Vector2(MAP_X0 + (_stops() - 1) * MAP_DX + 30, MAP_Y - 50)
 	add_child(princess)
+	if _world() == 1:
+		princess.visible = false   # world 2's goal is the Star of Pisitania
+		_text("★", 40, GOLD, MAP_Y - 80, MAP_X0 + (_stops() - 1) * MAP_DX - 70, 200)
 	cat = Sprite2D.new()
 	cat.texture = CAT_SHEET
 	cat.hframes = 10
 	cat.vframes = 5
 	cat.scale = Vector2(1.4, 1.4)
-	cat.position = Vector2(MAP_X0 + (cleared_index + 1) * MAP_DX, MAP_Y - 52)
+	cat.position = Vector2(MAP_X0 + clamp(cleared_index - _base() + 1, 0, _stops() - 1) * MAP_DX, MAP_Y - 52)
 	add_child(cat)
 	var next = cleared_index + 1
 	if next < Levels.count():
@@ -83,7 +86,7 @@ func _ready():
 	_text(Game.btn("SPACE", "A") + " - continue", 18, Color(0.7, 0.7, 0.85), 650)
 	var tween = create_tween()
 	tween.tween_interval(0.6)
-	tween.tween_property(cat, "position:x", MAP_X0 + min(next + 1, _stops() - 1) * MAP_DX, 2.2).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(cat, "position:x", MAP_X0 + clamp(next - _base() + 1, 0, _stops() - 1) * MAP_DX, 2.2).set_trans(Tween.TRANS_SINE)
 
 
 # The spell cards captured on this planet, revealed one after another (flip-in).
@@ -121,16 +124,29 @@ func _text(text: String, size: int, color: Color, y: float, x: float = 60.0, wid
 	return label
 
 
+# Sprint 6: one map per world (4 planets each). The card shows the world of the NEXT planet.
+const WORLD_SIZE = 4
+const HOMES = ["PISITANIA", "STARGATE"]
+
+
+func _world() -> int:
+	return clamp((cleared_index + 1) / WORLD_SIZE, 0, (Levels.count() - 1) / WORLD_SIZE)
+
+
+func _base() -> int:
+	return _world() * WORLD_SIZE
+
+
 func _stops() -> int:
-	return Levels.count() + 1
+	return WORLD_SIZE + 1
 
 
 func _stop_name(i: int) -> String:
-	return HOME if i == 0 else Levels.LEVELS[i - 1].title
+	return HOMES[_world()] if i == 0 else Levels.LEVELS[_base() + i - 1].title
 
 
 func _stop_color(i: int) -> Color:
-	return HOME_COLOR if i == 0 else Levels.LEVELS[i - 1].get("planet_color", Color(0.6, 0.6, 0.8))
+	return HOME_COLOR if i == 0 else Levels.LEVELS[_base() + i - 1].get("planet_color", Color(0.6, 0.6, 0.8))
 
 
 func _draw_map(map: Node2D):
@@ -142,17 +158,17 @@ func _draw_map(map: Node2D):
 			if k % 2 == 0:
 				map.draw_line(a.lerp(b, float(k) / steps), a.lerp(b, float(k + 1) / steps), Color(1, 1, 1, 0.5), 3.0)
 	for i in _stops():
-		var done = i <= cleared_index + 1
+		var done = i <= cleared_index - _base() + 1
 		var at = Vector2(MAP_X0 + i * MAP_DX, MAP_Y)
-		var color = _stop_color(i) if done or i == cleared_index + 2 else _stop_color(i).darkened(0.55)
+		var color = _stop_color(i) if done or i == cleared_index - _base() + 2 else _stop_color(i).darkened(0.55)
 		map.draw_circle(at, 30.0, color)
 		map.draw_circle(at + Vector2(-8, -8), 20.0, color.lightened(0.15))
 		map.draw_arc(at, 40.0, -0.4, PI + 0.4, 32, Color(1, 1, 1, 0.3), 3.0)
 		if done:
 			map.draw_string(ThemeDB.fallback_font, at + Vector2(-8, 8), "✓", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color(1, 1, 1))
 		if i > 0:
-			var st = Game.stars(i - 1)
-			var rank = Game.planet_records.get("level%d" % i, {}).get("rank", "")
+			var st = Game.stars(_base() + i - 1)
+			var rank = Game.planet_records.get("level%d" % (_base() + i), {}).get("rank", "")
 			var txt = "★".repeat(st) + "☆".repeat(3 - st) + ("  " + rank if rank != "" else "")
 			map.draw_string(ThemeDB.fallback_font, at + Vector2(-34, -44), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, GOLD)
 

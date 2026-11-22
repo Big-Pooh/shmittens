@@ -629,7 +629,7 @@ func _level_tests():
 					var mb = Levels.create_midboss(group)
 					check(mb.is_midboss and mb.cards.size() == 2 and mb.get_script() != load("res://scenes/enemies/bosses/mecha_tank.gd"), "mid-boss %s is a unique boss with 2 spell cards" % mb.boss_name)
 					mb.free()
-	check(wave_counts.all(func(n): return n == 10) and midbosses == 3, "every planet has 10 waves; planets 2-4 have a mid-boss (%s, %d)" % [wave_counts, midbosses])
+	check(wave_counts.all(func(n): return n == 10) and midbosses == 7, "every planet has 10 waves; planets 2-8 have a mid-boss (%s, %d)" % [wave_counts, midbosses])
 
 	# drive the music bar by bar and clear each wave by force
 	var spb = conductor.seconds_per_beat
@@ -806,7 +806,7 @@ func _boss_tests():
 	await _clear_world()
 	var runner = main.level_runner
 	conductor.time_override = 0.01
-	var last = Levels.count() - 1
+	var last = 3   # the world-1 finale (Sho, the Princess's cage)
 	runner.start_level(last)
 	runner.wave_index = Levels.LEVELS[last].waves.size() - 1
 	runner.state = runner.State.WAVES
@@ -814,7 +814,10 @@ func _boss_tests():
 	runner._spawn_boss()
 	await frames(2)
 	check(main.queen_cage != null and main.queen_cage.is_inside_tree(), "final boss fight (Sho) shows the caged Princess")
-	check(runner.boss.get_script() == load("res://scenes/enemies/bosses/sho.gd") and runner.boss.cards.size() == 4, "Sho is the final boss, with 4 spell cards")
+	check(runner.boss.get_script() == load("res://scenes/enemies/bosses/sho.gd") and runner.boss.cards.size() == 4, "Sho is the world-1 finale, with 4 spell cards")
+	var final_boss = Levels.create_boss(Levels.count() - 1)
+	check(final_boss.get_script() == load("res://scenes/enemies/bosses/sho_max.gd"), "Sho, MAXIMUM FLEX is the final boss of world 2")
+	final_boss.free()
 	var cleared = []
 	runner.all_levels_cleared.connect(func(): cleared.append(true))
 	runner.boss.die()
@@ -822,7 +825,7 @@ func _boss_tests():
 	check(runner.state == runner.State.CLEARED, "final boss defeated -> cleared")
 	runner.bars_to_wait = 1
 	runner._on_bar(0)
-	check(cleared == [true], "after the final level: all levels cleared")
+	check(cleared.is_empty() and runner.level_index == 4, "after world 1, the chase continues on planet 5 (full game)")
 	conductor.time_override = -1.0
 	cat.is_invulnerable = false
 
@@ -1829,7 +1832,12 @@ func _story_tests():
 	var card = load("res://scenes/ui/transition_card.gd").create(0, "A", 60, 50)
 	main.add_child(card)
 	await frames(1)
-	check(card._stops() == Levels.count() + 1 and card._stop_name(0) == "PISITANIA" and card._stop_name(Levels.count()) == "FLEXOR", "the map runs from Pisitania to Flexor")
+	check(card._stops() == 5 and card._stop_name(0) == "PISITANIA" and card._stop_name(4) == "FLEXOR", "the world-1 map runs from Pisitania to Flexor")
+	card.queue_free()
+	card = load("res://scenes/ui/transition_card.gd").create(4, "A", 60, 50)
+	main.add_child(card)
+	await frames(1)
+	check(card._stop_name(0) == "STARGATE" and card._stop_name(4) == "MOUNT FLEXMORE", "the world-2 map runs from the Stargate to Mount Flexmore")
 	card.queue_free()
 	check(main.backdrop != null and main.hud._planet() == Levels.LEVELS[game.level].title, "each level has its planet (backdrop + HUD name)")
 	# Sho's patterns: rose, rain curtain with a safe column

@@ -66,6 +66,7 @@ func _ready():
 		cont.pressed.connect(func(): start_level(Game.unlocked_level))
 		buttons.add_child(cont)
 		var row = HBoxContainer.new()
+		var row2 = HBoxContainer.new()   # world 2 (sprint 6)
 		for i in Game.unlocked_level + 1:
 			var b = Button.new()
 			b.text = Levels.LEVELS[i].title.substr(0, 5)
@@ -73,8 +74,10 @@ func _ready():
 			b.text += " " + "★".repeat(st) + "☆".repeat(3 - st)
 			b.tooltip_text = "%s - best %d, rank %s" % [Levels.LEVELS[i].planet, Game.best_scores.get("level%d" % (i + 1), 0), Game.planet_records.get("level%d" % (i + 1), {}).get("rank", "-")]
 			b.pressed.connect(start_level.bind(i))
-			row.add_child(b)
+			(row if i < 4 else row2).add_child(b)
 		buttons.add_child(row)
+		if row2.get_child_count() > 0:
+			buttons.add_child(row2)
 	if Game.story_complete:
 		var endless = Button.new()
 		endless.text = "ENDLESS (best %d)" % Game.best_scores.get("endless", 0)
@@ -161,7 +164,7 @@ func _relayout(grid: GridContainer):
 	top.alignment = BoxContainer.ALIGNMENT_CENTER
 	top.add_theme_constant_override("separation", 10)
 	layout.add_child(top)
-	var middle: Control = null
+	var middle: Array = []
 	var rest = GridContainer.new()
 	rest.columns = 3
 	rest.add_theme_constant_override("h_separation", 10)
@@ -169,7 +172,7 @@ func _relayout(grid: GridContainer):
 	for item in items:
 		grid.remove_child(item)
 		if item is HBoxContainer:
-			middle = item
+			middle.append(item)
 			item.alignment = BoxContainer.ALIGNMENT_CENTER
 			item.add_theme_constant_override("separation", 8)
 		elif item.name == "Start" or (item is Button and item.text.begins_with("CONTINUE")):
@@ -178,15 +181,15 @@ func _relayout(grid: GridContainer):
 		else:
 			item.custom_minimum_size = Vector2(220, 38)
 			rest.add_child(item)
-	if middle:
-		layout.add_child(middle)
+	for m in middle:
+		layout.add_child(m)
 	var center = HBoxContainer.new()
 	center.alignment = BoxContainer.ALIGNMENT_CENTER
 	center.add_child(rest)
 	layout.add_child(center)
 	grid.queue_free()
 	layout.custom_minimum_size = Vector2(760, 0)
-	layout.position = Vector2(640 - 380, 412)
+	layout.position = Vector2(640 - 380, 412 - 24 * max(middle.size() - 1, 0))
 
 
 # Easter egg: click the cat on the title screen to pet her.

@@ -132,8 +132,8 @@ var start_wave = 0
 # Effects: enemy shots ASSIST_SHOT_SLOWDOWN slower per level, +1 life per level (up to +2).
 const MAX_ASSIST = 3
 const ASSIST_SHOT_SLOWDOWN = 0.12
-const LEVEL_SHOT_SPEED = [1.0, 1.15, 1.3, 1.2]   # Flexor: denser waves, slightly slower bullets
-const LEVEL_COUNT = 4   # Levels.LEVELS.size() (playtest 4: + Flexor, Sho's planet)   # playtest 1: dodging felt too easy (was 0.8/0.9/1.0)
+const LEVEL_SHOT_SPEED = [1.0, 1.15, 1.3, 1.2, 1.2, 1.25, 1.25, 1.3]   # world 2 (sprint 6) added 4 planets
+const LEVEL_COUNT = 8   # Levels.LEVELS.size() (playtest 4: + Flexor, Sho's planet)   # playtest 1: dodging felt too easy (was 0.8/0.9/1.0)
 var assist = 0
 # per-level rank stats (time is measured by the level runner)
 var level_judged = 0
@@ -378,7 +378,7 @@ func toast(title: String, body: String = ""):
 	var layer = CanvasLayer.new()
 	layer.layer = 120
 	var panel = PanelContainer.new()
-	panel.position = Vector2(860, 70 + 64 * _toasts)
+	panel.position = Vector2(860, 470 - 70 * _toasts)   # lower right, clear of the boss bar
 	panel.custom_minimum_size = Vector2(400, 0)
 	var box = VBoxContainer.new()
 	panel.add_child(box)

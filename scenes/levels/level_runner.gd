@@ -25,6 +25,7 @@ enum State { IDLE, INTRO, WAVES, BOSS_INTRO, BOSS, CLEARED, DONE }
 const INTRO_BARS = 3
 const RETRY_INTRO_BARS = 1
 const BOSS_INTRO_BARS = 2
+const DEMO_LEVELS = 4   # the demo build is world 1 (planets 1-4)
 const CLEARED_BARS = 4   # the transition card (Space skips ahead)
 
 var state = State.IDLE
@@ -114,7 +115,7 @@ func _on_bar(_n: int):
 		State.BOSS_INTRO:
 			_spawn_boss()
 		State.CLEARED:
-			if level_index + 1 < Levels.count():
+			if level_index + 1 < Levels.count() and not (Game.is_demo() and level_index + 1 >= DEMO_LEVELS):
 				Game.carry_assist()   # struggling players keep one level less of help
 				start_level(level_index + 1)
 			else:

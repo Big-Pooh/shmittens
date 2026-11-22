@@ -28,6 +28,8 @@ const TRACK_BPM = {
 	"level1": 92, "level2": 104, "level3": 116,
 	"boss1": 100, "boss2": 112, "boss3": 124,
 	"level4": 120, "boss4": 128,
+	"level5": 108, "boss5": 116, "level6": 124, "boss6": 132,
+	"level7": 112, "boss7": 120, "level8": 128, "boss8": 136,
 }
 const SETTINGS_PATH = "user://settings.cfg"
 const SILENT_DB = -60.0

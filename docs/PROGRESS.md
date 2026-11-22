@@ -120,6 +120,6 @@ Core loop is FROZEN: polish and content only.
 - [x] **S2 Animation:** 2-frame idle/blink on the beat for every mouse and boss (`*_b.png`), cute defeat poof, boss entrance bounce.
 - [x] **S3 UI theme:** pastel rounded theme on the root window, menu hover/press sounds, styled panels.
 - [x] **S4 Meta:** cat hats (unlocked by stars and cards) + wardrobe, local achievements with toasts (Steam-ready API), album/stats screen.
-- [ ] **S5 Settings:** key rebinding, colour-blind / high-contrast bullet palette.
-- [ ] **S6 World 2:** planets 5–8 (Cheddaria, Neon Nibble, Frostwhisker, Mount Flexmore) with 10 waves each, 4 bosses (Big Cheese, DJ Squeak, Captain Frostbite, Sho Maximum Flex), music, themes, story; map per world; the demo stops after world 1.
+- [x] **S5 Settings:** key rebinding, colour-blind / high-contrast bullet palette.
+- [x] **S6 World 2:** planets 5–8 (Cheddaria, Neon Nibble, Frostwhisker, Mount Flexmore) with 10 waves each, 4 bosses (Big Cheese, DJ Squeak, Captain Frostbite, Sho Maximum Flex), music, themes, story; map per world; the demo stops after world 1.
 - [ ] **S7 Tech:** Platform/achievement abstraction (Steamworks-ready), BULLET HELL performance stress test, release checklist doc.

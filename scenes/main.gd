@@ -113,7 +113,7 @@ func _on_boss_spawned(boss: Boss):
 	boss.armor_changed.connect(func(_p, stunned): if stunned: banter.boss_stunned(boss))
 	boss.died.connect(func(_b): banter.boss_defeated(boss))
 	# the final boss (Sho) keeps the Princess caged in the corner
-	if level_runner.level_index == Levels.count() - 1 and not boss.is_midboss:
+	if Levels.LEVELS[level_runner.level_index].get("princess", false) and not boss.is_midboss:
 		queen_cage = QueenCage.new()
 		queen_cage.position = QUEEN_CAGE_POSITION
 		add_child(queen_cage)
@@ -122,10 +122,12 @@ func _on_boss_spawned(boss: Boss):
 func _on_level_cleared(index: int):
 	Game.track("levels_cleared")
 	Game.save_session("level_%d_cleared" % (index + 1))
-	if index == Levels.count() - 1 and queen_cage:
+	if queen_cage and is_instance_valid(queen_cage) and Levels.LEVELS[index].get("princess", false) and (Game.is_demo() or index == Levels.count() - 1):
 		hud.show_message("THE PRINCESS IS FREE!")
 		queen_cage.release(player.global_position)
 	else:
+		if queen_cage and is_instance_valid(queen_cage):
+			queen_cage.release(player.global_position)   # world 1 done - the chase continues
 		var ratio = 100.0 * Game.level_perfects / max(Game.level_judged, 1)
 		transition_card = TransitionCard.create(index, level_runner.last_rank, int(level_runner.level_seconds), int(ratio))
 		transition_card.dismissed.connect(level_runner.skip_transition)

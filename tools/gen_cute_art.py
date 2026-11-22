@@ -445,7 +445,7 @@ def companion_kiwi():
     c.save("companion_kiwi.png")
 
 
-def sho():
+def _draw_sho(c):
     # SHOCIREL "Sho": a chibi buff demon-lord mouse (faces left). Shirtless muscles, horns,
     # a cape, wrestling trunks and a champion belt - cartoon-cute, nothing explicit.
     SKIN = (176, 150, 196, 255)
@@ -453,7 +453,6 @@ def sho():
     CAPE = (150, 30, 60, 255)
     CAPE_D = (110, 20, 45, 255)
     HORN = (255, 236, 180, 255)
-    c = Canvas(38, 34)
     c.poly([(18, 10), (36, 12), (37, 33), (16, 33)], CAPE)          # cape behind
     c.poly([(22, 14), (35, 15), (35, 32), (24, 32)], CAPE_D)
     c.line(33, 26, 37, 22, PINK_D)                                    # tail
@@ -486,6 +485,11 @@ def sho():
     c.rect(12, 11, 15, 11, EYE)                                       # smirk
     c.set(16, 10, EYE)
     c.outline()
+
+
+def sho():
+    c = Canvas(38, 34)
+    _draw_sho(c)
     c.save("boss_sho.png")
 
 
@@ -682,6 +686,105 @@ def hats():
         c.save(name + ".png")
 
 
+def big_cheese():
+    # THE BIG CHEESE: a giant cheese-wheel robot with a tiny mouse pilot window (faces left)
+    c = Canvas(32, 28)
+    c.ellipse(16, 15, 14, 12, GOLD)
+    c.ellipse(16, 13, 11, 8, (255, 230, 120, 255))
+    for x, y, r in ((8, 18, 2.2), (22, 21, 1.8), (24, 10, 1.6), (11, 9, 1.4), (18, 24, 1.3)):
+        c.ellipse(x, y, r, r, GOLD_D)
+    c.ellipse(13, 12, 4.5, 3.5, GLASS)
+    c.ellipse(12, 12.5, 2.4, 2.0, GREY)
+    c.ellipse(10.5, 10, 1.2, 1.2, GREY)
+    c.ellipse(13.5, 10, 1.2, 1.2, GREY)
+    c.set(11, 12, EYE)
+    c.rect(2, 13, 4, 15, STEEL)                      # cheese cannon
+    c.ellipse(1.5, 14, 1.3, 1.8, (255, 140, 90, 255))
+    c.rect(9, 26, 11, 27, PINK_D)
+    c.rect(21, 26, 23, 27, PINK_D)
+    c.outline()
+    c.save("boss_big_cheese.png")
+
+
+def dj_squeak():
+    # DJ SQUEAK: a party mouse behind a turntable, headphones, shades
+    c = Canvas(32, 28)
+    c.rect(2, 17, 30, 26, (60, 40, 90, 255))           # deck
+    c.ellipse(10, 18, 6, 2.2, (40, 30, 60, 255))       # records
+    c.ellipse(24, 18, 6, 2.2, (40, 30, 60, 255))
+    c.ellipse(10, 18, 1.5, 0.8, (255, 100, 190, 255))
+    c.ellipse(24, 18, 1.5, 0.8, (120, 220, 255, 255))
+    for x, col in ((6, (255, 100, 190, 255)), (16, (120, 220, 255, 255)), (26, GOLD)):
+        c.rect(x, 22, x + 2, 24, col)                   # neon lights
+    c.ellipse(16, 10, 7, 6, GREY)                      # head
+    c.ellipse(10.5, 4, 2.8, 2.8, GREY)
+    c.ellipse(10.5, 4, 1.4, 1.4, PINK)
+    c.ellipse(21.5, 4, 2.8, 2.8, GREY)
+    c.ellipse(21.5, 4, 1.4, 1.4, PINK)
+    c.line(9, 6, 23, 6, STEEL)                         # headphones
+    c.ellipse(9, 9, 1.8, 2.2, (255, 100, 190, 255))
+    c.ellipse(23, 9, 1.8, 2.2, (255, 100, 190, 255))
+    c.rect(11, 9, 21, 10, EYE)                         # shades
+    c.set(13, 9, WHITE)
+    c.set(18, 9, WHITE)
+    c.rect(14, 13, 18, 13, PINK_D)                     # grin
+    c.outline()
+    c.save("boss_dj_squeak.png")
+
+
+def frostbite():
+    # CAPTAIN FROSTBITE: an ice-captain mouse on a snowflake sled (faces left)
+    ICE = (190, 235, 255, 255)
+    c = Canvas(32, 28)
+    c.rect(3, 22, 29, 24, ICE)                         # sled
+    c.line(2, 21, 4, 24, STEEL)
+    c.ellipse(17, 16, 8, 6, (160, 200, 240, 255))      # coat
+    c.ellipse(17, 17, 4, 3, WHITE)
+    c.ellipse(13, 9, 5.5, 5, GREY)                     # head
+    c.ellipse(9, 4.5, 2.4, 2.4, GREY)
+    c.ellipse(9, 4.5, 1.2, 1.2, PINK)
+    c.rect(8, 3, 18, 5, (90, 140, 220, 255))           # captain hat
+    c.rect(10, 1, 16, 3, (90, 140, 220, 255))
+    c.set(13, 2, GOLD)
+    c.set(10, 9, EYE)
+    c.set(8, 11, PINK_D)
+    c.line(5, 12, 9, 13, WHITE)                        # frosty moustache
+    for x, y in ((25, 6), (28, 12), (5, 18)):
+        c.set(x, y, WHITE)
+        c.set(x + 1, y, ICE)
+        c.set(x, y + 1, ICE)
+    c.outline()
+    c.save("boss_frostbite.png")
+
+
+def sho_max():
+    # SHO, MAXIMUM FLEX: Sho's rematch form - same buff mouse, golden aura and gold trunks
+    sho()   # draw the base first, then recolour into a new file
+    import struct, zlib
+    src = os.path.join(OUT, "boss_sho.png")
+    # re-render with a palette swap: reuse the Canvas by re-running sho() into a fresh canvas
+    c = Canvas(42, 38)
+    base = Canvas(38, 34)
+    _draw_sho(base)
+    for y in range(base.h):
+        for x in range(base.w):
+            px = base.px[y][x]
+            if px is None:
+                continue
+            if px == (60, 40, 120, 255):
+                px = GOLD
+            elif px == (150, 30, 60, 255):
+                px = (255, 170, 60, 255)
+            elif px == (110, 20, 45, 255):
+                px = (220, 120, 40, 255)
+            c.px[y + 2][x + 2] = px
+    for y in range(c.h):
+        for x in range(c.w):
+            if c.px[y][x] is None and any(0 <= x + dx < c.w and 0 <= y + dy < c.h and c.px[y + dy][x + dx] not in (None, (255, 230, 140, 160)) for dx, dy in ((2, 0), (-2, 0), (0, 2), (0, -2))):
+                c.px[y][x] = (255, 230, 140, 160)          # golden aura
+    c.save("boss_sho_max.png")
+
+
 def main():
     mouse("grunt.png", LILAC, LILAC_L, accessory=grunt_bits)
     mouse("gunner.png", PEACH, PEACH_L, accessory=gunner_bits)
@@ -711,6 +814,10 @@ def main():
     companion_nori()
     companion_kiwi()
     sho()
+    big_cheese()
+    dj_squeak()
+    frostbite()
+    sho_max()
     mech()
     mech_core()
     hats()

@@ -34,8 +34,8 @@ ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
 GODOT = os.environ.get("GODOT", os.path.expanduser("~/Desktop/Godot_v4.7.2.app/Contents/MacOS/Godot"))
 OUT = os.path.join(ROOT, "montecarlo")
 RUNS = os.path.join(OUT, "panel_runs")
-LEVELS = 4
-PAR = [55.0, 52.0, 52.0, 60.0]
+LEVELS = 8
+PAR = [55.0, 52.0, 52.0, 60.0, 60.0, 60.0, 60.0, 70.0]
 
 # Presentation quality of the current assets (0-1). Fixed judgement, NOT computable from code:
 # generated placeholder pixel art (the cat is hand-made) and generated chiptune loops/sfx.

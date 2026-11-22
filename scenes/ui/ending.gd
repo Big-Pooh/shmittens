@@ -20,8 +20,12 @@ func _ready():
 	var stars = Node2D.new()
 	stars.set_script(preload("res://scenes/levels/starfield.gd"))
 	add_child(stars)
-	add_child(_label("THE PRINCESS IS FREE!", 72, GOLD, 120))
-	add_child(_label("Shmitten, Pip, Nori and Kiwi defeated Sho and brought the Princess home to Pisitania.", 24, Color(0.9, 0.9, 1), 220))
+	if Game.is_demo():
+		add_child(_label("THE PRINCESS IS FREE!", 72, GOLD, 120))
+		add_child(_label("...but Sho escaped with the Star of Pisitania. The chase continues in the full game!", 24, Color(0.9, 0.9, 1), 220))
+	else:
+		add_child(_label("THE STAR SHINES AGAIN!", 72, GOLD, 120))
+		add_child(_label("Shmitten, Pip, Nori, Kiwi and the Princess brought the Star of Pisitania home.", 24, Color(0.9, 0.9, 1), 220))
 	add_child(_label("Sho has been sentenced to 1000 hours of cardio.", 20, Color(1, 0.75, 0.85), 470))
 	# the last planet's captured spell cards, small, under the heroes
 	var won = Game.level_cards_won.slice(0, 6)
