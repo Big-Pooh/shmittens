@@ -96,6 +96,7 @@ func _ready():
 	quit.custom_minimum_size = Vector2(200, 44)
 	quit.pressed.connect(func(): get_tree().quit())
 	buttons.add_child(quit)
+	_relayout(buttons)
 	start.grab_focus()
 	settings = SettingsMenu.new()
 	add_child(settings)
@@ -130,6 +131,45 @@ func open_album() -> CardAlbum:
 	var a = CardAlbum.new()
 	add_child(a)
 	return a
+
+
+# Sprint 3 layout: NEW GAME + CONTINUE on top, level select below, the rest in a 3-column grid,
+# all centred and clear of the controls line at the bottom.
+func _relayout(grid: GridContainer):
+	var items = grid.get_children()
+	var layout = VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 8)
+	add_child(layout)
+	var top = HBoxContainer.new()
+	top.alignment = BoxContainer.ALIGNMENT_CENTER
+	top.add_theme_constant_override("separation", 10)
+	layout.add_child(top)
+	var middle: Control = null
+	var rest = GridContainer.new()
+	rest.columns = 3
+	rest.add_theme_constant_override("h_separation", 10)
+	rest.add_theme_constant_override("v_separation", 8)
+	for item in items:
+		grid.remove_child(item)
+		if item is HBoxContainer:
+			middle = item
+			item.alignment = BoxContainer.ALIGNMENT_CENTER
+			item.add_theme_constant_override("separation", 8)
+		elif item.name == "Start" or (item is Button and item.text.begins_with("CONTINUE")):
+			item.custom_minimum_size = Vector2(300, 48)
+			top.add_child(item)
+		else:
+			item.custom_minimum_size = Vector2(220, 38)
+			rest.add_child(item)
+	if middle:
+		layout.add_child(middle)
+	var center = HBoxContainer.new()
+	center.alignment = BoxContainer.ALIGNMENT_CENTER
+	center.add_child(rest)
+	layout.add_child(center)
+	grid.queue_free()
+	layout.custom_minimum_size = Vector2(760, 0)
+	layout.position = Vector2(640 - 380, 412)
 
 
 # Easter egg: click the cat on the title screen to pet her.

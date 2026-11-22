@@ -368,6 +368,13 @@ func graze(at: Vector2):
 	grazed.emit(at, on_beat)
 
 
+func _on_node_added(node: Node):
+	if node is BaseButton:
+		node.mouse_entered.connect(func(): Sfx.play("perfect", -20.0))
+		node.focus_entered.connect(func(): Sfx.play("perfect", -22.0))
+		node.pressed.connect(func(): Sfx.play("pickup", -10.0))
+
+
 func set_dancing(on: bool):
 	if on == dancing:
 		return
@@ -535,6 +542,9 @@ func is_fever() -> bool:
 
 func _ready():
 	Conductor.beat.connect(_on_beat)
+	# sprint 3: the pastel UI theme everywhere + soft menu sounds on every button
+	get_tree().root.theme = UiTheme.make()
+	get_tree().node_added.connect(_on_node_added)
 	load_settings()
 	apply_settings()
 
