@@ -87,7 +87,11 @@ func _run():
 	Shockwave = load("res://scenes/gestures/skills/shockwave.gd")
 	LaserBeam = load("res://scenes/gestures/skills/laser_beam.gd")
 	ChainLightning = load("res://scenes/gestures/skills/chain_lightning.gd")
+	# snapshot the player's real settings file; it is restored byte-for-byte after the run
+	var settings_snapshot = FileAccess.get_file_as_string("user://settings.cfg") if FileAccess.file_exists("user://settings.cfg") else ""
 	Levels = load("res://scenes/levels/levels.gd")
+	# the opening story plays before the very first game; tests start games directly
+	root.get_node("Game").tips_seen["intro_story"] = true
 	# restore the player's real settings after the run (some tests change and save them)
 	var original = {"chosen": root.get_node("Game").difficulty_chosen, "relaxed": root.get_node("Game").relaxed_mode}
 	# tests must never write the player's real save (the persistence test enables it briefly)
@@ -199,9 +203,14 @@ func _run():
 	await _playtest2_tests()
 	await _playtest3_tests()
 	await _playtest4_tests()
+	await _story_tests()
 
 	game.difficulty_chosen = original.chosen
 	game.relaxed_mode = original.relaxed
+	if settings_snapshot != "":
+		var f = FileAccess.open("user://settings.cfg", FileAccess.WRITE)
+		f.store_string(settings_snapshot)
+		f.close()
 	print("%d passed, %d failed" % [passed, failed])
 	quit(1 if failed else 0)
 
@@ -776,13 +785,15 @@ func _boss_tests():
 	await _clear_world()
 	var runner = main.level_runner
 	conductor.time_override = 0.01
-	runner.start_level(2)
-	runner.wave_index = Levels.LEVELS[2].waves.size() - 1
+	var last = Levels.count() - 1
+	runner.start_level(last)
+	runner.wave_index = Levels.LEVELS[last].waves.size() - 1
 	runner.state = runner.State.WAVES
 	runner._next_wave()   # -> boss intro
 	runner._spawn_boss()
 	await frames(2)
-	check(main.queen_cage != null and main.queen_cage.is_inside_tree(), "final boss fight shows the caged Queen")
+	check(main.queen_cage != null and main.queen_cage.is_inside_tree(), "final boss fight (Sho) shows the caged Princess")
+	check(runner.boss.get_script() == load("res://scenes/enemies/bosses/sho.gd") and runner.boss.cards.size() == 4, "Sho is the final boss, with 4 spell cards")
 	var cleared = []
 	runner.all_levels_cleared.connect(func(): cleared.append(true))
 	runner.boss.die()
@@ -815,6 +826,7 @@ func _screen_tests():
 		await process_frame
 	check(current_scene.name == "Title", "title screen loads")
 	game.difficulty_chosen = true
+	game.tips_seen["intro_story"] = true   # (the settings reload above restored the real tips)
 	current_scene.start_game()
 	for i in 3:
 		await process_frame
@@ -898,7 +910,7 @@ func _full_run_test():
 		await next_bar.call()
 		if conductor.track != track:
 			bar[0] = 0   # a new track restarts the clock
-	check(runner.state == runner.State.DONE and bosses_beaten == 3, "full run: 3 levels and 3 bosses completed (bosses %d)" % bosses_beaten)
+	check(runner.state == runner.State.DONE and bosses_beaten == Levels.count(), "full run: every planet and boss completed (bosses %d)" % bosses_beaten)
 	conductor.time_override = -1.0
 	await wait(4.0)
 	check(current_scene.name == "Ending", "full run ends on the rescue screen")
@@ -1729,3 +1741,51 @@ func _playtest4_tests():
 	var beam_script = load("res://scenes/player/overdrive_beam.gd")
 	check(beam_script.TICK_DAMAGE >= 8.0, "overdrive ticks hit hard (%.0f)" % beam_script.TICK_DAMAGE)
 	cat.is_invulnerable = false
+
+
+func _story_tests():
+	# the opening story plays before the first game, then the game starts
+	game.tips_seen.erase("intro_story")
+	game.difficulty_chosen = true
+	change_scene_to_file("res://scenes/ui/title.tscn")
+	for i in 3:
+		await process_frame
+	current_scene.start_game()
+	for i in 4:
+		await process_frame
+	check(current_scene.name == "IntroStory", "the opening story plays before the first game")
+	for i in 5:
+		current_scene.next()
+	for i in 4:
+		await process_frame
+	check(current_scene.name == "Main", "after the story, the game starts")
+	check(game.tips_seen.has("intro_story"), "the story plays only once (STORY on the title replays it)")
+	main = current_scene
+	cat = main.get_node("Shmitten")
+	main.level_runner.stop()
+	# the planet map between levels has home + every planet
+	var card = load("res://scenes/ui/transition_card.gd").create(0, "A", 60, 50)
+	main.add_child(card)
+	await frames(1)
+	check(card._stops() == Levels.count() + 1 and card._stop_name(0) == "PISITANIA" and card._stop_name(Levels.count()) == "FLEXOR", "the map runs from Pisitania to Flexor")
+	card.queue_free()
+	check(main.backdrop != null and main.hud._planet() == Levels.LEVELS[game.level].title, "each level has its planet (backdrop + HUD name)")
+	# Sho's patterns: rose, rain curtain with a safe column
+	var sho = load("res://scenes/enemies/bosses/sho.gd").new()
+	sho.position = Vector2(1000, 360)
+	sho.drops = false
+	main.add_child(sho)
+	await frames(2)
+	var shots = _count("enemy_shots")
+	sho.curtain(12, 150.0, 400.0)
+	await frames(1)
+	var rain = get_nodes_in_group("enemy_shots").slice(shots)
+	check(rain.size() >= 8 and rain.all(func(e): return absf(e.position.x - 400.0) >= 70.0 and e.velocity.y > 0.0), "protein rain falls from the top and leaves a safe column")
+	shots = _count("enemy_shots")
+	sho.rose(18, 190.0, 5)
+	await frames(1)
+	var bloom = get_nodes_in_group("enemy_shots").slice(shots)
+	var speeds = bloom.map(func(e): return e.velocity.length())
+	check(bloom.size() == 18 and speeds.max() > speeds.min() * 1.5, "a rose blooms: bullet speeds vary around the ring")
+	sho.queue_free()
+	await _clear_world()

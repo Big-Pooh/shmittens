@@ -5,8 +5,9 @@ class_name MechaTank
 # Level 1 boss, "Tanky": the gentle introduction to patterns. Two spell cards:
 #   0 "Toy Cannon Parade" - a 5-candy arc on the downbeat (nudged every bar so the safe lanes
 #     alternate) + the melody as staff notes. Drifts between two heights.
-#   1 "Clockwork Waltz" (beat armour) - 2-arm rice spiral on beats 2 and 4, a 2-petal flower
-#     every other bar, staff notes.
+#     Every 4th bar a small 3-petal rose blooms.
+#   1 "Clockwork Waltz" (beat armour) - a 2-arm "sun" spiral on beats 2 and 4 that reverses
+#     every bar, a 2-petal flower every other bar, staff notes.
 
 const TEXTURE = preload("res://Art/Generated/boss_tank.png")
 
@@ -26,9 +27,11 @@ func on_beat(n: int):
 	if card == 0:
 		if beat == 0:
 			arc(5, 16.0, 180.0, 180.0 + (8.0 if bar % 2 == 0 else -8.0))
+		if beat == 2 and bar % 4 == 3:
+			rose(12, 160.0, 3, bar * 0.3)   # playtest 4: a little bloom to read
 	else:
 		if beat == 1 or beat == 3:
-			spiral(2, 150.0, 37.0)
+			sun(2, 150.0, 37.0, bar)
 		if beat == 0 and bar % 2 == 0:
 			flower(2, 10, 170.0, EnemyShot.Kind.ORB, bar * 0.2)
 	if beat == 0 and bar % 2 == 0:

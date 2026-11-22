@@ -424,6 +424,50 @@ def companion_kiwi():
     c.save("companion_kiwi.png")
 
 
+def sho():
+    # SHOCIREL "Sho": a chibi buff demon-lord mouse (faces left). Shirtless muscles, horns,
+    # a cape, wrestling trunks and a champion belt - cartoon-cute, nothing explicit.
+    SKIN = (176, 150, 196, 255)
+    SKIN_L = (206, 184, 222, 255)
+    CAPE = (150, 30, 60, 255)
+    CAPE_D = (110, 20, 45, 255)
+    HORN = (255, 236, 180, 255)
+    c = Canvas(38, 34)
+    c.poly([(18, 10), (36, 12), (37, 33), (16, 33)], CAPE)          # cape behind
+    c.poly([(22, 14), (35, 15), (35, 32), (24, 32)], CAPE_D)
+    c.line(33, 26, 37, 22, PINK_D)                                    # tail
+    c.ellipse(19, 21, 9, 8, SKIN)                                     # chest
+    c.ellipse(15.5, 19, 3.6, 2.6, SKIN_L)                             # pecs
+    c.ellipse(22.5, 19, 3.6, 2.6, SKIN_L)
+    for y in (23, 25):                                                # abs
+        c.rect(17, y, 18, y, SKIN_L)
+        c.rect(20, y, 21, y, SKIN_L)
+    c.ellipse(8, 20, 4.5, 5.5, SKIN)                                  # big front arm (flexing)
+    c.ellipse(6.5, 14, 3.4, 3.4, SKIN)                                # bicep
+    c.ellipse(6.5, 13.4, 1.8, 1.4, SKIN_L)
+    c.ellipse(29, 21, 4.0, 5.0, SKIN)                                 # back arm
+    c.rect(12, 27, 26, 30, (60, 40, 120, 255))                        # trunks
+    c.rect(12, 27, 26, 27, GOLD)                                      # champion belt
+    c.ellipse(19, 27.5, 2.0, 1.5, GOLD_D)
+    c.rect(14, 31, 16, 32, SKIN)                                      # legs
+    c.rect(22, 31, 24, 32, SKIN)
+    c.ellipse(17, 8.5, 6.5, 5.5, SKIN)                                # head
+    c.ellipse(22, 3.5, 2.8, 2.8, SKIN)                                # ears
+    c.ellipse(22, 3.5, 1.5, 1.5, PINK)
+    c.ellipse(12.5, 3.5, 2.6, 2.6, SKIN)
+    c.ellipse(12.5, 3.5, 1.4, 1.4, PINK)
+    c.poly([(14, 4), (12, -0.5), (16, 3)], HORN)                      # horns
+    c.poly([(19, 3), (21, -0.5), (21.5, 3.5)], HORN)
+    c.rect(12, 6, 15, 6, EYE)                                         # angry brow
+    c.rect(13, 7, 14, 8, (255, 60, 80, 255))                          # glowing eye
+    c.set(13, 7, WHITE)
+    c.set(10, 10, PINK_D)                                             # nose
+    c.rect(12, 11, 15, 11, EYE)                                       # smirk
+    c.set(16, 10, EYE)
+    c.outline()
+    c.save("boss_sho.png")
+
+
 def main():
     mouse("grunt.png", LILAC, LILAC_L, accessory=grunt_bits)
     mouse("gunner.png", PEACH, PEACH_L, accessory=gunner_bits)
@@ -445,6 +489,7 @@ def main():
     companion_pip()
     companion_nori()
     companion_kiwi()
+    sho()
     print("wrote cute sprites to", os.path.normpath(OUT))
 
 

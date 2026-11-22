@@ -20,8 +20,8 @@ func _ready():
 	var stars = Node2D.new()
 	stars.set_script(preload("res://scenes/levels/starfield.gd"))
 	add_child(stars)
-	add_child(_label("THE QUEEN IS FREE!", 72, GOLD, 120))
-	add_child(_label("Shmitten defeated the Rat King and brought the Queen home.", 26, Color(0.9, 0.9, 1), 220))
+	add_child(_label("THE PRINCESS IS FREE!", 72, GOLD, 120))
+	add_child(_label("Shmitten, Pip, Nori and Kiwi defeated Sho and brought the Princess home to Pisitania.", 24, Color(0.9, 0.9, 1), 220))
 	add_child(_label("FINAL SCORE  %06d" % Game.score, 34, GOLD, 520))
 	if not Game.ranks.is_empty():
 		add_child(_label("RANKS   " + "  ".join(Game.ranks.map(func(r): return r)), 26, Color(0.9, 0.9, 1), 570))

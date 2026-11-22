@@ -2,7 +2,7 @@ extends Boss
 
 class_name RatKing
 
-# Level 3 (final) boss, "King Ratbert". Playtest 2: "too many random bullets and hard to hit"
+# Level 3 boss, "King Ratbert", Sho's loyal general. Playtest 2: "too many random bullets and hard to hit"
 # -> no shot-blocking guards, no jumping to your height, every bullet is part of a fixed
 # pattern. Three spell cards:
 #   0 "Royal Decree" - a 14-candy ring that rotates a little every bar + a 5-shot arc on beat 3.
@@ -35,7 +35,10 @@ func on_beat(n: int):
 			if beat == 0:
 				ring(14, 160.0, bar * 0.11)
 			if beat == 2:
-				arc(5, 14.0, 190.0)
+				if bar % 2 == 0:
+					arc(5, 14.0, 190.0)
+				else:
+					rose(12, 170.0, 4, bar * 0.5)
 		1:
 			spiral(1, 150.0, 31.0)
 			_counter_spiral()
@@ -45,7 +48,7 @@ func on_beat(n: int):
 			if beat == 0:
 				flower(3, 12, 180.0, EnemyShot.Kind.RICE, bar * 0.17)
 			if beat == 1 or beat == 3:
-				spiral(1, 150.0, 31.0)
+				sun(1, 150.0, 31.0, bar)
 				_counter_spiral()
 	if beat == 0 and bar % 2 == 0:
 		drift_to(360.0 + 150.0 * sin(bar * 0.8), Conductor.seconds_per_beat * 8.0)

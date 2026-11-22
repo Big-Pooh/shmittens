@@ -129,7 +129,7 @@ func _show_step():
 			if get_tree().get_nodes_in_group("enemies").size() < 3:
 				_spawn_practice_mice()
 		STEP_READY:
-			panel_label.text = "YOU'RE READY!\nRelease a spell ON THE BEAT to empower it.  X = emergency CATNIP BOMB (uses all charges).\n50 on-beat hits in a row = OVERDRIVE (press F).  Between waves: DANCE on the beat!\nNow go save the Queen!"
+			panel_label.text = "YOU'RE READY!\nRelease a spell ON THE BEAT to empower it.  X = emergency CATNIP BOMB (uses all charges).\n50 on-beat hits in a row = OVERDRIVE (press F).  Between waves: DANCE on the beat!\nNow go save the Princess!"
 
 
 func _spawn_practice_mice():

@@ -3,6 +3,7 @@ extends Control
 # Title screen: game name, the flying cat, Start / Quit. Plays the level 1 drums in the background.
 
 const MAIN_SCENE = "res://scenes/main.tscn"
+const INTRO_SCENE = "res://scenes/ui/intro_story.tscn"
 const CAT_SHEET = preload("res://Art/Popo-AnimationSheet.png")
 const GOLD = Color(1, 0.82, 0.25)
 
@@ -20,10 +21,10 @@ func _ready():
 	add_child(stars)
 
 	var title = _label("SHMITTENS! ✰", 84, GOLD)
-	title.position = Vector2(0, 110)
+	title.position = Vector2(0, 70)
 	add_child(title)
-	var subtitle = _label("The Rat King has kidnapped the Queen.\nOnly one cat can save her.", 24, Color(0.85, 0.85, 1))
-	subtitle.position = Vector2(0, 230)
+	var subtitle = _label("Sho, the buff demon lord of the mice, has kidnapped the Princess of Pisitania.\nOnly one cat - and her friends - can bring her home.", 22, Color(0.85, 0.85, 1))
+	subtitle.position = Vector2(0, 185)
 	add_child(subtitle)
 
 	cat = Sprite2D.new()
@@ -31,13 +32,15 @@ func _ready():
 	cat.hframes = 10
 	cat.vframes = 5
 	cat.scale = Vector2(3, 3)
-	cat.position = Vector2(640, 380)
+	cat.position = Vector2(640, 340)
 	add_child(cat)
 
-	var buttons = VBoxContainer.new()
-	buttons.position = Vector2(540, 440)
-	buttons.custom_minimum_size = Vector2(200, 0)
-	buttons.add_theme_constant_override("separation", 12)
+	# two columns so every button fits on screen (playtest 4 added STORY + more levels)
+	var buttons = GridContainer.new()
+	buttons.columns = 2
+	buttons.position = Vector2(425, 450)
+	buttons.add_theme_constant_override("h_separation", 20)
+	buttons.add_theme_constant_override("v_separation", 10)
 	add_child(buttons)
 	var start = Button.new()
 	start.name = "Start"
@@ -48,15 +51,15 @@ func _ready():
 	if Game.unlocked_level > 0:
 		# saved progress: continue at the furthest level, or pick any unlocked level
 		var cont = Button.new()
-		cont.text = "CONTINUE (LEVEL %d)" % (Game.unlocked_level + 1)
+		cont.text = "CONTINUE (%s)" % Levels.LEVELS[Game.unlocked_level].title
 		cont.custom_minimum_size = Vector2(200, 44)
 		cont.pressed.connect(func(): start_level(Game.unlocked_level))
 		buttons.add_child(cont)
 		var row = HBoxContainer.new()
 		for i in Game.unlocked_level + 1:
 			var b = Button.new()
-			b.text = "L%d" % (i + 1)
-			b.tooltip_text = "Best: %d" % Game.best_scores.get("level%d" % (i + 1), 0)
+			b.text = Levels.LEVELS[i].title.substr(0, 5)
+			b.tooltip_text = "%s - best %d" % [Levels.LEVELS[i].planet, Game.best_scores.get("level%d" % (i + 1), 0)]
 			b.pressed.connect(start_level.bind(i))
 			row.add_child(b)
 		buttons.add_child(row)
@@ -66,6 +69,11 @@ func _ready():
 		endless.custom_minimum_size = Vector2(200, 44)
 		endless.pressed.connect(start_endless)
 		buttons.add_child(endless)
+	var story = Button.new()
+	story.text = "STORY"
+	story.custom_minimum_size = Vector2(200, 40)
+	story.pressed.connect(play_story)
+	buttons.add_child(story)
 	var settings_button = Button.new()
 	settings_button.text = "SETTINGS"
 	settings_button.custom_minimum_size = Vector2(200, 44)
@@ -105,7 +113,7 @@ func _label(text: String, size: int, color: Color) -> Label:
 func _process(delta):
 	time += delta
 	cat.frame = int(time * 12.0) % 10
-	cat.position.y = 380 + sin(time * 2.0) * 10.0
+	cat.position.y = 340 + sin(time * 2.0) * 8.0
 
 
 # First time: the tutorial runs before Level 1 (it can be skipped with Tab).
@@ -162,7 +170,16 @@ func _begin_new_game():
 	Game.start_wave = 0
 	Game.clear_assist()
 	Game.tutorial_mode = not Tutorial.is_done()
-	get_tree().change_scene_to_file(MAIN_SCENE)
+	# the opening story plays before the very first game (STORY on the title replays it)
+	get_tree().change_scene_to_file(INTRO_SCENE if Game.first_time("intro_story") else MAIN_SCENE)
+
+
+func play_story():
+	Game.endless_mode = false
+	Game.tutorial_mode = false
+	Game.start_level = 0
+	Game.start_wave = 0
+	get_tree().change_scene_to_file(INTRO_SCENE)
 
 
 func start_level(index: int):

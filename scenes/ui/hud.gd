@@ -226,11 +226,15 @@ func _update_wave_label():
 	elif Game.endless_mode:
 		wave_label.text = "ENDLESS   WAVE %d" % Game.wave
 	elif Game.wave < 0:
-		wave_label.text = "LEVEL %d   BOSS" % (Game.level + 1)
+		wave_label.text = "%s   BOSS" % _planet()
 	else:
-		wave_label.text = "LEVEL %d   WAVE %d/%d" % [Game.level + 1, Game.wave, Game.wave_total]
+		wave_label.text = "%s   WAVE %d/%d" % [_planet(), Game.wave, Game.wave_total]
 	if Game.challenge != Game.Challenge.NORMAL and not Game.tutorial_mode:
 		wave_label.text = Game.CHALLENGE_NAMES[Game.challenge] + "   " + wave_label.text
+
+
+func _planet() -> String:
+	return Levels.LEVELS[clamp(Game.level, 0, Levels.count() - 1)].title
 
 
 func _on_lives(lives: int):

@@ -19,13 +19,15 @@ const ENEMY_SCENES = {
 
 const LEVELS = [
 	{
-		"title": "MOUSE FACTORY",
+		"title": "MOUSETRONICA",
+		"planet": "Mousetronica, the factory planet",
+		"planet_color": Color(0.95, 0.6, 0.35),
 		"track": "level1",
 		"boss_track": "boss1",
 		"boss": "tank",
 		"par_seconds": 55.0,   # playtest 2: slower BPM, tougher bosses (speedrunner median 51 s)
 		"volley_rate": 0.5,   # onboarding: grunt volleys half as often in level 1
-		"story": "The Rat King has taken the Queen!\nShmitten flies into the Mouse Factory to find her.",
+		"story": "Sho's robot mice are built on Mousetronica.\nShmitten and friends fly in to shut the factory down.",
 		"waves": [
 			[{"enemy": "grunt", "formation": "grid", "columns": 3, "rows": 3, "health": 2}],
 			[{"enemy": "grunt", "formation": "grid", "columns": 4, "rows": 4, "health": 2}],
@@ -36,12 +38,14 @@ const LEVELS = [
 		],
 	},
 	{
-		"title": "SEWER FLEET",
+		"title": "DRAINIA",
+		"planet": "Drainia, the sewer moon",
+		"planet_color": Color(0.4, 0.8, 0.6),
 		"track": "level2",
 		"boss_track": "boss2",
 		"boss": "mothership",
 		"par_seconds": 52.0,
-		"story": "The trail leads down into the sewers,\nwhere the mouse fleet guards the way.",
+		"story": "The trail leads to Drainia, the sewer moon,\nwhere Sho's cheese fleet guards the way.",
 		"waves": [
 			[{"enemy": "dasher", "formation": "line", "count": 3, "health": 2}],
 			[{"enemy": "grunt", "formation": "grid", "columns": 4, "rows": 4, "health": 3}],
@@ -53,12 +57,14 @@ const LEVELS = [
 		],
 	},
 	{
-		"title": "RAT KING'S CASTLE",
+		"title": "RATOPOLIS",
+		"planet": "Ratopolis, the castle planet",
+		"planet_color": Color(0.65, 0.5, 0.9),
 		"track": "level3",
 		"boss_track": "boss3",
 		"boss": "rat_king",
 		"par_seconds": 52.0,
-		"story": "At last, the Rat King's castle.\nThe Queen is somewhere inside...",
+		"story": "King Ratbert, Sho's loyal general, rules Ratopolis.\nHe knows the way to Sho's planet...",
 		"waves": [
 			[{"enemy": "shield", "formation": "grid", "columns": 3, "rows": 3, "health": 4}],
 			[{"enemy": "shield", "formation": "column", "count": 4, "health": 4, "x": 1000},
@@ -71,9 +77,33 @@ const LEVELS = [
 			 {"enemy": "dasher", "formation": "line", "count": 2, "health": 3}],
 		],
 	},
+	{
+		"title": "FLEXOR",
+		"planet": "Flexor, Sho's fortress planet",
+		"planet_color": Color(0.9, 0.3, 0.45),
+		"track": "level4",
+		"boss_track": "boss4",
+		"boss": "sho",
+		"par_seconds": 60.0,
+		"story": "Flexor: Sho's own planet. The Princess is held here.\nEverything Sho has is waiting for you!",
+		"waves": [
+			[{"enemy": "grunt", "formation": "grid", "columns": 4, "rows": 4, "health": 5},
+			 {"enemy": "dasher", "formation": "line", "count": 2, "health": 3}],
+			[{"enemy": "shield", "formation": "column", "count": 4, "health": 6, "x": 1000},
+			 {"enemy": "gunner", "formation": "v", "count": 5, "health": 6}],
+			[{"enemy": "dasher", "formation": "line", "count": 5, "health": 4},
+			 {"enemy": "gunner", "formation": "column", "count": 3, "health": 7}],
+			[{"enemy": "shield", "formation": "grid", "columns": 3, "rows": 4, "health": 6, "x": 1040},
+			 {"enemy": "grunt", "formation": "v", "count": 7, "health": 5}],
+			[{"enemy": "gunner", "formation": "grid", "columns": 2, "rows": 4, "health": 7},
+			 {"enemy": "dasher", "formation": "line", "count": 3, "health": 4},
+			 {"enemy": "shield", "formation": "column", "count": 3, "health": 6, "x": 960}],
+		],
+	},
 ]
 
 const BOSS_SCRIPTS = {
+	"sho": preload("res://scenes/enemies/bosses/sho.gd"),
 	"tank": preload("res://scenes/enemies/bosses/mecha_tank.gd"),
 	"mothership": preload("res://scenes/enemies/bosses/mothership.gd"),
 	"rat_king": preload("res://scenes/enemies/bosses/rat_king.gd"),

@@ -24,6 +24,7 @@ const DANCE_CHEESE = 4
 var dance_hits = 0
 var transition_card: TransitionCard
 var companions: Companions
+var backdrop: PlanetBackdrop
 
 
 func _ready():
@@ -32,6 +33,11 @@ func _ready():
 	Game.reward.connect(_on_reward)
 	Game.judged.connect(_on_judged)
 	Game.grazed.connect(_on_grazed)
+	backdrop = PlanetBackdrop.new()
+	backdrop.name = "PlanetBackdrop"
+	add_child(backdrop)
+	move_child(backdrop, 0)
+	backdrop.set_level(Game.start_level)
 	companions = Companions.new()
 	companions.name = "Companions"
 	add_child(companions)
@@ -70,6 +76,7 @@ func _exit_tree():
 
 
 func _on_level_started(index: int):
+	backdrop.set_level(index)
 	if transition_card and is_instance_valid(transition_card):
 		transition_card.close()
 		transition_card = null
@@ -84,7 +91,7 @@ func _on_level_started(index: int):
 			help = "\nASSIST: slower enemy shots, +%d lives" % min(Game.assist, 2)
 		hud.show_message("LEVEL %d - TRY AGAIN from %s%s" % [index + 1, where, help])
 	else:
-		hud.show_message("LEVEL %d - %s\n%s" % [index + 1, level.title, level.story])
+		hud.show_message("PLANET %d - %s\n%s" % [index + 1, level.title, level.story])
 
 
 func _on_boss_incoming(boss_name: String):
@@ -96,7 +103,7 @@ func _on_boss_incoming(boss_name: String):
 func _on_boss_spawned(boss: Boss):
 	hud.hide_message()
 	hud.show_boss(boss)
-	# the final boss keeps the Queen caged in the corner
+	# the final boss (Sho) keeps the Princess caged in the corner
 	if level_runner.level_index == Levels.count() - 1:
 		queen_cage = QueenCage.new()
 		queen_cage.position = QUEEN_CAGE_POSITION
@@ -107,7 +114,7 @@ func _on_level_cleared(index: int):
 	Game.track("levels_cleared")
 	Game.save_session("level_%d_cleared" % (index + 1))
 	if index == Levels.count() - 1 and queen_cage:
-		hud.show_message("THE QUEEN IS FREE!")
+		hud.show_message("THE PRINCESS IS FREE!")
 		queen_cage.release(player.global_position)
 	else:
 		var ratio = 100.0 * Game.level_perfects / max(Game.level_judged, 1)

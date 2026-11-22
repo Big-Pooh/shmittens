@@ -87,7 +87,8 @@ var start_wave = 0
 # Effects: enemy shots ASSIST_SHOT_SLOWDOWN slower per level, +1 life per level (up to +2).
 const MAX_ASSIST = 3
 const ASSIST_SHOT_SLOWDOWN = 0.12
-const LEVEL_SHOT_SPEED = [1.0, 1.15, 1.3]   # playtest 1: dodging felt too easy (was 0.8/0.9/1.0)
+const LEVEL_SHOT_SPEED = [1.0, 1.15, 1.3, 1.35]
+const LEVEL_COUNT = 4   # Levels.LEVELS.size() (playtest 4: + Flexor, Sho's planet)   # playtest 1: dodging felt too easy (was 0.8/0.9/1.0)
 var assist = 0
 # per-level rank stats (time is measured by the level runner)
 var level_judged = 0
@@ -459,7 +460,7 @@ func apply_settings():
 
 # A story level was cleared: unlock the next one and keep the best score.
 func record_level_clear(level_index: int):
-	unlocked_level = max(unlocked_level, min(level_index + 1, 2))
+	unlocked_level = max(unlocked_level, min(level_index + 1, LEVEL_COUNT - 1))
 	record_score("level%d" % (level_index + 1))
 	save_settings()
 

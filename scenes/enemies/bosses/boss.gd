@@ -405,6 +405,61 @@ func freeze_ring(count: int, speed: float, then_speed: float, kind: int = EnemyS
 		shot.freeze(spb * 0.9, spb, then_speed, true, (i - (count - 1) / 2.0) * 0.06)
 
 
+# ROSE (playtest 4: "closer to Touhou"): a ring whose bullet speeds follow a rose curve,
+# so it blooms into `petals` petals as it expands.
+func rose(count: int, speed: float, petals: int, offset: float = 0.0, kind: int = EnemyShot.Kind.RICE):
+	count = dense(count)
+	if Game.assist >= 1:
+		count = max(count - 6, 8)
+	for i in count:
+		var a = offset + TAU * i / count
+		var k = 0.45 + 0.55 * absf(cos(petals * a / 2.0))
+		fire_shot(Vector2.from_angle(a), speed * k, kind)
+
+
+# CURTAIN ("rain"): bullets drop from the top edge across the screen in columns, with a
+# gentle sideways drift; `gap_x` leaves a safe column you can sit in.
+func curtain(columns: int, speed: float, gap_x: float, kind: int = EnemyShot.Kind.ORB, drift: float = 0.0):
+	columns = dense(columns)
+	var gap = 150.0 * (1.25 if Game.assist > 0 else 1.0)
+	for i in columns:
+		var x = 60.0 + (global_position.x - 140.0) * (i + 0.5) / columns
+		if absf(x - gap_x) < gap / 2.0:
+			continue
+		_spawn_shot(Vector2(x, 24.0), Vector2(drift, 1.0).normalized(), speed, kind)
+
+
+# SUN: a spiral that reverses its spin every bar, drawing a zigzag lattice.
+var spin_dir = 1.0
+var _sun_bar = -1
+
+func sun(arms: int, speed: float, step_degrees: float, bar: int, kind: int = EnemyShot.Kind.RICE):
+	if bar != _sun_bar:
+		_sun_bar = bar
+		spin_dir = -spin_dir
+	arms = dense(arms)
+	if Game.assist >= 2 and arms > 1:
+		arms -= 1
+	for i in arms:
+		fire_shot(Vector2.from_angle(spiral_angle + TAU * i / arms), speed, kind)
+	spiral_angle += deg_to_rad(step_degrees) * spin_dir
+
+
+# AIMED: `count` bullets in a tight fan straight at the cat (the classic "move or die" stream).
+func aimed(count: int, speed: float, spread_degrees: float = 6.0, kind: int = EnemyShot.Kind.CANDY):
+	var base = (player_position() - global_position).angle()
+	for i in count:
+		fire_shot(Vector2.from_angle(base + deg_to_rad((i - (count - 1) / 2.0) * spread_degrees)), speed, kind)
+
+
+# A few loose random shots toward the left half of the screen (spice, not the main pattern).
+func spray(count: int, speed: float, kind: int = EnemyShot.Kind.CANDY):
+	if Game.assist >= 1:
+		count = max(count / 2, 1)
+	for i in dense(count):
+		fire_shot(Vector2.from_angle(PI + randf_range(-0.9, 0.9)), speed * randf_range(0.7, 1.2), kind)
+
+
 func _spawn_shot(at: Vector2, direction: Vector2, speed: float, kind: int = 0):
 	var shot = EnemyShot.create(at, direction, speed * Game.shot_speed_factor(), kind)
 	shot.volley = "%d:%d" % [get_instance_id(), Engine.get_physics_frames()]

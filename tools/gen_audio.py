@@ -113,6 +113,8 @@ TRACKS = {
     "level3": (116, 52, [0, -4, -2, 0]),   # E minor: Em C D Em
     "boss1": (100, 57, [0, 1, 0, -1]),     # tense: i bII i VII
     "boss2": (112, 50, [0, 1, -2, -5]),
+    "level4": (120, 53, [0, -4, -5, -2]),   # F minor: Fm Db C Eb
+    "boss4": (128, 53, [0, 1, -1, 1]),     # final boss: tense half-steps
     "boss3": (124, 52, [0, 1, 3, -1]),
 }
 MINOR_PENTATONIC = [0, 3, 5, 7, 10, 12, 15, 17]

@@ -13,10 +13,13 @@ signal dismissed
 const CAT_SHEET = preload("res://Art/Popo-AnimationSheet.png")
 const QUEEN = preload("res://Art/Generated/queen.png")
 const GOLD = Color(1, 0.82, 0.25)
-const STOPS = ["MOUSE FACTORY", "SEWER FLEET", "RAT KING'S CASTLE", "THE QUEEN"]
+# playtest 4: a planet map (Mario Galaxy style): home -> 4 planets -> the Princess on Flexor.
+# Stop 0 is home (Pisitania); stop i + 1 is level i.
+const HOME = "PISITANIA"
+const HOME_COLOR = Color(1, 0.7, 0.55)
 const MAP_Y = 400.0
-const MAP_X0 = 250.0
-const MAP_DX = 260.0
+const MAP_X0 = 170.0
+const MAP_DX = 235.0
 
 var cleared_index = 0
 var rank = ""
@@ -51,19 +54,19 @@ func _ready():
 	add_child(map)
 	map.draw.connect(_draw_map.bind(map))
 	map.queue_redraw()
-	for i in STOPS.size():
-		_text(STOPS[i], 16, Color(1, 1, 1) if i <= cleared_index + 1 else Color(0.6, 0.6, 0.7), MAP_Y + 30, MAP_X0 + i * MAP_DX - 100, 200)
-	var queen = Sprite2D.new()
-	queen.texture = QUEEN
-	queen.scale = Vector2(3, 3)
-	queen.position = Vector2(MAP_X0 + 3 * MAP_DX, MAP_Y - 34)
-	add_child(queen)
+	for i in _stops():
+		_text(_stop_name(i), 16, Color(1, 1, 1) if i <= cleared_index + 2 else Color(0.6, 0.6, 0.7), MAP_Y + 42, MAP_X0 + i * MAP_DX - 100, 200)
+	var princess = Sprite2D.new()
+	princess.texture = QUEEN
+	princess.scale = Vector2(2.5, 2.5)
+	princess.position = Vector2(MAP_X0 + (_stops() - 1) * MAP_DX + 30, MAP_Y - 50)
+	add_child(princess)
 	cat = Sprite2D.new()
 	cat.texture = CAT_SHEET
 	cat.hframes = 10
 	cat.vframes = 5
 	cat.scale = Vector2(1.4, 1.4)
-	cat.position = Vector2(MAP_X0 + cleared_index * MAP_DX, MAP_Y - 40)
+	cat.position = Vector2(MAP_X0 + (cleared_index + 1) * MAP_DX, MAP_Y - 52)
 	add_child(cat)
 	var next = cleared_index + 1
 	if next < Levels.count():
@@ -73,7 +76,7 @@ func _ready():
 	_text("SPACE - continue", 18, Color(0.7, 0.7, 0.85), 650)
 	var tween = create_tween()
 	tween.tween_interval(0.6)
-	tween.tween_property(cat, "position:x", MAP_X0 + min(next, 3) * MAP_DX, 2.2).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(cat, "position:x", MAP_X0 + min(next + 1, _stops() - 1) * MAP_DX, 2.2).set_trans(Tween.TRANS_SINE)
 
 
 func _text(text: String, size: int, color: Color, y: float, x: float = 60.0, width: float = 1160.0) -> Label:
@@ -91,18 +94,35 @@ func _text(text: String, size: int, color: Color, y: float, x: float = 60.0, wid
 	return label
 
 
+func _stops() -> int:
+	return Levels.count() + 1
+
+
+func _stop_name(i: int) -> String:
+	return HOME if i == 0 else Levels.LEVELS[i - 1].title
+
+
+func _stop_color(i: int) -> Color:
+	return HOME_COLOR if i == 0 else Levels.LEVELS[i - 1].get("planet_color", Color(0.6, 0.6, 0.8))
+
+
 func _draw_map(map: Node2D):
-	for i in STOPS.size() - 1:
+	for i in _stops() - 1:
 		var a = Vector2(MAP_X0 + i * MAP_DX, MAP_Y)
 		var b = Vector2(MAP_X0 + (i + 1) * MAP_DX, MAP_Y)
 		var steps = 13
 		for k in steps:
 			if k % 2 == 0:
 				map.draw_line(a.lerp(b, float(k) / steps), a.lerp(b, float(k + 1) / steps), Color(1, 1, 1, 0.5), 3.0)
-	for i in STOPS.size():
-		var done = i <= cleared_index
-		map.draw_circle(Vector2(MAP_X0 + i * MAP_DX, MAP_Y), 12.0, GOLD if done else Color(0.4, 0.4, 0.5))
-		map.draw_circle(Vector2(MAP_X0 + i * MAP_DX, MAP_Y), 6.0, Color(1, 1, 1) if done else Color(0.2, 0.2, 0.3))
+	for i in _stops():
+		var done = i <= cleared_index + 1
+		var at = Vector2(MAP_X0 + i * MAP_DX, MAP_Y)
+		var color = _stop_color(i) if done or i == cleared_index + 2 else _stop_color(i).darkened(0.55)
+		map.draw_circle(at, 30.0, color)
+		map.draw_circle(at + Vector2(-8, -8), 20.0, color.lightened(0.15))
+		map.draw_arc(at, 40.0, -0.4, PI + 0.4, 32, Color(1, 1, 1, 0.3), 3.0)
+		if done:
+			map.draw_string(ThemeDB.fallback_font, at + Vector2(-8, 8), "✓", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color(1, 1, 1))
 
 
 func _process(delta):

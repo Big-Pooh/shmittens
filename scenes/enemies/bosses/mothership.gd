@@ -4,7 +4,8 @@ class_name Mothership
 
 # Level 2 boss, "the Cheese Saucer". Two spell cards:
 #   0 "Cheese Rain" - a full-height wall with one gap on every other downbeat (the gap moves
-#     along a slow wave), staff notes, a warned beam every 4th bar, 2 helper mice every 4 bars.
+#     along a slow wave) - every 4th bar it's a rain of cheese orbs from the top instead -
+#     staff notes, a warned beam every 4th bar, 2 helper mice every 4 bars.
 #   1 "Holey Lattice" (beat armour) - walls every bar, a 3-arm rice spiral on beat 3, and every
 #     4th bar an orb ring that freezes on the beat and then re-aims at you.
 
@@ -38,11 +39,17 @@ func on_beat(n: int):
 	if Game.assist >= 1:
 		wall_bar = bar % (2 if card >= 1 else 4) == 0   # beginner care: half as many walls
 	if beat == 0 and wall_bar:
-		wall(gap_for_bar(bar), 200.0, 170.0)
+		if card == 0 and bar % 4 == 2:
+			# playtest 4: actual cheese rain - orbs fall from the top, one safe column
+			curtain(10, 140.0, 200.0 + 120.0 * (bar % 3), EnemyShot.Kind.ORB)
+		else:
+			wall(gap_for_bar(bar), 200.0, 170.0)
 	if beat == 0 and card == 0 and bar % 4 == 2:
 		summon(GRUNT, [Vector2(position.x - 170, 180), Vector2(position.x - 170, 540)], 3.0)
 	if card >= 1 and beat == 2:
 		spiral(3, 150.0, 29.0)
+	if card >= 1 and beat == 3 and bar % 2 == 0:
+		aimed(3, 220.0, 8.0)
 	if card >= 1 and beat == 1 and bar % 4 == 1:
 		freeze_ring(10, 160.0, 200.0, EnemyShot.Kind.ORB, bar * 0.3)
 	# beam every 4th bar (every 8th when heavily assisted)
