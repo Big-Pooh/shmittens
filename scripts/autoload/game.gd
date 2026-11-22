@@ -9,7 +9,10 @@ signal gun_level_changed(level: int)
 signal weapon_changed(weapon: int)
 signal dance_changed(active: bool)
 signal overdrive_changed(state: int)   # 0 none, 1 ready (banked), 2 active
-signal grazed(at: Vector2, on_beat: bool)   # dance break between waves (see LevelRunner)
+signal grazed(at: Vector2, on_beat: bool)
+signal mech_parts_changed(parts: int)
+signal mech_core_ready
+signal mech_changed(active: bool)   # dance break between waves (see LevelRunner)
 signal wave_changed(wave: int)
 signal game_over
 signal combo_changed(combo: int, multiplier: int)
@@ -74,6 +77,13 @@ var beat_grazes = 0
 const OVERDRIVE_COMBO = 50
 const OVERDRIVE_SECONDS = 5.0
 var overdrive = 0   # 0 none, 1 ready, 2 active
+# MECHA-MEOW (playtest 5): the rarest power-up. Earn MECH_PARTS_NEEDED parts by playing well -
+# every boss spell card CAPTURED and every MECH_COMBO on-beat hits in a row give one part - and
+# a golden MECH CORE drops; collect it to pilot the mech for Shmitten.MECH_SECONDS.
+# Parts carry across planets (lost only on a game over).
+const MECH_PARTS_NEEDED = 3
+const MECH_COMBO = 40
+var mech_parts = 0
 var wave = 0
 var combo = 0
 var plain_kills = 0
@@ -236,6 +246,17 @@ func save_session(reason: String):
 		f.store_string(JSON.stringify(data, "  "))
 
 
+func add_mech_part(reason: String):
+	mech_parts += 1
+	track("mech_parts")
+	track("mech_part_" + reason)
+	if mech_parts >= MECH_PARTS_NEEDED:
+		mech_parts = 0
+		track("mech_cores")
+		mech_core_ready.emit()
+	mech_parts_changed.emit(mech_parts)
+
+
 func set_overdrive(state: int):
 	overdrive = state
 	overdrive_changed.emit(state)
@@ -303,6 +324,8 @@ func register_judgement(judgement: int):
 		if combo % FEVER_EVERY == 0:
 			fever_beats = FEVER_BEATS
 			fever_changed.emit(true)
+		if combo % MECH_COMBO == 0:
+			add_mech_part("combo")
 		if combo % OVERDRIVE_COMBO == 0 and overdrive == 0:
 			set_overdrive(1)
 			track("overdrives_earned")
@@ -508,6 +531,9 @@ func lose_life() -> int:
 	reset_combo()
 	if is_touhou():
 		bomb_stock = 1   # a fresh bomb with every life
+	if lives == 0:
+		mech_parts = 0   # a game over loses the collected mech parts
+		mech_parts_changed.emit(mech_parts)
 	if lives == 0 and not is_game_over:
 		is_game_over = true
 		game_over.emit()

@@ -204,6 +204,7 @@ func _run():
 	await _playtest3_tests()
 	await _playtest4_tests()
 	await _story_tests()
+	await _playtest5_tests()
 
 	game.difficulty_chosen = original.chosen
 	game.relaxed_mode = original.relaxed
@@ -1817,4 +1818,81 @@ func _story_tests():
 	var speeds = bloom.map(func(e): return e.velocity.length())
 	check(bloom.size() == 18 and speeds.max() > speeds.min() * 1.5, "a rose blooms: bullet speeds vary around the ring")
 	sho.queue_free()
+	await _clear_world()
+
+
+# ---------------------------------------------------------------- playtest 5
+func _playtest5_tests():
+	await _start_main()
+	main.level_runner.stop()
+	await _clear_world()
+	var conductor = root.get_node("Conductor")
+	var gestures = main.get_node("GestureInput")
+	cat.position = Vector2(220, 360)
+	cat.is_invulnerable = true
+
+	# bombs: one per planet and they need 2 charges
+	game.bomb_stock = 0
+	game.bomb_used_this_level = false
+	game.charges = 1
+	check(not gestures.bomb(), "no bomb with only 1 charge")
+	game.charges = 3
+	check(gestures.bomb(), "a bomb with 2+ charges")
+	game.charges = 3
+	check(not gestures.bomb(), "only one bomb per planet")
+	game.set_level(1, 5)
+	check(gestures.bomb(), "a new planet gives a new bomb")
+	cat.is_invulnerable = true
+	await _clear_world()
+
+	# boss bullets pulse with the beat
+	var boss = await _make_boss("res://scenes/enemies/bosses/mecha_tank.gd")
+	var shots = _count("enemy_shots")
+	boss.ring(6, 100.0)
+	await frames(1)
+	var ringed = get_nodes_in_group("enemy_shots").slice(shots)
+	check(ringed.size() > 0 and ringed.all(func(e): return e.pulse), "boss bullets pulse with the music")
+	# armoured cards stream on the hi-hats
+	boss.take_damage(boss.health - boss.max_health * 0.4)
+	boss.card_intro = 0
+	await frames(2)   # bullets cleared at the card change finish freeing
+	shots = _count("enemy_shots")
+	boss._on_eighth(3)
+	boss._on_eighth(4)
+	await frames(1)
+	check(_count("enemy_shots") - shots == 1, "armoured cards fire on the off-beat hi-hat only")
+	boss.queue_free()
+	await _clear_world()
+
+	# mech parts -> mech core -> mech suit
+	game.mech_parts = 0
+	var cores = [0]
+	game.mech_core_ready.connect(func(): cores[0] += 1)
+	game.add_mech_part("test")
+	game.add_mech_part("test")
+	check(game.mech_parts == 2 and cores[0] == 0, "mech parts add up")
+	game.add_mech_part("test")
+	await frames(2)
+	check(cores[0] == 1 and game.mech_parts == 0 and get_nodes_in_group("pickups").any(func(p): return p.type == Pickup.Type.MECH_CORE), "3 parts drop a MECH CORE")
+	game.reset_combo()
+	for i in game.MECH_COMBO:
+		game.register_judgement(conductor.Judgement.PERFECT)
+	check(game.mech_parts == 1, "a 40 combo earns a mech part")
+	game.mech_parts = 0
+	await _clear_world()
+	cat.start_mech()
+	check(cat.is_mech() and cat.mech_armor == cat.MECH_ARMOR, "the core turns the cat into MECHA-MEOW")
+	game.aim_override = Vector2(900, 360)
+	var before = _shots().size()
+	cat.get_node("Gun").fire(1.0)
+	check(_shots().size() - before == 2 and _shots()[-1].damage >= 2.0, "the mech fires twin heavy cannons")
+	cat.get_node("Gun")._on_bar(1)
+	check(_shots().size() - before == 2 + cat.get_node("Gun").MECH_MISSILES, "the mech launches missiles every bar")
+	cat.is_invulnerable = false
+	check(not cat.hit("shot") and cat.mech_armor == cat.MECH_ARMOR - 1 and not cat.is_dead, "mech armour absorbs hits")
+	cat.mech_time = 0.01
+	await frames(3)
+	check(not cat.is_mech() and cat.sprite.hframes == 10, "the mech wears off and the cat hops out")
+	game.aim_override = null
+	cat.is_invulnerable = false
 	await _clear_world()

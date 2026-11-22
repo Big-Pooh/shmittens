@@ -7,12 +7,13 @@ class_name Pickup
 #   BATTERY: +1 skill charge
 #   YARN:    +1 gun level
 
-enum Type { CHEESE, BATTERY, YARN }
+enum Type { CHEESE, BATTERY, YARN, MECH_CORE }
 
 const TEXTURES = {
 	Type.CHEESE: preload("res://Art/Generated/cheese.png"),
 	Type.BATTERY: preload("res://Art/Generated/battery.png"),
 	Type.YARN: preload("res://Art/Generated/yarn.png"),
+	Type.MECH_CORE: preload("res://Art/Generated/mech_core.png"),
 }
 const SPRITE_SCALE = 3.0
 const DRIFT_SPEED = 70.0
@@ -78,6 +79,10 @@ func collect():
 		Type.BATTERY:
 			Game.add_charge(1)
 			Sfx.play("power_up")
+		Type.MECH_CORE:
+			var player = Game.player_ref
+			if player and is_instance_valid(player):
+				player.start_mech()
 		Type.YARN:
 			Game.add_gun_level(1)
 			Sfx.play("power_up")

@@ -27,6 +27,7 @@ var armor_label: Label
 var card_label: Label
 var overdrive_label: Label
 var current_boss: Boss
+var mech_label: Label
 var combo_label: Label
 var fever_label: Label
 var wind_label: Label
@@ -219,6 +220,14 @@ func _build():
 	overdrive_label.hide()
 	add_child(overdrive_label)
 
+	# MECH PARTS meter (rare power-up goal), bottom-left above the skills
+	mech_label = _label("", 16, Color(1, 0.85, 0.4))
+	mech_label.position = Vector2(20, 606)
+	mech_label.size = Vector2(420, 24)
+	add_child(mech_label)
+	_on_mech_parts(Game.mech_parts)
+	Game.mech_parts_changed.connect(_on_mech_parts)
+
 
 func _update_wave_label():
 	if Game.tutorial_mode:
@@ -231,6 +240,17 @@ func _update_wave_label():
 		wave_label.text = "%s   WAVE %d/%d" % [_planet(), Game.wave, Game.wave_total]
 	if Game.challenge != Game.Challenge.NORMAL and not Game.tutorial_mode:
 		wave_label.text = Game.CHALLENGE_NAMES[Game.challenge] + "   " + wave_label.text
+
+
+func _on_mech_parts(parts: int):
+	var gears = ""
+	for i in Game.MECH_PARTS_NEEDED:
+		gears += "⚙" if i < parts else "·"
+	mech_label.text = "MECH PARTS %s   (capture cards, 40-combos)" % gears
+	if parts > 0:
+		mech_label.pivot_offset = Vector2(0, 12)
+		mech_label.scale = Vector2.ONE * 1.3
+		create_tween().tween_property(mech_label, "scale", Vector2.ONE, 0.2)
 
 
 func _planet() -> String:
@@ -288,6 +308,10 @@ func _on_card_started(index: int, card_name: String, _seconds: float, boss: Boss
 
 func _on_card_ended(_index: int, captured: bool):
 	_flash_text("SPELL CARD CAPTURED!  +BONUS" if captured else "CARD FAILED", GOLD if captured else Color(0.7, 0.7, 0.8))
+
+
+func flash_text(text: String, color: Color):
+	_flash_text(text, color)
 
 
 # A big line across the middle that fades (spell card names, captures).

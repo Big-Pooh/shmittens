@@ -33,6 +33,7 @@ func _ready():
 	Game.reward.connect(_on_reward)
 	Game.judged.connect(_on_judged)
 	Game.grazed.connect(_on_grazed)
+	Game.mech_core_ready.connect(_on_mech_core)
 	backdrop = PlanetBackdrop.new()
 	backdrop.name = "PlanetBackdrop"
 	add_child(backdrop)
@@ -121,6 +122,13 @@ func _on_level_cleared(index: int):
 		transition_card = TransitionCard.create(index, level_runner.last_rank, int(level_runner.level_seconds), int(ratio))
 		transition_card.dismissed.connect(level_runner.skip_transition)
 		add_child(transition_card)
+
+
+# The rare MECH CORE appears right in front of the cat, with fanfare.
+func _on_mech_core():
+	Sfx.play("jingle")
+	hud.flash_text("MECH CORE!  grab it!", Color(1, 0.85, 0.3))
+	add_child.call_deferred(Pickup.create(Pickup.Type.MECH_CORE, player.global_position + Vector2(90, 0)))
 
 
 var _last_graze_msec = 0

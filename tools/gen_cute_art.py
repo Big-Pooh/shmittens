@@ -468,6 +468,50 @@ def sho():
     c.save("boss_sho.png")
 
 
+def mech():
+    # MECHA-MEOW: a chunky pastel mech suit with the cat in a glass cockpit (faces right)
+    METAL = (200, 210, 235, 255)
+    METAL_D = (140, 150, 190, 255)
+    c = Canvas(30, 28)
+    c.rect(6, 22, 10, 26, METAL_D)                                 # legs
+    c.rect(17, 22, 21, 26, METAL_D)
+    c.rect(4, 26, 11, 27, (110, 120, 160, 255))
+    c.rect(16, 26, 23, 27, (110, 120, 160, 255))
+    c.ellipse(14, 16, 10, 7, METAL)                                # torso
+    c.ellipse(14, 18, 6, 3, (230, 236, 250, 255))
+    c.rect(22, 12, 29, 14, METAL_D)                                # cannon arms
+    c.rect(22, 17, 29, 19, METAL_D)
+    c.set(29, 13, (255, 120, 140, 255))
+    c.set(29, 18, (255, 120, 140, 255))
+    c.rect(3, 9, 6, 13, GOLD)                                      # backpack missile pod
+    c.set(4, 8, RED)
+    c.ellipse(14, 8, 6.5, 6, GLASS)                                # cockpit dome
+    c.ellipse(14, 9.5, 3.6, 3.0, ORANGE)                           # the cat inside
+    c.poly([(11, 8), (11.5, 5.5), (13, 7.5)], ORANGE)
+    c.poly([(15, 7.5), (16.5, 5.5), (17, 8)], ORANGE)
+    c.set(15, 9, EYE)
+    c.set(12, 9, EYE)
+    c.set(17, 4, WHITE)
+    c.set(18, 5, WHITE)
+    c.rect(9, 15, 11, 16, PINK)                                    # heart decal
+    c.set(10, 17, PINK)
+    c.outline()
+    c.save("mech.png")
+
+
+def mech_core():
+    # the rare golden power-up that summons the mech
+    c = Canvas(13, 13)
+    c.ellipse(6.5, 6.5, 6.0, 6.0, GOLD)
+    c.ellipse(6.5, 6.5, 3.5, 3.5, (255, 245, 190, 255))
+    for x, y in ((6, 0), (6, 12), (0, 6), (12, 6)):
+        c.set(x, y, GOLD_D)
+    c.ellipse(6.5, 6.5, 1.5, 1.5, (255, 120, 140, 255))
+    c.set(4, 4, WHITE)
+    c.outline((150, 100, 20, 255))
+    c.save("mech_core.png")
+
+
 def main():
     mouse("grunt.png", LILAC, LILAC_L, accessory=grunt_bits)
     mouse("gunner.png", PEACH, PEACH_L, accessory=gunner_bits)
@@ -490,6 +534,8 @@ def main():
     companion_nori()
     companion_kiwi()
     sho()
+    mech()
+    mech_core()
     print("wrote cute sprites to", os.path.normpath(OUT))
 
 

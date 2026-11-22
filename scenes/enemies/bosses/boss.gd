@@ -157,6 +157,7 @@ func _end_card(captured: bool):
 	if captured:
 		captures += 1
 		Game.add_score(CAPTURE_SCORE)
+		Game.add_mech_part("capture")
 		Sfx.play("jingle")
 		var scene = get_tree().current_scene
 		scene.add_child.call_deferred(Pickup.create(Pickup.Type.BATTERY, global_position + Vector2(-70, 0)))
@@ -259,6 +260,7 @@ func take_damage(amount: float, judgement: int = -1):
 		if card_clean:
 			captures += 1
 			Game.add_score(CAPTURE_SCORE)
+			Game.add_mech_part("capture")
 		card_ended.emit(card, card_clean)
 
 

@@ -40,8 +40,25 @@ var last_click_msec = -100000
 var last_half = -1
 
 
+# MECHA-MEOW guns: every shot is a pair of heavy piercing cannon bolts (MECH_CANNON x damage);
+# on every bar the missile pod launches MECH_MISSILES homing missiles.
+const MECH_CANNON = 2.0
+const MECH_MISSILES = 4
+const MECH_MISSILE_DAMAGE = 3.0
+
+
 func _ready():
 	Conductor.beat.connect(_on_beat)
+	Conductor.bar.connect(_on_bar)
+
+
+func _on_bar(_n: int):
+	if not is_inside_tree() or not player.is_mech() or not player.can_shoot():
+		return
+	var scene = get_tree().current_scene
+	for i in MECH_MISSILES:
+		var dir = Vector2.from_angle(deg_to_rad(-60.0 + i * 40.0))
+		scene.add_child(PlayerShot.create(global_position + Vector2(-20, -20), dir, MECH_MISSILE_DAMAGE, -1, PlayerShot.Kind.FISH))
 
 
 func _unhandled_input(event):
@@ -119,6 +136,13 @@ func fire(damage: float = CLICK_DAMAGE, judgement: int = -1):
 		direction = Vector2.RIGHT
 	var base_angle = direction.angle()
 	var scene = get_tree().current_scene
+	if player.is_mech():
+		for side in [-16.0, 16.0]:
+			var at = global_position + direction.normalized().orthogonal() * side
+			var bolt = PlayerShot.create(at, direction, damage * MECH_CANNON * (1.0 + 0.2 * (Game.gun_level - 1)), judgement, PlayerShot.Kind.LASER)
+			scene.add_child(bolt)
+		Sfx.play("shoot_laser", -3.0)
+		return
 	match Game.weapon:
 		Game.Weapon.LASER:
 			var power = LASER_BASE + LASER_PER_LEVEL * (Game.gun_level - 1)
