@@ -34,6 +34,16 @@ func _ready():
 	cat.scale = Vector2(3, 3)
 	cat.position = Vector2(640, 340)
 	add_child(cat)
+	var hat = Sprite2D.new()
+	hat.position = Vector2(14, -17)
+	var hat_path = "res://Art/Generated/%s.png" % Game.hat
+	hat.texture = load(hat_path) if Game.hat != "none" and ResourceLoader.exists(hat_path) else null
+	cat.add_child(hat)
+	Game.hat_changed.connect(func(id):
+		if not is_instance_valid(hat):
+			return
+		var p = "res://Art/Generated/%s.png" % id
+		hat.texture = load(p) if id != "none" and ResourceLoader.exists(p) else null)
 
 	# two columns so every button fits on screen (playtest 4 added STORY + more levels)
 	var buttons = GridContainer.new()
@@ -71,6 +81,13 @@ func _ready():
 		endless.custom_minimum_size = Vector2(200, 44)
 		endless.pressed.connect(start_endless)
 		buttons.add_child(endless)
+	var wardrobe = Button.new()
+	wardrobe.text = "WARDROBE & TROPHIES"
+	wardrobe.custom_minimum_size = Vector2(200, 40)
+	wardrobe.pressed.connect(func():
+		get_viewport().gui_release_focus()
+		add_child(Wardrobe.new()))
+	buttons.add_child(wardrobe)
 	var album = Button.new()
 	album.text = "CARD ALBUM (%d)" % Game.card_album.size()
 	album.custom_minimum_size = Vector2(200, 40)
@@ -182,6 +199,7 @@ var pets = 0
 
 func pet_cat():
 	pets += 1
+	Game.track("pets")
 	if not Sfx.meow("pet"):
 		Sfx.play("dance", -4.0)
 	var heart = Label.new()

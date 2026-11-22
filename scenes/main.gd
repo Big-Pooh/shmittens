@@ -161,6 +161,7 @@ func _on_judged(judgement: int):
 	if not Game.dancing or judgement == Conductor.Judgement.MISS:
 		return
 	dance_hits += 1
+	Game.track("dance_taps")
 	Game.add_score(DANCE_SCORE)
 	Sfx.play("dance", -6.0)
 	if dance_hits <= DANCE_CHEESE:
@@ -175,6 +176,9 @@ func _on_reward(kind: String):
 
 
 func _on_all_levels_cleared():
+	Game.track("story_completes")
+	if Game.challenge != Game.Challenge.NORMAL:
+		Game.track("hard_completes")
 	Game.start_level = 0
 	Game.start_wave = 0
 	Game.clear_assist()

@@ -45,7 +45,7 @@ GLASS = (190, 240, 255, 255)
 
 def ANIMATED(name):
     """Every mouse, boss and companion gets a blink/bob frame (shots and pickups don't)."""
-    return not (name.startswith("shot") or name in ("enemy_shot.png", "player_shot.png", "cheese.png", "battery.png", "yarn.png", "shield_plate.png", "mech_core.png"))
+    return not (name.startswith("shot") or name.startswith("hat_") or name in ("enemy_shot.png", "player_shot.png", "cheese.png", "battery.png", "yarn.png", "shield_plate.png", "mech_core.png"))
 
 
 class Canvas:
@@ -660,6 +660,28 @@ def bomber_bits(c):
     c.set(7, 12, GOLD)
 
 
+def hats():
+    # Sprint 4 cosmetics: little hats drawn on Shmitten's head (16x12 each)
+    designs = {
+        "hat_party": lambda c: (c.poly([(4, 11.5), (12, 11.5), (8, 0.5)], (255, 120, 170, 255)), c.line(6, 8, 10, 8, GOLD), c.line(5, 10, 11, 10, CYAN), c.ellipse(8, 1, 1.4, 1.4, GOLD)),
+        "hat_flowers": lambda c: [c.ellipse(x, 8, 2.2, 2.2, col) for x, col in ((3, PINK), (8, GOLD), (13, (190, 140, 255, 255)))] + [c.set(x, 8, WHITE) for x in (3, 8, 13)],
+        "hat_headphones": lambda c: (c.line(2, 9, 2, 4, STEEL), c.line(2, 4, 14, 4, STEEL), c.line(14, 4, 14, 9, STEEL), c.ellipse(2, 10, 2.2, 2.4, (255, 120, 170, 255)), c.ellipse(14, 10, 2.2, 2.4, (255, 120, 170, 255))),
+        "hat_wizard": lambda c: (c.poly([(2, 11.5), (14, 11.5), (9, 0.5)], (120, 90, 220, 255)), c.rect(1, 10, 15, 11, (90, 60, 190, 255)), c.set(8, 5, GOLD), c.set(10, 8, GOLD)),
+        "hat_crown": lambda c: (c.rect(3, 7, 13, 11, GOLD), c.poly([(3, 7.5), (3, 2.5), (6, 6)], GOLD), c.poly([(6.5, 6), (8, 1.5), (9.5, 6)], GOLD), c.poly([(10, 6), (13, 2.5), (13, 7.5)], GOLD), c.set(8, 9, RED), c.set(5, 9, CYAN), c.set(11, 9, CYAN)),
+        "hat_halo": lambda c: (c.ellipse(8, 6, 6.5, 2.4, (255, 240, 150, 255)), c.ellipse(8, 6, 4.5, 1.2, (0, 0, 0, 0))),
+    }
+    for name, draw in designs.items():
+        c = Canvas(16, 12)
+        draw(c)
+        if name == "hat_halo":
+            for y in range(c.h):
+                for x in range(c.w):
+                    if c.px[y][x] == (0, 0, 0, 0):
+                        c.px[y][x] = None
+        c.outline()
+        c.save(name + ".png")
+
+
 def main():
     mouse("grunt.png", LILAC, LILAC_L, accessory=grunt_bits)
     mouse("gunner.png", PEACH, PEACH_L, accessory=gunner_bits)
@@ -691,6 +713,7 @@ def main():
     sho()
     mech()
     mech_core()
+    hats()
     print("wrote cute sprites to", os.path.normpath(OUT))
 
 

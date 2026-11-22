@@ -61,6 +61,7 @@ func start_mech():
 		_cat_texture = sprite.texture
 		_cat_scale = sprite.scale
 		sprite.texture = MECH_TEXTURE
+		hat_sprite.visible = false
 		sprite.hframes = 1
 		sprite.vframes = 1
 		sprite.frame = 0
@@ -81,6 +82,7 @@ func end_mech():
 	mech_time = 0.0
 	mech_armor = 0
 	sprite.texture = _cat_texture
+	hat_sprite.visible = true
 	sprite.hframes = 10
 	sprite.vframes = 5
 	sprite.scale = _cat_scale
@@ -91,7 +93,15 @@ var guardian_timer = 0.0
 
 
 var sprite_base: Vector2
-var focus_marker: Node2D   # drawn ABOVE the cat sprite (playtest 3: the dot was hidden under it)
+var focus_marker: Node2D
+var hat_sprite: Sprite2D
+const HAT_OFFSET = Vector2(14, -17)   # head position in sheet pixels (cat faces right)
+
+
+func _wear(id: String):
+	var path = "res://Art/Generated/%s.png" % id
+	hat_sprite.texture = load(path) if id != "none" and ResourceLoader.exists(path) else null
+	hat_sprite.position = HAT_OFFSET   # drawn ABOVE the cat sprite (playtest 3: the dot was hidden under it)
 
 
 func _ready():
@@ -104,6 +114,14 @@ func _ready():
 	focus_marker.position = hitbox.position
 	focus_marker.draw.connect(_draw_focus)
 	add_child(focus_marker)
+	# sprint 4: the equipped hat sits on Shmitten's head (follows the dance bob)
+	hat_sprite = Sprite2D.new()
+	hat_sprite.name = "Hat"
+	hat_sprite.scale = Vector2(1.6, 1.6)
+	sprite.add_child(hat_sprite)
+	hat_sprite.scale = Vector2.ONE
+	_wear(Game.hat)
+	Game.hat_changed.connect(_wear)
 	spawn_position = position
 	Conductor.beat.connect(_on_beat)
 	hitbox.area_entered.connect(_on_hitbox_area_entered)

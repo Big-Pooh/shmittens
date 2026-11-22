@@ -2172,6 +2172,25 @@ func _designer7_tests():
 	g._anim_beat(2)
 	check(tex_b != tex_a and g.sprite.texture == tex_a, "mice swap to their blink/bob frame on every other beat")
 	g.queue_free()
+	# sprint 4: lifetime stats -> achievements + hats
+	var saved_meta = [game.lifetime.duplicate(), game.achievements.duplicate(), game.hats_unlocked.duplicate(), game.hat]
+	game.lifetime = {}
+	game.achievements = {}
+	game.hats_unlocked = {}
+	for i in 10:
+		game.track("pets")
+	check(game.achievements.has("good_kitty"), "petting the cat 10 times unlocks an achievement")
+	for i in 100:
+		game.track("spells_cast")
+	check(game.hats_unlocked.has("hat_wizard") and game.achievements.has("spellcat"), "100 spells unlock the Wizard Hat (and Spellcat)")
+	game.set_hat("hat_halo")
+	check(game.hat != "hat_halo", "locked hats can't be worn")
+	game.set_hat("hat_wizard")
+	check(game.hat == "hat_wizard", "unlocked hats can be worn")
+	game.lifetime = saved_meta[0]
+	game.achievements = saved_meta[1]
+	game.hats_unlocked = saved_meta[2]
+	game.hat = saved_meta[3]
 
 func Boss_names_ok() -> bool:
 	var names = load("res://scenes/enemies/bosses/boss.gd").SPELL_NAMES

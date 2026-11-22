@@ -11,7 +11,7 @@ signal closed
 func _ready():
 	layer = 60
 	var bg = ColorRect.new()
-	bg.color = Color(0.04, 0.03, 0.1, 0.96)
+	bg.color = Color(0.04, 0.03, 0.1, 1.0)
 	bg.size = Game.SCREEN.size
 	add_child(bg)
 	var all = Game.all_cards()

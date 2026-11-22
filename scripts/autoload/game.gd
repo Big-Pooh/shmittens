@@ -108,6 +108,12 @@ var planet_records = {}
 # card_album[name] = {"name", "boss", "weak", "script", "captures"}; level_cards_won lists this
 # planet's captures as [entry, is_new] for the end-of-planet card reveal.
 var card_album = {}
+# SPRINT 4: lifetime stats (every Game.track key, across sessions), achievements, hats
+var lifetime = {}
+var achievements = {}
+var hats_unlocked = {}
+var hat = "hat_party"
+signal hat_changed(id: String)
 var level_cards_won: Array = []
 var level_hits = 0
 var level_cards_met = 0
@@ -294,6 +300,54 @@ var session_file = ""
 
 func track(key: String, amount: float = 1.0):
 	session[key] = session.get(key, 0.0) + amount
+	lifetime[key] = lifetime.get(key, 0.0) + amount
+	if not _checking:
+		_checking = true
+		if not Progression.check(self).is_empty():
+			save_settings()
+		_checking = false
+
+
+var _checking = false
+
+func set_hat(id: String):
+	if Progression.hat_unlocked(self, id):
+		hat = id
+		hat_changed.emit(id)
+		save_settings()
+
+
+# A small toast in the top-right (achievements, hat unlocks); works on any screen.
+func toast(title: String, body: String = ""):
+	if not is_inside_tree():
+		return
+	var layer = CanvasLayer.new()
+	layer.layer = 120
+	var panel = PanelContainer.new()
+	panel.position = Vector2(860, 70 + 64 * _toasts)
+	panel.custom_minimum_size = Vector2(400, 0)
+	var box = VBoxContainer.new()
+	panel.add_child(box)
+	var t = Label.new()
+	t.text = title
+	t.add_theme_color_override("font_color", Color(1, 0.82, 0.35))
+	box.add_child(t)
+	if body != "":
+		var b = Label.new()
+		b.text = body
+		b.add_theme_font_size_override("font_size", 14)
+		box.add_child(b)
+	layer.add_child(panel)
+	get_tree().root.add_child.call_deferred(layer)
+	_toasts += 1
+	Sfx.play("jingle", -6.0)
+	var tw = panel.create_tween()
+	tw.tween_interval(3.5)
+	tw.tween_property(panel, "modulate:a", 0.0, 0.5)
+	tw.tween_callback(func(): layer.queue_free(); _toasts = max(_toasts - 1, 0))
+
+
+var _toasts = 0
 
 
 func save_session(reason: String):
@@ -369,6 +423,9 @@ func graze(at: Vector2):
 
 
 func _on_node_added(node: Node):
+	# controls placed directly under a CanvasLayer don't inherit the window theme: give it to them
+	if node is Control and node.theme == null and node.get_parent() is CanvasLayer:
+		node.theme = get_tree().root.theme
 	if node is BaseButton:
 		node.mouse_entered.connect(func(): Sfx.play("perfect", -20.0))
 		node.focus_entered.connect(func(): Sfx.play("perfect", -22.0))
@@ -414,6 +471,8 @@ func register_judgement(judgement: int):
 	level_judged += 1
 	if judgement == Conductor.Judgement.PERFECT:
 		level_perfects += 1
+	if judgement == Conductor.Judgement.PERFECT:
+		track("perfects")
 	if judgement == Conductor.Judgement.MISS:
 		combo = 0
 	else:
@@ -563,6 +622,10 @@ func load_settings():
 	hard_cleared = c.get_value("progress", "hard_cleared", hard_cleared)
 	planet_records = c.get_value("progress", "planet_records", planet_records)
 	card_album = c.get_value("progress", "card_album", card_album)
+	lifetime = c.get_value("progress", "lifetime", lifetime)
+	achievements = c.get_value("progress", "achievements", achievements)
+	hats_unlocked = c.get_value("progress", "hats_unlocked", hats_unlocked)
+	hat = c.get_value("progress", "hat", hat)
 	tips_seen = c.get_value("progress", "tips_seen", tips_seen)
 	difficulty_chosen = c.get_value("access", "difficulty_chosen", difficulty_chosen)
 	unlocked_level = c.get_value("progress", "unlocked_level", unlocked_level)
@@ -585,6 +648,10 @@ func save_settings():
 	c.set_value("progress", "hard_cleared", hard_cleared)
 	c.set_value("progress", "planet_records", planet_records)
 	c.set_value("progress", "card_album", card_album)
+	c.set_value("progress", "lifetime", lifetime)
+	c.set_value("progress", "achievements", achievements)
+	c.set_value("progress", "hats_unlocked", hats_unlocked)
+	c.set_value("progress", "hat", hat)
 	c.set_value("progress", "tips_seen", tips_seen)
 	c.set_value("access", "difficulty_chosen", difficulty_chosen)
 	c.set_value("progress", "unlocked_level", unlocked_level)
@@ -645,6 +712,8 @@ func record_planet(level_index: int, rank: String):
 	for c in PLANET_CHALLENGES:
 		rec[c] = rec[c] or now[c]
 	planet_records[key] = rec
+	if now.no_hit:
+		track("no_hit_planets")
 	track("challenges_done", float(now.values().count(true)))
 
 
