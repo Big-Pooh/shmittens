@@ -22,8 +22,8 @@ var last_cast_bar = -100
 const MAX_DRAW_TIME = 2.0
 # Snap assist (playtest 3): after SNAP_AFTER unrecognised strokes in a row, a stroke that is
 # at least SNAP_MIN_SCORE like a shape is accepted as that shape.
-const SNAP_AFTER = 2
-const SNAP_MIN_SCORE = 0.6
+const SNAP_AFTER = 1          # go-live: snap after the first miss (was 2)
+const SNAP_MIN_SCORE = 0.58
 var fizzles_in_a_row = 0
 # Spell impact (playtest 3: spells felt pointless): every cast clears the enemy bullets on
 # screen, turning up to CANCEL_TO_CHEESE of them into cheese, and shows the spell's name.
@@ -179,6 +179,9 @@ func finish() -> Dictionary:
 		result["snapped"] = true
 	if result.name == "":
 		fizzles_in_a_row += 1
+		# log what failed, so the recogniser can be tuned from real play (session stats)
+		Game.track("fizzle_best_" + str(result.get("best", "none")))
+		Game.track("fizzle_score_x100", round(result.get("score", 0.0) * 100.0))
 		_popup("FIZZLE", Color(0.7, 0.7, 0.7))
 		fizzled.emit("unrecognised")
 		Game.track("fizzles")

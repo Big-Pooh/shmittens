@@ -127,7 +127,14 @@ func _on_area_entered(area):
 		return
 	if area is EnemyBase and not area.is_dead:
 		spent = true
-		area.take_hit(damage_now(), velocity, judgement)
+		var dmg = damage_now()
+		if kind == Kind.BOLT and (area is ShieldMouse or area is Turret):
+			dmg *= 1.5   # Spread's niche: armoured mice and turrets
+			if area is ShieldMouse:
+				area._hit_by_pellet = true
+		area.take_hit(dmg, velocity, judgement)
+		if area is ShieldMouse:
+			area._hit_by_pellet = false
 		queue_free()
 
 

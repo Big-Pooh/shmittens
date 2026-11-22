@@ -60,7 +60,7 @@ func _ready():
 # event once every MEOW_EVENT_COOLDOWN s; random variant, +-8% pitch, tuned to the current
 # song's key, snapped to the next 8th note if it is within MEOW_SNAP s; mixed under the music.
 # Settings -> "Cat meows" turns them off.
-const MEOW_GLOBAL_COOLDOWN = 3.0
+const MEOW_GLOBAL_COOLDOWN = 6.0   # go-live review: ~1 meow / 11 s was too chatty
 const MEOW_EVENT_COOLDOWN = 8.0
 const MEOW_SNAP = 0.06
 const MEOW_DB = -6.0

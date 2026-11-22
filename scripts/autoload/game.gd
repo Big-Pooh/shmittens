@@ -62,7 +62,7 @@ var gun_level = 1
 # (yarn) powers whichever weapon is equipped. Kept across deaths and levels.
 enum Weapon { SPREAD, LASER, FISH }
 const WEAPON_NAMES = ["YARN SPREAD", "LASER POINTER", "FISH SEEKERS"]
-const WEAPON_HINTS = ["point blank - eats bullets into spell fuel", "aim it - strongest, pierces", "homing - easy, weaker"]
+const WEAPON_HINTS = ["point blank - eats bullets, cracks shields & turrets", "aim it - strongest, pierces", "homing - easy, weaker"]
 var weapon = Weapon.FISH   # playtest 3: Fish is the default; the others reward skill
 var focus_override = false   # automated playthroughs hold "focus" with this
 var dancing = false          # true during a dance break between waves
