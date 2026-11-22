@@ -198,6 +198,8 @@ func reset():
 func add_score(points: int):
 	score += points * multiplier()
 	score_changed.emit(score)
+	if score > session.get("best_run_score", 0.0):
+		session["best_run_score"] = float(score)   # survives the score reset on retry/title
 
 
 func add_cheese(amount: int = 1):

@@ -92,6 +92,9 @@ func _run():
 	Levels = load("res://scenes/levels/levels.gd")
 	# the opening story plays before the very first game; tests start games directly
 	root.get_node("Game").skip_intro = true
+	# tests assume NORMAL difficulty regardless of the player's saved choice (restored after)
+	root.get_node("Game").challenge = 0
+	root.get_node("Game").relaxed_mode = false
 	# restore the player's real settings after the run (some tests change and save them)
 	var original = {"chosen": root.get_node("Game").difficulty_chosen, "relaxed": root.get_node("Game").relaxed_mode}
 	# tests must never write the player's real save (the persistence test enables it briefly)
@@ -1260,6 +1263,7 @@ func _iteration1_tests():
 	game.save_settings()
 	game.apply_settings()
 	game.persist = false
+	game.challenge = 0   # the reload above restored the player's own difficulty
 	# reduce effects disables shake; relaxed mode keeps assist >= 1
 	await _start_main()
 	main.level_runner.stop()
