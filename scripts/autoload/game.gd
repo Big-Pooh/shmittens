@@ -129,6 +129,7 @@ var sfx_volume = 0.8
 var fullscreen = false
 var reduce_effects = false   # accessibility: no screen shake, softer flashes
 var relaxed_mode = false     # accessibility: always at least assist 1 (slower shots, +1 life, guardian)
+var meows_enabled = true     # Settings -> "Cat meows"
 # Challenge modes (playtest 4): 0 NORMAL, 1 HARD, 2 TOUHOU (unlocked by beating the story on HARD).
 # HARD: faster, denser patterns, tougher bosses, no assists / guardian / second wind.
 # TOUHOU: twice the bullets (a bit slower), bigger graze for triple points, 1 free bomb per life.
@@ -469,6 +470,7 @@ func load_settings():
 	fullscreen = c.get_value("video", "fullscreen", fullscreen)
 	reduce_effects = c.get_value("access", "reduce_effects", reduce_effects)
 	relaxed_mode = c.get_value("access", "relaxed_mode", relaxed_mode)
+	meows_enabled = c.get_value("audio", "meows", meows_enabled)
 	challenge = c.get_value("access", "challenge", challenge)
 	hard_cleared = c.get_value("progress", "hard_cleared", hard_cleared)
 	tips_seen = c.get_value("progress", "tips_seen", tips_seen)
@@ -488,6 +490,7 @@ func save_settings():
 	c.set_value("video", "fullscreen", fullscreen)
 	c.set_value("access", "reduce_effects", reduce_effects)
 	c.set_value("access", "relaxed_mode", relaxed_mode)
+	c.set_value("audio", "meows", meows_enabled)
 	c.set_value("access", "challenge", challenge)
 	c.set_value("progress", "hard_cleared", hard_cleared)
 	c.set_value("progress", "tips_seen", tips_seen)

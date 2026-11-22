@@ -64,10 +64,11 @@ func start_mech():
 		sprite.hframes = 1
 		sprite.vframes = 1
 		sprite.frame = 0
-		sprite.scale = Vector2(2.6, 2.6)
+		sprite.scale = Vector2(2.4, 2.4)
 	mech_time = MECH_SECONDS
 	mech_armor = MECH_ARMOR
 	Sfx.play("power_up")
+	Sfx.meow("mech")
 	Game.shake(10.0)
 	Conductor.set_layers(4)
 	Game.track("mechs")
@@ -283,6 +284,7 @@ func hit(cause: String = "") -> bool:
 	velocity = Vector2.ZERO
 	sprite.hide()
 	Sfx.play("player_hit")
+	Sfx.meow("hit")
 	Game.player_hit.emit(cause)
 	Game.track("deaths_" + (cause if cause != "" else "other"))
 	Game.shake(12.0)

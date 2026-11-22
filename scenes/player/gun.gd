@@ -41,11 +41,13 @@ var last_click_msec = -100000
 var last_half = -1
 
 
-# MECHA-MEOW guns: every shot is a pair of heavy piercing cannon bolts (MECH_CANNON x damage);
-# on every bar the missile pod launches MECH_MISSILES homing missiles.
-const MECH_CANNON = 2.0
-const MECH_MISSILES = 4
-const MECH_MISSILE_DAMAGE = 3.0
+# PAWFRAME MK-IX (MECHA-MEOW) weapons, real-robot style: every shot is one heavy piercing
+# BEAM RIFLE bolt (MECH_RIFLE x damage); on every bar the BEAM SABER slashes a SABER_RADIUS arc in
+# front of the mech, hitting each mouse for SABER_DAMAGE and cutting the bullets it touches.
+const MECH_RIFLE = 3.0
+const SABER_RADIUS = 190.0
+const SABER_ARC = 1.4   # radians either side of the aim
+const SABER_DAMAGE = 6.0
 
 
 func _ready():
@@ -56,10 +58,40 @@ func _ready():
 func _on_bar(_n: int):
 	if not is_inside_tree() or not player.is_mech() or not player.can_shoot():
 		return
-	var scene = get_tree().current_scene
-	for i in MECH_MISSILES:
-		var dir = Vector2.from_angle(deg_to_rad(-60.0 + i * 40.0))
-		scene.add_child(PlayerShot.create(global_position + Vector2(-20, -20), dir, MECH_MISSILE_DAMAGE, -1, PlayerShot.Kind.FISH))
+	saber_slash()
+
+
+# Returns how many mice the slash hit.
+func saber_slash() -> int:
+	var aim = Game.aim_override if Game.aim_override != null else get_global_mouse_position()
+	var facing = (aim - global_position).angle()
+	var hits = 0
+	for e in get_tree().get_nodes_in_group("enemies"):
+		var to = e.global_position - global_position
+		if not e.is_dead and to.length() <= SABER_RADIUS + 30.0 and absf(angle_difference(facing, to.angle())) <= SABER_ARC:
+			e.take_hit(SABER_DAMAGE, to.normalized(), Conductor.Judgement.GOOD)
+			hits += 1
+	for shot in get_tree().get_nodes_in_group("enemy_shots"):
+		var to = shot.global_position - global_position
+		if to.length() <= SABER_RADIUS and absf(angle_difference(facing, to.angle())) <= SABER_ARC:
+			shot.queue_free()
+	saber_fx = {"facing": facing, "time": 0.25}
+	queue_redraw()
+	Sfx.play("laser", -4.0)
+	Game.track("saber_slashes")
+	return hits
+
+
+var saber_fx = {}
+
+
+func _draw():
+	if saber_fx.is_empty():
+		return
+	var a = saber_fx.time / 0.25
+	var f = saber_fx.facing
+	draw_arc(Vector2.ZERO, SABER_RADIUS * 0.85, f - SABER_ARC, f + SABER_ARC, 32, Color(1, 0.55, 0.85, a), 14.0)
+	draw_arc(Vector2.ZERO, SABER_RADIUS * 0.85, f - SABER_ARC, f + SABER_ARC, 32, Color(1, 1, 1, a), 4.0)
 
 
 func _unhandled_input(event):
@@ -86,6 +118,11 @@ func _unhandled_input(event):
 
 # The off-beat 8th notes (the on-beat ones come from the Conductor's beat signal).
 func _process(delta):
+	if not saber_fx.is_empty():
+		saber_fx.time -= delta
+		queue_redraw()
+		if saber_fx.time <= 0.0:
+			saber_fx = {}
 	if not Conductor.playing:
 		return
 	if player.can_shoot():
@@ -138,10 +175,9 @@ func fire(damage: float = CLICK_DAMAGE, judgement: int = -1):
 	var base_angle = direction.angle()
 	var scene = get_tree().current_scene
 	if player.is_mech():
-		for side in [-16.0, 16.0]:
-			var at = global_position + direction.normalized().orthogonal() * side
-			var bolt = PlayerShot.create(at, direction, damage * MECH_CANNON * (1.0 + 0.2 * (Game.gun_level - 1)), judgement, PlayerShot.Kind.LASER)
-			scene.add_child(bolt)
+		var rifle = PlayerShot.create(global_position + direction.normalized() * 40.0, direction, damage * MECH_RIFLE * (1.0 + 0.2 * (Game.gun_level - 1)), judgement, PlayerShot.Kind.LASER)
+		rifle.scale = Vector2(1.6, 1.6)
+		scene.add_child(rifle)
 		Sfx.play("shoot_laser", -3.0)
 		return
 	match Game.weapon:

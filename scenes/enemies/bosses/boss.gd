@@ -162,6 +162,7 @@ func _end_card(captured: bool):
 		if spell_this_card:
 			Game.add_mech_part("spell_capture")
 		Sfx.play("jingle")
+		Sfx.meow("capture")
 		var scene = get_tree().current_scene
 		scene.add_child.call_deferred(Pickup.create(Pickup.Type.BATTERY, global_position + Vector2(-70, 0)))
 	_bullets_to_cheese()
@@ -554,6 +555,7 @@ func _draw():
 func die():
 	if not is_dead:
 		Game.shake(18.0)
+		Sfx.meow("boss_defeat")
 	super()
 
 

@@ -95,9 +95,77 @@ def main():
     write("armor_crack.wav", mix(sweep(0.18, 1500, 700, 0.18, square, 3.0), noise(0.12, 0.2, 3)))
     write("armor_break.wav", mix(sweep(0.5, 900, 120, 0.25, square, 1.0), noise(0.5, 0.3, 4)))
     write("dance.wav", sweep(0.07, 1319, 1319, 0.16, tri, 2.0))
+    write_meows()
     print("wrote sounds to %s" % os.path.normpath(OUT))
     write_music()
 
+
+
+# ---------------------------------------------------------------- meows (playtest 7)
+# Recipe from the design review: a sawtooth source with a pitch contour (rise ~1.5x in the first
+# 40%, fall to ~0.8x, 5 Hz vibrato), shaped by two band-pass "formants" sweeping ee -> a -> oo
+# (F1 400 -> 900 -> 500 Hz, F2 2200 -> 1500 -> 900 Hz), plus a little breath noise.
+# Base pitch is tuned to A (the game pitches it to each song's key at runtime).
+
+def _bandpass_run(x, centers, q=4.0):
+    """Time-varying 2-pole band-pass (RBJ biquad), coefficients updated every 32 samples."""
+    out = [0.0] * len(x)
+    x1 = x2 = y1 = y2 = 0.0
+    b0 = b2 = a1 = a2 = 0.0
+    for i, v in enumerate(x):
+        if i % 32 == 0:
+            f = centers(i / len(x))
+            w = 2 * math.pi * f / RATE
+            alpha = math.sin(w) / (2 * q)
+            a0 = 1 + alpha
+            b0, b2 = alpha / a0, -alpha / a0
+            a1, a2 = -2 * math.cos(w) / a0, (1 - alpha) / a0
+        y = b0 * v + b2 * x2 - a1 * y1 - a2 * y2
+        x2, x1 = x1, v
+        y2, y1 = y1, y
+        out[i] = y
+    return out
+
+
+def _lerp3(a, b, c, t):
+    return a + (b - a) * (t / 0.4) if t < 0.4 else b + (c - b) * ((t - 0.4) / 0.6)
+
+
+def meow(seconds=0.36, f0=700.0, rise=1.5, fall=0.8, noise_amt=0.05, vol=0.5, trill=0.0, seed=1):
+    rnd = random.Random(seed)
+    n = int(seconds * RATE)
+    src, ph = [], 0.0
+    for i in range(n):
+        t = i / n
+        f = f0 * _lerp3(1.0, rise, fall, t) * (1 + 0.02 * math.sin(2 * math.pi * 5 * i / RATE))
+        ph += f / RATE
+        saw = 2 * (ph % 1.0) - 1
+        src.append(saw + noise_amt * (rnd.random() * 2 - 1))
+    f1 = _bandpass_run(src, lambda t: _lerp3(400, 900, 500, t), 3.0)
+    f2 = _bandpass_run(src, lambda t: _lerp3(2200, 1500, 900, t), 5.0)
+    out = []
+    att, rel = int(0.015 * RATE), int(0.12 * RATE)
+    for i in range(n):
+        env = min(1.0, i / att) * min(1.0, (n - i) / rel)
+        if trill:
+            env *= 0.6 + 0.4 * math.sin(2 * math.pi * trill * i / RATE)
+        out.append((f1[i] * 1.0 + f2[i] * 0.6) * env * vol * 3.0)
+    peak = max(abs(v) for v in out) or 1.0
+    return [v / peak * vol for v in out]
+
+
+def write_meows():
+    variants = [
+        dict(seconds=0.34, f0=700, rise=1.5, fall=0.8),
+        dict(seconds=0.30, f0=760, rise=1.4, fall=0.85),
+        dict(seconds=0.40, f0=660, rise=1.6, fall=0.75),
+        dict(seconds=0.26, f0=820, rise=1.3, fall=0.9),
+        dict(seconds=0.38, f0=720, rise=1.55, fall=0.7),
+    ]
+    for k, v in enumerate(variants):
+        write("meow_%d.wav" % (k + 1), meow(seed=k + 1, **v))
+    write("mrrp.wav", meow(seconds=0.22, f0=520, rise=1.15, fall=0.95, trill=28.0, noise_amt=0.08, seed=9))
+    write("meow_growl.wav", meow(seconds=0.55, f0=380, rise=1.35, fall=0.7, noise_amt=0.18, vol=0.55, seed=11))
 
 
 # ---------------------------------------------------------------- music

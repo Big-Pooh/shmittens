@@ -469,32 +469,51 @@ def sho():
 
 
 def mech():
-    # MECHA-MEOW: a chunky pastel mech suit with the cat in a glass cockpit (faces right)
-    METAL = (200, 210, 235, 255)
-    METAL_D = (140, 150, 190, 255)
-    c = Canvas(30, 28)
-    c.rect(6, 22, 10, 26, METAL_D)                                 # legs
-    c.rect(17, 22, 21, 26, METAL_D)
-    c.rect(4, 26, 11, 27, (110, 120, 160, 255))
-    c.rect(16, 26, 23, 27, (110, 120, 160, 255))
-    c.ellipse(14, 16, 10, 7, METAL)                                # torso
-    c.ellipse(14, 18, 6, 3, (230, 236, 250, 255))
-    c.rect(22, 12, 29, 14, METAL_D)                                # cannon arms
-    c.rect(22, 17, 29, 19, METAL_D)
-    c.set(29, 13, (255, 120, 140, 255))
-    c.set(29, 18, (255, 120, 140, 255))
-    c.rect(3, 9, 6, 13, GOLD)                                      # backpack missile pod
-    c.set(4, 8, RED)
-    c.ellipse(14, 8, 6.5, 6, GLASS)                                # cockpit dome
-    c.ellipse(14, 9.5, 3.6, 3.0, ORANGE)                           # the cat inside
-    c.poly([(11, 8), (11.5, 5.5), (13, 7.5)], ORANGE)
-    c.poly([(15, 7.5), (16.5, 5.5), (17, 8)], ORANGE)
-    c.set(15, 9, EYE)
-    c.set(12, 9, EYE)
-    c.set(17, 4, WHITE)
-    c.set(18, 5, WHITE)
-    c.rect(9, 15, 11, 16, PINK)                                    # heart decal
-    c.set(10, 17, PINK)
+    # PAWFRAME MK-IX ("MECHA-MEOW"): a slim, armoured real-robot frame in the anime tradition,
+    # deliberately NOT Gundam trade dress: cat-ear antennae instead of a V-fin, a single visor
+    # instead of a twin-eye face, pastel lilac/mint with gold trim instead of the tricolour.
+    # Faces right; beam rifle in the right hand, thruster backpack behind.
+    LILAC = (206, 190, 245, 255)
+    LILAC_D = (150, 130, 205, 255)
+    MINT_ = (170, 240, 215, 255)
+    TRIM = (255, 215, 110, 255)
+    VISOR = (120, 240, 255, 255)
+    FRAME = (90, 84, 120, 255)
+    c = Canvas(36, 40)
+    # thruster backpack + flames
+    c.rect(5, 12, 10, 22, LILAC_D)
+    c.rect(3, 14, 5, 20, FRAME)
+    c.poly([(3, 21), (0.5, 26), (5, 23)], (255, 170, 90, 255))
+    c.poly([(5, 23), (3.5, 29), (8, 24)], (255, 220, 120, 255))
+    # legs
+    c.rect(12, 28, 15, 36, LILAC)
+    c.rect(19, 28, 22, 36, LILAC)
+    c.rect(11, 36, 16, 38, FRAME)
+    c.rect(18, 36, 24, 38, FRAME)
+    c.rect(12, 31, 15, 31, TRIM)
+    c.rect(19, 31, 22, 31, TRIM)
+    # waist + torso
+    c.rect(12, 25, 22, 28, FRAME)
+    c.rect(16, 25, 18, 28, TRIM)
+    c.poly([(10, 13), (24, 13), (23, 25), (11, 25)], MINT_)
+    c.rect(11, 13, 23, 14, TRIM)
+    c.ellipse(17, 19, 2.4, 2.2, (255, 130, 160, 255))          # heart core
+    c.set(16, 18, WHITE)
+    # shoulder armour
+    c.ellipse(9.5, 14, 3.6, 3.0, LILAC)
+    c.ellipse(25, 14, 3.6, 3.0, LILAC)
+    c.rect(7, 16, 12, 16, TRIM)
+    # right arm forward with the beam rifle
+    c.rect(24, 16, 27, 20, LILAC_D)
+    c.rect(26, 19, 35, 21, FRAME)
+    c.rect(33, 18, 35, 18, VISOR)
+    # head: helmet, single visor, cat-ear antennae
+    c.ellipse(17, 8, 5.2, 4.6, LILAC)
+    c.rect(13, 7, 21, 9, VISOR)
+    c.set(20, 7, WHITE)
+    c.poly([(12.5, 5), (13.5, 0.5), (16, 4)], TRIM)             # cat-ear antenna L
+    c.poly([(18, 4), (20.5, 0.5), (21.5, 5)], TRIM)             # cat-ear antenna R
+    c.rect(16, 11, 18, 12, FRAME)                                 # chin vent
     c.outline()
     c.save("mech.png")
 

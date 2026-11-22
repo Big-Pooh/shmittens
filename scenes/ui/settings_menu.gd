@@ -13,6 +13,7 @@ var sfx: HSlider
 var fullscreen: CheckButton
 var reduce: CheckButton
 var relaxed: CheckButton
+var meows: CheckButton
 
 
 func _ready():
@@ -32,6 +33,7 @@ func _ready():
 	box.add_child(title)
 	music = _slider(box, "Music volume", Game.music_volume, func(v): Game.music_volume = v; _changed())
 	sfx = _slider(box, "Sound effects volume", Game.sfx_volume, func(v): Game.sfx_volume = v; _changed())
+	meows = _check(box, "Cat meows", Game.meows_enabled, func(on): Game.meows_enabled = on; _changed())
 	fullscreen = _check(box, "Fullscreen", Game.fullscreen, func(on): Game.fullscreen = on; _changed())
 	reduce = _check(box, "Reduce effects (no screen shake, softer flashes)", Game.reduce_effects, func(on): Game.reduce_effects = on; _changed())
 	relaxed = _check(box, "Relaxed mode (slower shots, +1 life, guardian bubble)", Game.relaxed_mode, func(on): _set_relaxed(on))
@@ -114,6 +116,7 @@ func open():
 	music.set_value_no_signal(Game.music_volume)
 	sfx.set_value_no_signal(Game.sfx_volume)
 	fullscreen.set_pressed_no_signal(Game.fullscreen)
+	meows.set_pressed_no_signal(Game.meows_enabled)
 	reduce.set_pressed_no_signal(Game.reduce_effects)
 	_sync_difficulty()
 	panel.show()

@@ -62,6 +62,7 @@ func _join(index: int):
 	add_child(sprite)
 	members.append({"sprite": sprite, "index": index})
 	Sfx.play("jingle", -8.0)
+	Sfx.meow("companion")
 	Game.track("companions_joined")
 	_say(sprite.position + Vector2(0, -30), CREW[index].line, CREW[index].color)
 

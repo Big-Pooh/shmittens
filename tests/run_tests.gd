@@ -1899,11 +1899,19 @@ func _playtest5_tests():
 	game.aim_override = Vector2(900, 360)
 	var before = _shots().size()
 	cat.get_node("Gun").fire(1.0)
-	check(_shots().size() - before == 2 and _shots()[-1].damage >= 2.0, "the mech fires twin heavy cannons")
-	cat.get_node("Gun")._on_bar(1)
-	check(_shots().size() - before == 2 + cat.get_node("Gun").MECH_MISSILES, "the mech launches missiles every bar")
+	check(_shots().size() - before == 1 and _shots()[-1].damage >= 3.0 and _shots()[-1].pierce, "the mech fires a heavy piercing beam rifle")
+	var dummy = load("res://scenes/enemies/grunt.tscn").instantiate()
+	dummy.position = cat.global_position + Vector2(120, 0)
+	dummy.max_health = 50
+	main.add_child(dummy)
+	await frames(1)
+	check(cat.get_node("Gun").saber_slash() == 1 and dummy.health < 50, "the beam saber slashes mice in front of the mech")
+	dummy.queue_free()
+	await frames(1)
 	cat.is_invulnerable = false
 	check(not cat.hit("shot") and cat.mech_armor == cat.MECH_ARMOR - 1 and not cat.is_dead, "mech armour absorbs hits")
+	for p in get_nodes_in_group("pickups"):
+		p.free()   # stray mech cores from the tests above would restart the mech
 	cat.mech_time = 0.01
 	await frames(3)
 	check(not cat.is_mech() and cat.sprite.hframes == 10, "the mech wears off and the cat hops out")

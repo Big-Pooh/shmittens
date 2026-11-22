@@ -115,7 +115,8 @@ var pets = 0
 
 func pet_cat():
 	pets += 1
-	Sfx.play("dance", -4.0)
+	if not Sfx.meow("pet"):
+		Sfx.play("dance", -4.0)
 	var heart = Label.new()
 	heart.text = "♥" if pets % 10 != 0 else "♥ purrrrrr x%d ♥" % pets
 	heart.add_theme_font_size_override("font_size", 30)
