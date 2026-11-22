@@ -246,7 +246,7 @@ func _on_mech_parts(parts: int):
 	var gears = ""
 	for i in Game.MECH_PARTS_NEEDED:
 		gears += "⚙" if i < parts else "·"
-	mech_label.text = "MECH PARTS %s   (capture cards, 40-combos)" % gears
+	mech_label.text = "MECH PARTS %s   (capture a card using a spell, 75-combos)" % gears
 	if parts > 0:
 		mech_label.pivot_offset = Vector2(0, 12)
 		mech_label.scale = Vector2.ONE * 1.3
@@ -327,7 +327,31 @@ func _flash_text(text: String, color: Color):
 	tween.tween_callback(label.queue_free)
 
 
-func _process(_delta):
+# Playtest 6: spells got forgotten -> while your charges sit full, a reminder pulses.
+const FULL_CHARGE_NAG = 6.0
+var full_time = 0.0
+var spell_nag: Label
+
+
+func _nag(delta: float):
+	if spell_nag == null:
+		spell_nag = _label("CHARGES FULL!  HOLD RIGHT-CLICK and draw a spell over the mice  (spells SHATTER boss armour)", 18, Color(0.6, 0.95, 1))
+		spell_nag.position = Vector2(0, 574)
+		spell_nag.size = Vector2(1280, 24)
+		spell_nag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		spell_nag.hide()
+		add_child(spell_nag)
+	if Game.charges >= Game.MAX_CHARGES and not Game.drawing and not Game.tutorial_mode:
+		full_time += delta
+	else:
+		full_time = 0.0
+	spell_nag.visible = full_time > FULL_CHARGE_NAG
+	if spell_nag.visible:
+		spell_nag.modulate.a = 0.6 + 0.4 * sin(full_time * 5.0)
+
+
+func _process(delta):
+	_nag(delta)
 	if current_boss and is_instance_valid(current_boss) and current_boss.card >= 0:
 		var c = current_boss.cards[current_boss.card]
 		var name_part = ("~ " + c.name + " ~   ") if c.name != "" else ""

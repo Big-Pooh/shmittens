@@ -121,7 +121,7 @@ func _run():
 	await frames(2)
 	main.add_child(PlayerShot.create(Vector2(620, 200), Vector2.RIGHT))
 	await wait(0.2)
-	check(a.health + b.health == 9, "a shot damages only one enemy")
+	check(is_equal_approx(a.health + b.health, 10.0 - PlayerShot.POINT_BLANK), "a shot damages only one enemy")   # (spread pellet, point-blank x1.3)
 	a.queue_free(); b.queue_free()
 
 	# --- pickups
@@ -1204,7 +1204,8 @@ func _fever_tests():
 	var shot = PlayerShot.create(Vector2(500, 300), Vector2.RIGHT, 1.0)
 	main.add_child(shot)
 	await wait(0.35)
-	check(a.health == 3.5 and b.health == 3.5, "FEVER shots pierce and do +50 percent (%.1f, %.1f)" % [a.health, b.health])
+	var fever_hit = 1.5 * 1.3   # FEVER +50%, point-blank spread pellet x1.3
+	check(is_equal_approx(a.health, 5.0 - fever_hit) and is_equal_approx(b.health, 5.0 - fever_hit), "FEVER shots pierce and do +50 percent (%.2f, %.2f)" % [a.health, b.health])
 	for n in game.FEVER_BEATS:
 		game._on_beat(n)
 	check(not game.is_fever(), "FEVER ends after 8 beats")
@@ -1572,7 +1573,7 @@ func _playtest3_tests():
 	boss.take_damage(boss.health - boss.max_health * 0.4)
 	boss.card_intro = 0
 	boss.take_skill_damage(1.0)
-	check(is_equal_approx(boss.armor, boss.ARMOR_PIPS - 2.0), "a spell cracks 2 pips of beat armour")
+	check(boss.is_stunned() and boss.armor == 0.0, "SPELL BREAK: a drawn spell shatters all the beat armour")
 	boss.queue_free()
 	await _clear_world()
 
@@ -1617,7 +1618,7 @@ func _playtest3_tests():
 
 	# weapons: spread pellets fall off with distance and erase bullets
 	var pellet = PlayerShot.create(Vector2(100, 360), Vector2.RIGHT, 1.0)
-	check(is_equal_approx(pellet.damage_now(), 1.0), "spread pellets do full damage up close")
+	check(is_equal_approx(pellet.damage_now(), pellet.POINT_BLANK), "spread pellets hit extra hard point-blank")
 	pellet.position = Vector2(800, 360)
 	check(is_equal_approx(pellet.damage_now(), pellet.FALLOFF_MIN), "spread pellets fall off with distance")
 	pellet.free()
@@ -1868,18 +1869,25 @@ func _playtest5_tests():
 
 	# mech parts -> mech core -> mech suit
 	game.mech_parts = 0
+	game.mech_used_this_level = false
 	var cores = [0]
 	game.mech_core_ready.connect(func(): cores[0] += 1)
-	game.add_mech_part("test")
-	game.add_mech_part("test")
-	check(game.mech_parts == 2 and cores[0] == 0, "mech parts add up")
+	for i in game.MECH_PARTS_NEEDED - 1:
+		game.add_mech_part("test")
+	check(game.mech_parts == game.MECH_PARTS_NEEDED - 1 and cores[0] == 0, "mech parts add up")
 	game.add_mech_part("test")
 	await frames(2)
-	check(cores[0] == 1 and game.mech_parts == 0 and get_nodes_in_group("pickups").any(func(p): return p.type == Pickup.Type.MECH_CORE), "3 parts drop a MECH CORE")
+	check(cores[0] == 1 and game.mech_parts == 0 and get_nodes_in_group("pickups").any(func(p): return p.type == Pickup.Type.MECH_CORE), "4 parts drop a MECH CORE")
+	for i in game.MECH_PARTS_NEEDED + 2:
+		game.add_mech_part("test")
+	check(cores[0] == 1 and game.mech_parts == game.MECH_PARTS_NEEDED - 1, "only one mech per planet: parts wait at 3/4")
+	game.set_level(2, 5)
+	game.add_mech_part("test")
+	check(cores[0] == 2, "...and the next planet releases the next core")
 	game.reset_combo()
 	for i in game.MECH_COMBO:
 		game.register_judgement(conductor.Judgement.PERFECT)
-	check(game.mech_parts == 1, "a 40 combo earns a mech part")
+	check(game.mech_parts == 1, "a 75 combo earns a mech part")
 	game.mech_parts = 0
 	await _clear_world()
 	cat.start_mech()
@@ -1913,6 +1921,25 @@ func _playtest5_tests():
 	game.reset_combo()
 	await _clear_world()
 
+	# spell captures: a card captured with a drawn spell gives a mech part; without one it doesn't
+	game.mech_parts = 0
+	game.mech_used_this_level = false
+	var capt = await _make_boss("res://scenes/enemies/bosses/rat_king.gd")
+	capt.take_damage(capt.health - capt.card_floor)
+	check(game.mech_parts == 0 and capt.card == 1, "capturing without a spell gives no mech part")
+	capt.card_intro = 0
+	capt.take_skill_damage(1.0)
+	capt.take_damage(capt.health - capt.card_floor)
+	check(game.mech_parts == 1, "capturing a card you hit with a spell gives a mech part")
+	capt.queue_free()
+	await _clear_world()
+	# spread eats bullets into cheese
+	var cheese_before = game.cheese + game.charges * game.CHEESE_PER_CHARGE
+	game.charges = 0
+	game.cheese = 0
+	for i in game.BULLETS_PER_CHEESE:
+		game.eat_bullet()
+	check(game.cheese == 1, "spread pellets eat bullets: every 3 = 1 cheese")
 
 func Banter_lines_has(text: String) -> bool:
 	return load("res://scenes/ui/banter.gd").CAT_COMBO.has(text)

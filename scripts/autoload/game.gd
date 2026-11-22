@@ -62,7 +62,7 @@ var gun_level = 1
 # (yarn) powers whichever weapon is equipped. Kept across deaths and levels.
 enum Weapon { SPREAD, LASER, FISH }
 const WEAPON_NAMES = ["YARN SPREAD", "LASER POINTER", "FISH SEEKERS"]
-const WEAPON_HINTS = ["close range - erases bullets", "aim it - strongest, pierces", "homing - easy, weaker"]
+const WEAPON_HINTS = ["point blank - eats bullets into spell fuel", "aim it - strongest, pierces", "homing - easy, weaker"]
 var weapon = Weapon.FISH   # playtest 3: Fish is the default; the others reward skill
 var focus_override = false   # automated playthroughs hold "focus" with this
 var dancing = false          # true during a dance break between waves
@@ -81,9 +81,13 @@ var overdrive = 0   # 0 none, 1 ready, 2 active
 # every boss spell card CAPTURED and every MECH_COMBO on-beat hits in a row give one part - and
 # a golden MECH CORE drops; collect it to pilot the mech for Shmitten.MECH_SECONDS.
 # Parts carry across planets (lost only on a game over).
-const MECH_PARTS_NEEDED = 3
-const MECH_COMBO = 40
+# Playtest 6: 6 mechs in one run was not "very rare" -> 4 parts, combo parts every 75 hits,
+# capture parts only for cards captured WITH a drawn spell, and at most one mech per planet
+# (parts wait at 3/4 until the next planet).
+const MECH_PARTS_NEEDED = 4
+const MECH_COMBO = 75
 var mech_parts = 0
+var mech_used_this_level = false
 var wave = 0
 var combo = 0
 var plain_kills = 0
@@ -247,14 +251,28 @@ func save_session(reason: String):
 
 
 func add_mech_part(reason: String):
+	if mech_used_this_level and mech_parts >= MECH_PARTS_NEEDED - 1:
+		return   # one mech per planet: the last part waits for the next planet
 	mech_parts += 1
 	track("mech_parts")
 	track("mech_part_" + reason)
 	if mech_parts >= MECH_PARTS_NEEDED:
 		mech_parts = 0
+		mech_used_this_level = true
 		track("mech_cores")
 		mech_core_ready.emit()
 	mech_parts_changed.emit(mech_parts)
+
+
+# Spread pellets EAT bullets: every BULLETS_PER_CHEESE eaten bullets = 1 cheese (spell fuel).
+const BULLETS_PER_CHEESE = 3
+var bullets_eaten = 0
+
+func eat_bullet():
+	bullets_eaten += 1
+	track("bullets_eaten")
+	if bullets_eaten % BULLETS_PER_CHEESE == 0:
+		add_cheese(1)
 
 
 func set_overdrive(state: int):
@@ -354,6 +372,7 @@ func set_level(value: int, total_waves: int):
 	wave_total = total_waves
 	wave = 0
 	bomb_used_this_level = false
+	mech_used_this_level = false
 	level_changed.emit(level)
 	wave_changed.emit(wave)
 

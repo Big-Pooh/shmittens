@@ -22,6 +22,7 @@ const FALLOFF_START = 200.0
 const FALLOFF_END = 700.0
 const FALLOFF_MIN = 0.3
 const BOLT_RANGE = 760.0
+const POINT_BLANK = 1.3   # playtest 6: Spread's niche - a real point-blank punch...
 var origin: Vector2
 var crit = false   # PERFECT laser bolt: shows "CRIT!" on hit
 
@@ -90,7 +91,7 @@ func damage_now() -> float:
 		return damage
 	var d = position.distance_to(origin)
 	var t = clamp((d - FALLOFF_START) / (FALLOFF_END - FALLOFF_START), 0.0, 1.0)
-	return damage * lerp(1.0, FALLOFF_MIN, t)
+	return damage * lerp(POINT_BLANK, FALLOFF_MIN, t)
 
 
 func _crit_popup(at: Vector2):
@@ -114,7 +115,8 @@ func _on_area_entered(area):
 	if area is EnemyBase and crit and not area.is_dead and not already_hit.has(area):
 		_crit_popup(area.global_position)
 	if area is EnemyShot:
-		area.queue_free()   # spread pellets erase bullets and keep going
+		area.queue_free()   # spread pellets erase bullets and keep going...
+		Game.eat_bullet()   # ...and eaten bullets feed your spell charges
 		return
 	if spent:
 		return

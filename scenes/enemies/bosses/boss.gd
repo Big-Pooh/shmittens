@@ -75,6 +75,7 @@ var card_time = 0.0
 var card_intro = 0
 var card_clean = true
 var captures = 0
+var spell_this_card = false   # a drawn spell hit during the current card (mech part on capture)
 
 
 func build(texture: Texture2D, sprite_scale: float, radius: float, health: float):
@@ -136,6 +137,7 @@ func _start_card(index: int):
 	card_time = cards[index].seconds * (CARD_ASSIST_TIME if Game.assist > 0 else 1.0)
 	card_intro = CARD_INTRO_BEATS
 	card_clean = true
+	spell_this_card = false
 	stunned_beats = 0
 	if cards[index].armored:
 		if phase == 1:
@@ -157,7 +159,8 @@ func _end_card(captured: bool):
 	if captured:
 		captures += 1
 		Game.add_score(CAPTURE_SCORE)
-		Game.add_mech_part("capture")
+		if spell_this_card:
+			Game.add_mech_part("spell_capture")
 		Sfx.play("jingle")
 		var scene = get_tree().current_scene
 		scene.add_child.call_deferred(Pickup.create(Pickup.Type.BATTERY, global_position + Vector2(-70, 0)))
@@ -228,9 +231,13 @@ func take_skill_damage(amount: float):
 	if card_intro > 0:
 		return
 	Game.track("spell_hits_boss")
+	spell_this_card = true
 	amount = max(amount, max_health * SKILL_MIN_FRACTION)
 	if is_armored():
-		_crack(SKILL_ARMOR_CRACK)
+		# SPELL BREAK (playtest 6: drawing must stay central): a drawn spell shatters ALL the
+		# remaining beat armour at once and stuns the boss.
+		Game.track("spell_breaks")
+		_crack(armor)
 		take_damage(amount * 0.5)
 		return
 	take_damage(amount * (STUN_DAMAGE if is_stunned() else 1.0))
@@ -260,7 +267,8 @@ func take_damage(amount: float, judgement: int = -1):
 		if card_clean:
 			captures += 1
 			Game.add_score(CAPTURE_SCORE)
-			Game.add_mech_part("capture")
+			if spell_this_card:
+				Game.add_mech_part("spell_capture")
 		card_ended.emit(card, card_clean)
 
 
