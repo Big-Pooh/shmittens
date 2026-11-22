@@ -221,7 +221,7 @@ func _build():
 	card_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 	overdrive_label = _label("OVERDRIVE READY - press F!", 22, Color(1, 0.6, 0.9))
-	overdrive_label.position = Vector2(0, 600)
+	overdrive_label.position = Vector2(0, 574)   # clear of the timing popups (602-628)
 	overdrive_label.size = Vector2(1280, 30)
 	overdrive_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	overdrive_label.hide()
@@ -297,7 +297,8 @@ func _on_charges(charges: int, cheese: int):
 
 func _on_combo(combo: int, multiplier: int):
 	combo_label.visible = combo > 0
-	combo_label.text = "COMBO %d   x%d" % [combo, multiplier]
+	combo_label.text = "COMBO %d   x%d" % [combo, multiplier] + ("   FEVER!" if Game.is_fever() else "")
+	combo_label.add_theme_color_override("font_color", Color(1, 0.75, 0.2) if Game.is_fever() else Color(0.6, 1, 0.7))
 	if combo > 0:
 		combo_label.pivot_offset = combo_label.size / 2
 		combo_label.scale = Vector2.ONE * 1.25
@@ -326,7 +327,7 @@ func _on_card_started(index: int, card_name: String, _seconds: float, boss: Boss
 		_flash_text("SPELL CARD  -  " + card_name.to_upper(), Color(1, 0.75, 0.95))
 	if boss.weak_spell() != "" and not Game.tips_seen.has("weakness") and Game.tips_seen.has("spell_cards"):
 		Game.first_time("weakness")
-		show_tip("WEAK TO %s!\nEvery spell card shows the spell it's weak to (under the health bar): that spell does DOUBLE damage.\nZIGZAG lightning also shatters beat armour." % Boss.SPELL_NAMES.get(boss.weak_spell(), ""))
+		show_tip("WEAK TO %s!\nEvery spell card shows the spell it's weak to (under the health bar): that spell does DOUBLE damage.\nZIGZAG BOLT also shatters beat armour." % Boss.SPELL_NAMES.get(boss.weak_spell(), ""))
 	if index == 0 and Game.first_time("spell_cards"):
 		show_tip("BOSS SPELL CARDS\nEvery boss attacks in named SPELL CARDS. Each one owns a slice of its health bar and has a timer.\nEmpty the slice (or outlast the timer) to move on. Do it WITHOUT getting hit or bombing\nto CAPTURE the card: big bonus + a battery. Drawn spells hit bosses hard and SHATTER beat armour -\ncapture a card you hit with a spell to earn a MECH PART.")
 
@@ -365,15 +366,16 @@ func _pump_banners(delta: float):
 		return   # (banners also wait while a centre message is up)
 	var b = banner_queue.pop_front()
 	var label = _label(b[0], b[2], b[1])
-	label.position = Vector2(0, 230)
+	label.position = Vector2(0, 292)   # the banner lane, just below the HUD band (score, boss bar, card)
 	label.size = Vector2(1280, 50)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.name = "Banner"
 	add_child(label)
 	# the next banner may start once this one has had its minimum time on screen
-	banner_busy = BANNER_MIN if not banner_queue.is_empty() else BANNER_SHOW
+	var show = BANNER_MIN if not banner_queue.is_empty() else BANNER_SHOW
+	banner_busy = show + 0.25   # the next banner waits for this one's fade-out too
 	var tween = label.create_tween()
-	tween.tween_interval(banner_busy)
+	tween.tween_interval(show)
 	tween.tween_property(label, "modulate:a", 0.0, 0.25)
 	tween.tween_callback(label.queue_free)
 
@@ -387,7 +389,7 @@ var spell_nag: Label
 func _nag(delta: float):
 	if spell_nag == null:
 		spell_nag = _label("CHARGES FULL!  HOLD RIGHT-CLICK and draw a spell over the mice  (spells SHATTER boss armour)", 18, Color(0.6, 0.95, 1))
-		spell_nag.position = Vector2(0, 574)
+		spell_nag.position = Vector2(0, 548)
 		spell_nag.size = Vector2(1280, 24)
 		spell_nag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		spell_nag.hide()
@@ -434,11 +436,10 @@ func _on_dance(active: bool):
 
 
 func _on_fever(active: bool):
-	fever_label.visible = active
+	# FEVER is shown in the combo line (a big centre label collided with the timing popups)
+	fever_label.visible = false
+	_on_combo(Game.combo, Game.multiplier())
 	if active:
-		fever_label.pivot_offset = Vector2(640, 25)
-		fever_label.scale = Vector2.ONE * 1.4
-		create_tween().tween_property(fever_label, "scale", Vector2.ONE, 0.2)
 		Sfx.play("jingle")
 
 
@@ -466,8 +467,12 @@ func show_tip(text: String):
 	tween.tween_callback(box.queue_free)
 
 
-# First line = big title, the rest = smaller body text (both wrap).
+# First line = big title, the rest = smaller body text (both wrap). A centre message clears any
+# banner on screen (they would overlap).
 func show_message(text: String):
+	for c in get_children():
+		if c.name.begins_with("Banner"):
+			c.queue_free()
 	var lines = text.split("\n", true, 1)
 	message_title.text = lines[0]
 	message_body.text = lines[1] if lines.size() > 1 else ""

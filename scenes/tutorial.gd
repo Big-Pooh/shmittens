@@ -15,10 +15,10 @@ const BEAT_CLICKS_NEEDED = 3
 const HELD_BEATS_NEEDED = 4
 const GESTURE_ORDER = ["shockwave", "laser", "lightning", "shield"]
 const GESTURE_HINTS = {
-	"shockwave": "Draw a CIRCLE around the mice  ->  it bursts right there",
-	"laser": "Draw a LINE through the mice  ->  CLAW SLASH along your line",
-	"lightning": "Draw a ZIGZAG over the mice  ->  LIGHTNING strikes along it",
-	"shield": "Draw a TRIANGLE anywhere  ->  a SHIELD around you",
+	"shockwave": "Draw a CIRCLE around the mice  ->  CIRCLE BURST right there",
+	"laser": "Draw a LINE through the mice  ->  LINE SLASH along your line",
+	"lightning": "Draw a ZIGZAG over the mice  ->  ZIGZAG BOLT strikes along it",
+	"shield": "Draw a TRIANGLE anywhere  ->  TRIANGLE SHIELD around you",
 }
 const SHAPE_FOR_SKILL = {"shockwave": "circle", "laser": "line", "lightning": "zigzag", "shield": "triangle"}
 const GRUNT = preload("res://scenes/enemies/grunt.tscn")

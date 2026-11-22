@@ -163,6 +163,9 @@ var hard_cleared = false     # unlocks TOUHOU
 var bomb_stock = 0           # TOUHOU: free bombs (1 per life)
 # One-time tips (playtest 4: "I didn't know until the end how spell cards work")
 var tips_seen = {}
+# ONE NAME PER SPELL, used by the guide, banners, popups, card weaknesses and the tutorial.
+const SPELL_TITLES = {"shockwave": "CIRCLE BURST", "laser": "LINE SLASH", "lightning": "ZIGZAG BOLT", "shield": "TRIANGLE SHIELD"}
+const SPELL_ICONS = {"shockwave": "○", "laser": "―", "lightning": "ϟ", "shield": "△"}
 # Feedback and bug reports (GTM: an in-game path for testers). Opened in the browser; nothing is
 # sent automatically.
 const FEEDBACK_URL = "https://github.com/Big-Pooh/shmittens/issues/new?template=playtest_feedback.yml"

@@ -184,6 +184,9 @@ func _portrait(target) -> Control:
 	return holder
 
 
+const HUD_BAND = 344.0   # below the HUD band (0-272) and the banner lane (292-332)
+
+
 func _process(delta):
 	for b in bubbles:
 		b[3] -= delta
@@ -191,9 +194,30 @@ func _process(delta):
 		if b[1] != null and is_instance_valid(b[1]):
 			label.position = b[1].global_position + b[2]
 		label.position.x = clamp(label.position.x, 8.0, 1272.0 - label.size.x)
-		label.position.y = clamp(label.position.y, 50.0, 640.0)
+		label.position.y = clamp(label.position.y, HUD_BAND, 640.0)
+	# bubbles never overlap: later bubbles are pushed up above earlier ones
+	var placed: Array = []
+	# keep clear of the HUD's centre message and banners too
+	var hud = get_tree().current_scene.get_node_or_null("HUD") if get_tree().current_scene else null
+	if hud:
+		if hud.message.visible:
+			placed.append(Rect2(hud.message.position, hud.message.size).grow(6))
+		for c in hud.get_children():
+			if c.name.begins_with("Banner"):
+				placed.append(Rect2(0, c.position.y, 1280, 44))
+	for b in bubbles:
+		var c: Control = b[0]
+		var r = Rect2(c.position, c.size)
+		var guard = 0
+		while placed.any(func(p): return p.grow(2).intersects(r)) and guard < 6:
+			r.position.y -= r.size.y + 4.0
+			if r.position.y < HUD_BAND:   # never into the score / boss bar / card band: go below
+				r.position.y = placed.map(func(p): return p.end.y).max() + 4.0
+			guard += 1
+		c.position = r.position
+		placed.append(r)
 		if b[3] < 0.3:
-			label.modulate.a = max(b[3] / 0.3, 0.0)
+			c.modulate.a = max(b[3] / 0.3, 0.0)
 	for b in bubbles.filter(func(b): return b[3] <= 0.0):
 		b[0].queue_free()
 	bubbles = bubbles.filter(func(b): return b[3] > 0.0)

@@ -11,7 +11,7 @@ class_name GestureGuide
 # (any direction works, the arrow is just a suggestion).
 
 const SHAPES = ["circle", "line", "zigzag", "triangle"]
-const SKILL = {"circle": "SHOCKWAVE", "line": "LASER", "zigzag": "LIGHTNING", "triangle": "SHIELD"}
+const SKILL = {"circle": "CIRCLE BURST", "line": "LINE SLASH", "zigzag": "ZIGZAG BOLT", "triangle": "TRIANGLE SHIELD"}
 const COLORS = {
 	"circle": Color(0.5, 0.9, 1.0),
 	"line": Color(1.0, 0.4, 0.9),
@@ -21,6 +21,12 @@ const COLORS = {
 const PANEL_Y_TOP = 150.0
 const PANEL_Y_BOTTOM = 480.0   # during boss fights, so it never covers the boss bar
 var PANEL_Y = PANEL_Y_TOP
+# during boss fights the guide is a small half-transparent strip at the bottom, so it never
+# covers the boss bar or the space you dodge in
+var compact = false
+const STRIP_Y = 552.0   # (the nag line shares this row but is hidden while drawing)
+const STRIP_SIZE = 14.0
+const STRIP_X = [560.0, 613.0, 667.0, 720.0]
 const PANEL_SIZE = 46.0
 const PANEL_X = [380.0, 553.0, 727.0, 900.0]
 
@@ -55,7 +61,8 @@ func _ready():
 
 func show_panel(on: bool):
 	panel = on
-	PANEL_Y = PANEL_Y_BOTTOM if on and not get_tree().get_nodes_in_group("bosses").is_empty() else PANEL_Y_TOP
+	compact = on and not get_tree().get_nodes_in_group("bosses").is_empty()
+	PANEL_Y = PANEL_Y_TOP
 	if not on:
 		matched = ""
 	queue_redraw()
@@ -81,7 +88,13 @@ func _process(delta):
 
 
 func _draw():
-	if panel:
+	if panel and compact:
+		draw_rect(Rect2(530, STRIP_Y - 22, 220, 44), Color(0, 0, 0, 0.25))
+		for i in SHAPES.size():
+			var shape = SHAPES[i]
+			var lit = shape == matched
+			draw_shape(self, shape, Vector2(STRIP_X[i], STRIP_Y), STRIP_SIZE, Color(COLORS[shape], 0.95 if lit else 0.5), 3.0 if lit else 2.0, time)
+	elif panel:
 		draw_rect(Rect2(300, PANEL_Y - 78, 680, 172), Color(0, 0, 0, 0.35))
 		for i in SHAPES.size():
 			var shape = SHAPES[i]

@@ -233,7 +233,7 @@ func take_hit(amount: float, _direction: Vector2, judgement: int = -1):
 # health per cast; against beat armour they crack SKILL_ARMOR_CRACK pips (and do half damage);
 # STUN_DAMAGE x while stunned.
 const WEAK_MULTIPLIER = 2.0
-const SPELL_NAMES = {"shockwave": "CIRCLE", "laser": "LINE", "lightning": "ZIGZAG"}
+const SPELL_NAMES = {"shockwave": "○ CIRCLE BURST", "laser": "― LINE SLASH", "lightning": "ϟ ZIGZAG BOLT"}
 
 
 # The spell this card is weak to ("shockwave" / "laser" / "lightning"), or "".

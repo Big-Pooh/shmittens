@@ -66,7 +66,11 @@ func _join(index: int):
 	Sfx.play("jingle", -8.0)
 	Sfx.meow("companion")
 	Game.track("companions_joined")
-	_say(sprite.position + Vector2(0, -30), CREW[index].line, CREW[index].color)
+	var banter = get_tree().current_scene.get_node_or_null("Banter")
+	if banter:
+		banter.say(sprite, CREW[index].line, CREW[index].color)
+	else:
+		_say(sprite.position + Vector2(0, -30), CREW[index].line, CREW[index].color)
 
 
 func _leave_all():

@@ -1947,7 +1947,7 @@ func _playtest5_tests():
 	bubbles = banter.bubbles.size()
 	for i in 10:
 		game.register_judgement(conductor.Judgement.PERFECT)
-	check(banter.bubbles.size() > bubbles and Banter_lines_has(banter.text_of(banter.bubbles[-1][0])), "the cat makes a pun every 10 combo")
+	check(banter.bubbles.slice(bubbles).any(func(b): return Banter_lines_has(banter.text_of(b[0]))), "the cat makes a pun every 10 combo")
 	game.reset_combo()
 	await _clear_world()
 
@@ -2133,4 +2133,13 @@ func _designer7_tests():
 	await wait(0.8)
 	check(main.hud.banner_queue.size() == 1, "banners wait while a centre message is showing")
 	main.hud.hide_message()
+	check(load("res://scenes/gestures/gesture_guide.gd").SKILL.values() == game.SPELL_TITLES.values() and Boss_names_ok(), "one name per spell everywhere (guide, banners, weaknesses)")
+
+
+func Boss_names_ok() -> bool:
+	var names = load("res://scenes/enemies/bosses/boss.gd").SPELL_NAMES
+	for k in names:
+		if not names[k].ends_with(root.get_node("Game").SPELL_TITLES[k]):
+			return false
+	return true
 

@@ -28,10 +28,7 @@ var fizzles_in_a_row = 0
 # Spell impact (playtest 3: spells felt pointless): every cast clears the enemy bullets on
 # screen, turning up to CANCEL_TO_CHEESE of them into cheese, and shows the spell's name.
 const CANCEL_TO_CHEESE = 6
-const SPELL_NAMES = {
-	"shockwave": "PURR-CUSSION WAVE", "laser": "CLAW SLASH",
-	"lightning": "STATIC FLUFF STORM", "shield": "CUDDLE SHIELD",
-}
+const SPELL_NAMES = Game.SPELL_TITLES   # one name per spell everywhere
 # Emergency CATNIP BOMB (X): spends ALL charges; clears every bullet, hits every enemy for
 # BOMB_DAMAGE per charge (bosses: Boss.take_bomb) and gives BOMB_INVULNERABLE s of safety.
 const BOMB_DAMAGE = 5.0
@@ -237,14 +234,14 @@ func cast_skill(skill: String, empowered: bool, direction: Vector2 = Vector2.RIG
 			player.add_child(Shield.create(empowered))
 	Sfx.play(skill)
 	Game.shake({"shockwave": 9.0, "laser": 6.0, "lightning": 5.0, "shield": 2.0}[skill] * (1.4 if empowered else 1.0))
-	var text = skill.to_upper() + "!"
+	var text = Game.SPELL_TITLES[skill] + "!"
 	if empowered:
 		text = "EMPOWERED " + text
 	if chain > 0:
 		text += "  CHAIN x%d" % (chain + 1)
 		Sfx.play("chain_%d" % chain, -4.0)
-	_popup(text, SKILL_COLORS[skill])
-	_banner(SPELL_NAMES[skill], SKILL_COLORS[skill])
+	# one banner carries the spell's name, EMPOWERED and CHAIN (no separate popup = no clutter)
+	_banner(text.trim_suffix("!").replace(Game.SPELL_TITLES[skill] + "!", Game.SPELL_TITLES[skill]), SKILL_COLORS[skill])
 	cancel_bullets(CANCEL_TO_CHEESE)
 	Game.track("cast_" + skill)
 	Game.level_spells[skill] = true
@@ -349,7 +346,10 @@ func _popup(text: String, color: Color):
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_color_override("font_outline_color", Color.BLACK)
 	label.add_theme_constant_override("outline_size", 6)
-	label.position = (player.global_position if player else get_global_mouse_position()) + Vector2(-60, -80)
+	var at = (player.global_position if player else get_global_mouse_position()) + Vector2(-60, 44)
+	at.y = clamp(at.y, 344.0, 600.0)   # under the cat, below the HUD band and the banner lane
+	at.x = max(at.x, 8.0)
+	label.position = at
 	label.z_index = 60
 	get_tree().current_scene.add_child(label)
 	var tween = label.create_tween().set_parallel()
