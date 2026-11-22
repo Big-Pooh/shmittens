@@ -1,12 +1,12 @@
 # Steam page copy (draft v1)
 
 ## Name
-Shmittens! ✰
+Shmittens!  (the ✰ lives in the logo only - it hurts store search)
 
 ## Short description (max 300 characters)
-Draw spells to the beat! Blast clockwork mice in time with the music, trace magic shapes that land
-where you draw them, and dodge boss spell cards whose bullets dance to the song. A cute rhythm
-shoot-'em-up: one superhero cat, three tiny friends, one very buff mouse lord.
+Draw spells to the beat! Circle a swarm, slash a row, zigzag lightning - all timed to the music.
+A cute rhythm shoot-'em-up where one superhero cat takes on a very buff mouse lord and bullets that
+dance to the song.
 
 ## About this game
 **Sho, the buff demon lord of the mice, has kidnapped the Princess of Pisitania.**
@@ -31,18 +31,18 @@ even assemble the legendary **PAWFRAME MK-IX** mech suit.
 - A step-by-step tutorial teaches every system.
 - RELAXED mode, beginner assists and a guardian bubble.
 - HARD and BULLET HELL modes for experts.
-- Rhythm calibration, reduce-effects option, and remappable timing offset.
+- Reduce-effects option and an adjustable beat offset.
 
 **FEATURES**
 - A planet-hopping journey from Pisitania to Sho's fortress world.
 - Four drawn spells, three weapons (homing Fish, crit-happy Laser, bullet-eating Spread).
 - Spell cards, graze, focus mode and beat armour for bullet-hell fans.
-- Endless mode and per-planet ranks.
+- Endless mode and a rank for every planet.
 - Puns. So many puns. Also you can pet the cat.
 
 ## Tags (Steam, max 20, most important first)
-Shoot 'Em Up, Rhythm, Bullet Hell, Cute, Cats, Arcade, Music, Pixel Graphics, Casual, Action,
-Singleplayer, Shooter, Colorful, Funny, Family Friendly, 2D, Difficult, Indie, Score Attack, Drawing
+Rhythm, Shoot 'Em Up, Cute, Cats, Bullet Hell, Music, Arcade, Pixel Graphics, Casual, Funny,
+Colorful, Family Friendly, Action, Shooter, 2D, Score Attack, Drawing
 
 ## Screenshot list (in order)
 1. Spell card banner and a rose pattern blooming, cat mid-dodge (hook: bullets dance)

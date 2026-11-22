@@ -19,8 +19,8 @@ Sho, the buff demon lord of the mice.
 | Overdrive | **F** when ready (50 on-beat hits in a row) |
 | Pause | **Esc** |
 
-Features: four planets and a final boss with Touhou-style **spell cards**, bullets that pulse to
-the music, companions that join your combo, a rare mech suit, Relaxed / Normal / Hard / Touhou
+Features: four planets and a final boss with bullet-hell **spell cards**, bullets that pulse to
+the music, companions that join your combo, the rare PAWFRAME MK-IX mech, Relaxed / Normal / Hard / Bullet Hell
 modes, Endless mode, and a tutorial.
 
 ## Development

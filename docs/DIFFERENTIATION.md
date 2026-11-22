@@ -1,4 +1,4 @@
-# Smittens: uniqueness and differentiation
+# Shmittens!: uniqueness and differentiation
 
 ## Is there a Steam game with 90%+ similarity?
 **No match found.** This comes from web searches done on 2026-11-22. Search can't see every Steam title, so it isn't exhaustive.

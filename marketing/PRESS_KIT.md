@@ -1,4 +1,7 @@
-# Press kit: Shmittens! ✰
+# Press kit: Shmittens!
+**One sentence:** a cute rhythm shoot-'em-up where you draw spells to the beat.
+**6 s GIF:** marketing/gifs/circle_burst.gif (added with the week-3 capture)
+
 
 **Developer:** Big-Pooh (solo indie) · **Engine:** Godot 4 · **Platforms:** Windows, macOS (Steam), web demo
 **Release:** Steam demo for the next Next Fest; Early Access to follow · **Price:** TBA ($7.99 EA target)
@@ -21,4 +24,4 @@ them, and dodge boss spell cards whose bullets pulse with the music.
 Logo, capsules, screenshots and GIFs: `marketing/capsules/` and `marketing/screenshots/` (added in week 3).
 
 ## Contact
-Press and creators: via GitHub issues or the Steam page (contact email added when the page goes live).
+Press and creators: **press@<project domain>**, a dedicated alias the owner creates (never a personal address). Steam page link goes here once live.

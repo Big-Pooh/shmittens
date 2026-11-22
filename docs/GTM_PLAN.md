@@ -6,8 +6,8 @@ Status: v0.10.0 is a public pre-release. Web demo: https://big-pooh.github.io/sh
 ## 1. Positioning
 - **Hook (one line):** *Draw spells to the beat.*
 - **Elevator pitch:** a cute rhythm shoot-'em-up. Shmitten the superhero cat and her friends blast clockwork mice in time with the music, draw magic shapes that land exactly where you draw them, and dodge boss spell cards whose bullets dance to the song. The goal: rescue the Princess of Pisitania from Sho, the very buff (and very dramatic) demon lord of the mice.
-- **Primary audience:** cat lovers and casual rhythm / shmup players aged 12–35. Cozy-adjacent, streamer-friendly, family-safe humour.
-- **Secondary audience:** bullet-hell fans. HARD and BULLET HELL modes, spell-card captures, ranks.
+- **Audience (one):** cute-game and cat fans who enjoy light rhythm action. Streamer-friendly, family-safe humour.
+- **Bonus audience:** bullet-hell players (HARD and BULLET HELL modes, captures, ranks), but never the lead message.
 - **Category:** rhythm shmup × drawing. The Steam check found no game with 90%+ similarity (`docs/DIFFERENTIATION.md`).
 - **Tone:** wholesome puns, cartoon villains, pastel pixel art, chiptune.
 
@@ -24,7 +24,7 @@ Status: v0.10.0 is a public pre-release. Web demo: https://big-pooh.github.io/sh
 ## 3. Product and pricing
 - **Platforms:** Windows and macOS on Steam (Steam Deck check later). A free web demo on GitHub Pages / itch.io for reach.
 - **Price:** $7.99 in Early Access, $9.99 at 1.0, with a 10–15% launch discount. Regional pricing uses Steam's suggested pricing.
-- **Demo:** the first 3 planets plus the first boss of world 2 (20–30 min), with saves carried into the full game.
+- **Demo (single scope):** planets 1–3 at 8 waves each, with mid-bosses on planets 2–3, plus the tutorial. About 15 min for a first clear, with HARD and ranks as the replay hook (target median session ≥ 15 min). Saves carry into the full game.
 - **Art and audio:** generated in code (owner decision). Mitigation: one cohesive style guide (`marketing/STYLE_GUIDE.md`), readable capsules, sound design over realism.
 
 ## 4. Funnel and channels
@@ -35,12 +35,12 @@ Web demo (GitHub Pages / itch)  ->  Steam page (wishlists)  ->  Next Fest demo  
 
 | Channel | Action | Cadence |
 |---|---|---|
-| Steam page | capsule, 60 s trailer, 6 screenshots, 2 GIFs, short and long descriptions | live by day 21 |
-| Short video (TikTok / Shorts / Reels) | 10–15 s clips: meow on a PERFECT, spell break, Sho's one-liners, pet the cat | 3 a week |
-| Reddit | r/IndieGaming, r/shmups, r/rhythmgames, r/cats (only where allowed), r/godot | 1 post a week, devlog style |
+| Steam page | **"Coming Soon" page NOW** (owner pays Steam Direct; identity, tax and review take weeks) with in-engine screenshots; capsule, 45 s trailer and GIFs improved later | page submitted this week |
+| Short video (TikTok / Shorts / Reels) | 10–15 s clips: circle burst, spell break, Sho's one-liners, pet the cat | 2 a week |
+| Reddit | r/IndieGaming, r/shmups, r/rhythmgames, r/godot, r/playmygame (tester recruiting) | 1 post a week, devlog style |
 | Bluesky / X | GIFs and devlogs, #screenshotsaturday | 3 a week |
 | Devlogs | GitHub repo + itch devlog; the audit log is the source | every release |
-| Creators | 30 small and mid cozy / rhythm / cat YouTubers and streamers, with keys and a press kit | 2 weeks before Next Fest |
+| Creators | 30 small and mid cozy / rhythm / cat YouTubers and streamers, with keys and a press kit; contact via a press@ alias | 2 weeks before Next Fest |
 | Press | indie and cozy sites (Rock Paper Shotgun, PC Gamer indie round-ups, TheGamer) | Next Fest week |
 | Community | Discord (or Steam forums at first), plus a feedback form in the pause menu | from day 7 |
 
@@ -54,16 +54,18 @@ Web demo (GitHub Pages / itch)  ->  Steam page (wishlists)  ->  Next Fest demo  
 | 28 | Polish from tester data, demo-ready build, planets 7–8 in progress | v0.14 (demo RC) |
 | 30 | Go/no-go for submitting the Steam page and Next Fest registration | – |
 
-## 6. KPIs and go/no-go (real players, not simulations)
-| Metric | Source | Go | No-go action |
-|---|---|---|---|
-| Web demo: finish planet 1 | session stats / form | ≥ 70% | Fix onboarding |
-| Demo completion (3 planets) | session stats | ≥ 40% | Shorten or rebalance |
-| Median demo session | session stats | ≥ 15 min | Add content or replay hooks |
-| "Would wishlist" (form) | tester form | ≥ 40% | Revisit the hook and presentation |
-| Spells cast per planet | session stats | ≥ 3, using all 4 shapes | Rebalance spell roles |
-| Steam wishlists before Next Fest | Steamworks | ≥ 2,000 (aim 5,000) | Push creators and short videos harder |
-| Next Fest demo players → wishlists | Steamworks | ≥ 15% | Fix first-10-minutes retention |
+## 6. KPIs and go/no-go (real players; 20 cold testers, so counts, not percentages)
+| Metric | Go | No-go action |
+|---|---|---|
+| Cold external testers recruited | ≥ 20 | < 10: delay tuning, recruit via r/playmygame and itch |
+| Finish planet 1 | ≥ 14 / 20 | Fix onboarding |
+| Cast a spell unprompted on planet 1 | ≥ 16 / 20 | Tutorial and prompt rework |
+| Use 3+ spell shapes | ≥ 12 / 20 | Spell roles and weaknesses |
+| Describe the game with "draw" + "beat" in one sentence | ≥ 10 / 20 | Hook not landing: tutorial + capsule |
+| "Would wishlist" | ≥ 8 / 20 | Presentation and hook |
+| Trackpad users who manage to draw | ≥ 80% | Input rework |
+| Wishlists per day after a social spike (once the page is live) | ≥ 15 | More short video |
+| Wishlists at the Next Fest registration deadline | ≥ 1,000 (aim 3,000) | Skip to the next Next Fest |
 
 ## 7. Budget
 Zero-cash plan as decided: art and audio generated in code, organic marketing.
@@ -79,4 +81,5 @@ Zero-cash plan as decided: art and audio generated in code, organic marketing.
 | Rhythm timing differs on web and Bluetooth audio | First-launch tap calibration; wider PERFECT window on web |
 | Right-click drawing on trackpads and in browsers | Alternative draw input (hold Ctrl + left button); gamepad right-stick drawing |
 | Scope creep | Each iteration ships behind a tag; demo scope frozen on day 21 |
-| Privacy | Session stats stay local; any upload is opt-in and documented |
+| Privacy | Session stats stay local; the feedback form is opt-in, with a 13+ age gate and consent line (COPPA / GDPR-K) |
+| Next Fest timing | Check the February 2027 Next Fest dates and registration deadline in Steamworks this week. Below 1,000 wishlists at the deadline → skip to the following Next Fest |
