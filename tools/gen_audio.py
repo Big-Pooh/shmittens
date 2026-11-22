@@ -171,7 +171,7 @@ def write_meows():
 # ---------------------------------------------------------------- music
 
 MUSIC_OUT = os.path.join(OUT, "Music")
-BARS = 4
+BARS = 32   # sprint 1: arranged tracks (intro 4, A 8, B 8, bridge 4, A' 8) instead of a 4-bar loop
 BEATS_PER_BAR = 4
 
 # name: (bpm, root midi note, chord roots as semitones from root, minor scale lead pattern)
@@ -271,6 +271,70 @@ def pulse25(phase):
     return 1.0 if (phase % 1.0) < 0.25 else -1.0
 
 
+# --- arrangement (sprint 1) ----------------------------------------------------------------
+SECTIONS = [("intro", 4), ("A", 8), ("B", 8), ("bridge", 4), ("A2", 8)]
+
+
+def section_of(bar):
+    b = bar
+    for name, length in SECTIONS:
+        if b < length:
+            return name, b
+        b -= length
+    return "A2", 0
+
+
+def arranged_lead(name):
+    """The lead melody for all 32 bars: motif in A, inverted/lifted in B, long notes in the
+    bridge, an octave-lifted motif in A2, nothing in the intro."""
+    motif = MOTIFS.get(name, LEAD_PATTERNS)
+    out = []
+    for bar in range(BARS):
+        sec, k = section_of(bar)
+        m = motif[k % 4]
+        if sec == "intro":
+            out.append([])
+        elif sec == "A":
+            out.append(list(m))
+        elif sec == "B":
+            out.append([(st, min(7, max(0, 7 - i + (1 if k >= 4 else 0))), ln) for st, i, ln in m])
+        elif sec == "bridge":
+            out.append([(0, m[0][1], 4), (4, m[-1][1], 4)])
+        else:
+            out.append([(st, min(7, i + (2 if k >= 4 else 1)), ln) for st, i, ln in m])
+    return out
+
+
+def chords_for(chords, bar):
+    sec, k = section_of(bar)
+    if sec == "B":
+        return chords[(k + 1) % 4] + 3
+    if sec == "bridge":
+        return [chords[0], chords[2], chords[0], chords[3]][k % 4]
+    return chords[k % 4]
+
+
+_cache = {}
+
+
+def cached(key, fn):
+    if key not in _cache:
+        _cache[key] = fn()
+    return _cache[key]
+
+
+def stamp(buf, start, samples, gain=1.0):
+    n = min(len(samples), len(buf) - start)
+    for i in range(n):
+        buf[start + i] += samples[i] * gain
+
+
+def note_samples(length, freq, vol, wave_fn, decay=3.0, vibrato=0.0):
+    out = [0.0] * length
+    add_note(out, 0, length, freq, vol, wave_fn, decay, vibrato)
+    return out
+
+
 def write_music():
     os.makedirs(MUSIC_OUT, exist_ok=True)
     for name, (bpm, root, chords) in TRACKS.items():
@@ -280,38 +344,50 @@ def write_music():
         drums, bass, arp, lead = ([0.0] * total for _ in range(4))
         at = lambda beats: int(round(beats * beat * RATE))
         boss = name.startswith("boss")
+        kick = cached("kick", lambda: sweep(0.16, 130, 40, 0.55, sine, 2.0))
+        snare = cached("snare", lambda: noise(0.14, 0.32, 2))
+        hat = cached("hat", lambda: noise(0.03, 0.12, 1))
+        lead_bars = arranged_lead(name)
         for bar in range(BARS):
+            sec, k = section_of(bar)
             b0 = bar * BEATS_PER_BAR
-            chord_root = root + chords[bar]
+            chord_root = root + chords_for(chords, bar)
+            # drums: four-on-the-floor (half-time in the bridge, kick only + hats in the intro)
             for q in range(BEATS_PER_BAR):
-                # kick on every beat (four-on-the-floor) so the beat is unmistakable
-                kick = sweep(0.16, 130, 40, 0.55, sine, 2.0)
-                for i, v in enumerate(kick):
-                    if at(b0 + q) + i < total:
-                        drums[at(b0 + q) + i] += v
-                if q in (1, 3):
-                    for i, v in enumerate(noise(0.14, 0.32, 2)):
-                        if at(b0 + q) + i < total:
-                            drums[at(b0 + q) + i] += v
-                for h in (0.5,) + ((0.25, 0.75) if boss else ()):
-                    for i, v in enumerate(noise(0.03, 0.12, 1)):
-                        if at(b0 + q + h) + i < total:
-                            drums[at(b0 + q + h) + i] += v
-            # bass: 8th notes, root / octave
-            for e in range(8):
-                note = chord_root - 12 + (12 if e % 2 else 0)
-                add_note(bass, at(b0 + e / 2), int(eighth * RATE * 0.9), midi_hz(note), 0.22, tri, 4.0)
-            # arp: 16ths over the minor triad, 2 octaves
-            triad = [0, 3, 7, 12, 15, 19, 24, 19]
+                if sec != "bridge" or q in (0, 2):
+                    stamp(drums, at(b0 + q), kick)
+                if q in (1, 3) and sec != "intro":
+                    stamp(drums, at(b0 + q), snare)
+                hats = (0.5,) + ((0.25, 0.75) if boss or sec in ("B", "A2") else ())
+                for h in hats:
+                    stamp(drums, at(b0 + q + h), hat)
+            if sec in ("A", "B", "A2") and k % 4 == 3:   # snare fill closing each phrase
+                for f in (2.5, 3.25, 3.5, 3.75):
+                    stamp(drums, at(b0 + f), snare, 0.7)
+            if boss and sec == "A2":   # bosses build: double kicks at the climax
+                for q in range(BEATS_PER_BAR):
+                    stamp(drums, at(b0 + q + 0.5), kick, 0.6)
+            # bass: 8ths root/octave; whole notes in the bridge; quiet in the intro
+            if sec == "bridge":
+                stamp(bass, at(b0), cached(("bw", chord_root, bpm), lambda: note_samples(int(4 * beat * RATE * 0.95), midi_hz(chord_root - 12), 0.24, tri, 0.6)))
+            elif sec != "intro" or k >= 2:
+                for e in range(8):
+                    note = chord_root - 12 + (12 if e % 2 else 0) + (7 if sec == "B" and e in (6, 7) else 0)
+                    stamp(bass, at(b0 + e / 2), cached(("b8", note, bpm), lambda: note_samples(int(eighth * RATE * 0.9), midi_hz(note), 0.22, tri, 4.0)))
+            # arp: 16ths over the minor triad (an octave up in the bridge, every other 16th in the intro)
+            triad = [0, 3, 7, 12, 15, 19, 24, 19] if sec != "B" else [0, 4, 7, 12, 16, 19, 24, 19]
             for s16 in range(16):
-                note = chord_root + 12 + triad[s16 % len(triad)]
-                add_note(arp, at(b0 + s16 / 4), int(beat / 4 * RATE * 0.8), midi_hz(note), 0.07, pulse25, 8.0)
-            # lead: pentatonic phrase per bar
-            for step, idx, length in MOTIFS.get(name, LEAD_PATTERNS)[bar % 4]:
-                note = root + 12 + MINOR_PENTATONIC[idx] + (chords[bar] if boss else 0)
-                add_note(lead, at(b0 + step / 2), int(length * eighth * RATE * 0.95), midi_hz(note), 0.12, square, 1.5, 0.006)
+                if sec == "intro" and s16 % 2:
+                    continue
+                note = chord_root + 12 + triad[s16 % len(triad)] + (12 if sec == "bridge" else 0)
+                stamp(arp, at(b0 + s16 / 4), cached(("a", note, bpm), lambda: note_samples(int(beat / 4 * RATE * 0.8), midi_hz(note), 0.07, pulse25, 8.0)))
+            # lead
+            for step, idx, length in lead_bars[bar]:
+                note = root + 12 + MINOR_PENTATONIC[idx] + (chords_for(chords, bar) if boss else 0)
+                stamp(lead, at(b0 + step / 2), cached(("l", note, length, bpm), lambda: note_samples(int(length * eighth * RATE * 0.95), midi_hz(note), 0.12, square, 1.5, 0.006)))
         for layer, buf in (("drums", drums), ("bass", bass), ("arp", arp), ("lead", lead)):
             write_loop("%s_%s.wav" % (name, layer), buf)
+        print("  track", name, "done", flush=True)
     print("wrote %d music tracks x 4 layers to %s" % (len(TRACKS), os.path.normpath(MUSIC_OUT)))
     write_patterns()
 
@@ -328,7 +404,7 @@ def write_patterns():
         f.write("const SCALE_STEPS = %d\n" % len(MINOR_PENTATONIC))
         f.write("const BY_TRACK = {\n")
         for name in TRACKS:
-            bars = ["[" + ", ".join("[%d, %d, %d]" % n for n in bar) + "]" for bar in MOTIFS.get(name, LEAD_PATTERNS)]
+            bars = ["[" + ", ".join("[%d, %d, %d]" % n for n in bar) + "]" for bar in arranged_lead(name)]
             f.write('\t"%s": [%s],\n' % (name, ", ".join(bars)))
         f.write("}\n")
         f.write("const LEAD = BY_TRACK[\"level1\"]   # default / tests\n\n\n")

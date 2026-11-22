@@ -43,6 +43,11 @@ CYAN = (140, 235, 255, 255)
 GLASS = (190, 240, 255, 255)
 
 
+def ANIMATED(name):
+    """Every mouse, boss and companion gets a blink/bob frame (shots and pickups don't)."""
+    return not (name.startswith("shot") or name in ("enemy_shot.png", "player_shot.png", "cheese.png", "battery.png", "yarn.png", "shield_plate.png", "mech_core.png"))
+
+
 class Canvas:
     def __init__(self, w, h):
         self.w, self.h = w, h
@@ -105,6 +110,22 @@ class Canvas:
     def save(self, name):
         rows = [[c if c else (0, 0, 0, 0) for c in row] for row in self.px]
         write_png_rgba(os.path.join(OUT, name), rows)
+        if ANIMATED(name):
+            write_png_rgba(os.path.join(OUT, name.replace(".png", "_b.png")), self._blink_frame())
+
+    def _blink_frame(self):
+        """Sprint 2 animation: frame B = eyes closed (EYE pixels that have EYE below become the
+        colour to their left; white highlights next to eyes become EYE) and the sprite bobbed
+        down 1 px. The game swaps A/B on every beat, so the whole cast dances to the music."""
+        px = [row[:] for row in self.px]
+        for y in range(self.h - 1):
+            for x in range(self.w):
+                if px[y][x] == EYE and self.px[y + 1][x] == EYE:
+                    px[y][x] = self.px[y][x - 1] if x > 0 and self.px[y][x - 1] not in (EYE, WHITE, None) else self.px[y][min(x + 1, self.w - 1)]
+                elif px[y][x] == WHITE and any(self.px[y + dy][x + dx] == EYE for dx, dy in ((1, 0), (0, 1), (-1, 0)) if 0 <= x + dx < self.w and 0 <= y + dy < self.h):
+                    px[y][x] = EYE
+        shifted = [[None] * self.w] + px[:-1]
+        return [[c if c else (0, 0, 0, 0) for c in row] for row in shifted]
 
 
 def wind_key(c, x, y):

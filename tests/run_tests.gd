@@ -1251,11 +1251,16 @@ func _lead_note_tests():
 	conductor.lead_note.connect(func(pitch, length): notes.append([pitch, length]))
 	conductor.time_override = 0.0
 	conductor.play("level1", 2)
-	# advance one full bar (8 eighth notes) of the first bar's melody
-	conductor.time_override = 4 * conductor.seconds_per_beat - 0.01
+	# sprint 1: bars 1-4 are the intro (no lead); check bar 5, the first bar of section A
+	var MPL = load("res://scripts/music_patterns.gd").lead("level1")
+	conductor.time_override = 16 * conductor.seconds_per_beat - 0.01
 	await process_frame
 	await process_frame
-	check(notes.size() == MusicPatterns.LEAD[0].size() and notes[0] == [MusicPatterns.LEAD[0][0][1], MusicPatterns.LEAD[0][0][2]], "Conductor emits the lead melody notes of bar 1 (%d)" % notes.size())
+	check(notes.is_empty(), "the intro (bars 1-4) has no lead melody")
+	conductor.time_override = 20 * conductor.seconds_per_beat - 0.01
+	await process_frame
+	await process_frame
+	check(notes.size() == MPL[4].size() and notes[0] == [MPL[4][0][1], MPL[4][0][2]], "Conductor emits the lead melody notes of bar 5 (%d)" % notes.size())
 	conductor.time_override = -1.0
 
 
@@ -2156,6 +2161,17 @@ func _designer7_tests():
 	check(made.any(func(e): return e.curve != 0.0) and made.any(func(e): return e.accel > 0.0) and made.any(func(e): return e.bounces > 0) and made.any(func(e): return e.split > 0), "new patterns: curving, accelerating, bouncing and splitting bullets")
 	pb.queue_free()
 	await _clear_world()
+	# sprint 1 + 2: arranged music (32 bars) and beat-synced animation frames
+	check(load("res://scripts/music_patterns.gd").BARS == 32, "tracks are 32-bar arrangements, not 4-bar loops")
+	var g = load("res://scenes/enemies/grunt.tscn").instantiate()
+	main.add_child(g)
+	await frames(1)
+	var tex_a = g.sprite.texture
+	g._anim_beat(1)
+	var tex_b = g.sprite.texture
+	g._anim_beat(2)
+	check(tex_b != tex_a and g.sprite.texture == tex_a, "mice swap to their blink/bob frame on every other beat")
+	g.queue_free()
 
 func Boss_names_ok() -> bool:
 	var names = load("res://scenes/enemies/bosses/boss.gd").SPELL_NAMES

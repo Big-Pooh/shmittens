@@ -102,6 +102,10 @@ func _ready():
 	super()
 	add_to_group("bosses")
 	health_changed.emit(health, max_health)
+	# sprint 2: a bouncy entrance
+	sprite.scale = base_scale * 0.3
+	create_tween().tween_property(sprite, "scale", base_scale, 0.6).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_flash(Color(2, 2, 2.5))
 	Conductor.lead_note.connect(_on_lead_note)
 	Conductor.eighth.connect(_on_eighth)
 	if cards.is_empty():
