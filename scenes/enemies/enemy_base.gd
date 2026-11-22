@@ -44,7 +44,7 @@ func _ready():
 
 
 func tutorial_exempt() -> bool:
-	return Game.tutorial_mode or Game.player_ref == null
+	return Game.tutorial_mode
 
 
 func _physics_process(delta):

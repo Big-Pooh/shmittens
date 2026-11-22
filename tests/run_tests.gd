@@ -54,6 +54,10 @@ func frames(n: int):
 
 
 func _start_main():
+	# CI has no saved settings (tutorial "not done"): a title Start earlier in the run would leave
+	# tutorial mode on, so every main-scene test starts outside the tutorial explicitly.
+	root.get_node("Game").tutorial_mode = false
+	root.get_node("Game").endless_mode = false
 	change_scene_to_file("res://scenes/main.tscn")
 	# the scene switch happens on the next rendered frame
 	for i in 3:
