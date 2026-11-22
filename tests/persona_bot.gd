@@ -4,23 +4,25 @@ extends Node
 # WASD via Input actions, aim via Game.aim_override, clicks via Gun.click() at planned times
 # around the beat, held fire via the "shoot" action, gestures via GestureInput begin/add/finish.
 # Personas differ in timing accuracy, reaction, dodging, pickup greed and gesture skill.
+# Dodging calibrated to playtest 1 (a human "could dodge everything easily" where the old average
+# bot died ~2x per minute): dodge chance noob 0.7 / average 0.95 / speedrunner 0.99.
 
 const PERSONAS = {
 	"noob": {
 		"timing_sigma": 0.13, "timing_bias": 0.06, "click_prob": 0.35, "spam_per_sec": 1.2,
-		"hold_prob": 0.55, "reaction": 0.45, "dodge_chance": 0.5, "pickup_radius": 150.0,
+		"hold_prob": 0.55, "reaction": 0.40, "dodge_chance": 0.7, "pickup_radius": 150.0,
 		"aim_error": 45.0, "home_x": 220.0, "gesture_min_charges": 2, "gesture_noise": 0.16,
 		"gesture_mess_chance": 0.25, "draw_time": 1.3, "release_on_beat": false, "release_sigma": 0.2,
 	},
 	"average": {
 		"timing_sigma": 0.06, "timing_bias": 0.02, "click_prob": 0.75, "spam_per_sec": 0.3,
-		"hold_prob": 0.25, "reaction": 0.25, "dodge_chance": 0.8, "pickup_radius": 320.0,
+		"hold_prob": 0.25, "reaction": 0.22, "dodge_chance": 0.95, "pickup_radius": 320.0,
 		"aim_error": 15.0, "home_x": 260.0, "gesture_min_charges": 1, "gesture_noise": 0.07,
 		"gesture_mess_chance": 0.05, "draw_time": 0.8, "release_on_beat": true, "release_sigma": 0.07,
 	},
 	"speedrunner": {
 		"timing_sigma": 0.025, "timing_bias": 0.0, "click_prob": 0.98, "spam_per_sec": 0.0,
-		"hold_prob": 0.05, "reaction": 0.13, "dodge_chance": 0.95, "pickup_radius": 450.0,
+		"hold_prob": 0.05, "reaction": 0.12, "dodge_chance": 0.99, "pickup_radius": 450.0,
 		"aim_error": 5.0, "home_x": 420.0, "gesture_min_charges": 1, "gesture_noise": 0.04,
 		"gesture_mess_chance": 0.0, "draw_time": 0.5, "release_on_beat": true, "release_sigma": 0.03,
 	},
