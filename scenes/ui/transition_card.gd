@@ -79,7 +79,7 @@ func _ready():
 		_text("NEXT: LEVEL %d - %s" % [next + 1, nl.title], 30, GOLD, 480)
 		_text(nl.story, 22, Color(0.9, 0.9, 1), 525)
 	_text(Banter.pick(Banter.MAP_TIPS), 18, Color(1, 0.85, 0.6), 610)
-	_text("SPACE - continue", 18, Color(0.7, 0.7, 0.85), 650)
+	_text(Game.btn("SPACE", "A") + " - continue", 18, Color(0.7, 0.7, 0.85), 650)
 	var tween = create_tween()
 	tween.tween_interval(0.6)
 	tween.tween_property(cat, "position:x", MAP_X0 + min(next + 1, _stops() - 1) * MAP_DX, 2.2).set_trans(Tween.TRANS_SINE)

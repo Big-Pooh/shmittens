@@ -82,6 +82,7 @@ Resume a session by reading this file and `docs/PLAN.md` only. The full history 
 ## ACTIVE GOAL (2026-11-22): every senior-designer score ≥ 7, then ship
 Branch `iterate/designer-7`. **Do not release or deploy Pages until the designer scores every category ≥ 7.** v0.11.0 stays live. Push commits for backup only.
 Designer v0.11 scores: core loop 7, feel 7, onboarding 6, content 4, presentation 5, GTM 4.
+**Now (2026-11-22, commit after 4fce754):** core 7, feel 7, onboarding 7 (conditional), content 6, presentation 7, GTM 5. The rest is blocked on the owner (Steam page) and real cold testers; see AUDIT_LOG Phase 16.
 
 **Checklist** (✅ done · ⬜ to build · 👤 needs the owner or real players):
 - **Onboarding**

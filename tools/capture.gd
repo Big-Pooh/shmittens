@@ -30,6 +30,7 @@ func _attach(persona: String):
 	for tip in ["spell_cards", "overdrive", "bomb", "companions", "mech", "weakness"]:
 		game.tips_seen[tip] = true   # no tutorial pop-ups in marketing footage
 	main.hud._update_wave_label()
+	main.crosshair.sprite.visible = false   # no cursor over the HUD in store shots
 	main.get_node("Shmitten").is_invulnerable = true   # keep the footage going
 	bot = load("res://tests/persona_bot.gd").new()
 	bot.setup(persona, 7, {})

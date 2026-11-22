@@ -433,6 +433,7 @@ func _on_weapon(w: int):
 
 func _on_dance(active: bool):
 	dance_label.visible = active
+	dance_label.text = "DANCE BREAK!  tap %s on the beat" % Game.btn("SPACE", "A")
 
 
 func _on_fever(active: bool):

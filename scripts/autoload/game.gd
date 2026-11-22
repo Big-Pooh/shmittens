@@ -184,6 +184,20 @@ func open_feedback():
 func open_bug_report():
 	OS.shell_open(BUG_URL)
 var skip_intro = false   # tests and simulations start games without the story
+# Button prompts follow the last input device (store page claims gamepad support).
+var using_pad = false
+
+
+func _input(event):
+	if event is InputEventJoypadButton or (event is InputEventJoypadMotion and absf(event.axis_value) > 0.5):
+		using_pad = true
+	elif event is InputEventKey or event is InputEventMouseButton:
+		using_pad = false
+
+
+# A button prompt: btn("SPACE", "A") -> "A" when the last input came from a gamepad.
+func btn(keyboard: String, pad: String) -> String:
+	return pad if using_pad else keyboard
 # BOMB (playtest 5: 11 bombs in one run crowded out drawing -> cut to about a quarter): one bomb
 # per planet, and it needs at least BOMB_MIN_CHARGES charges. TOUHOU keeps its free bomb per life.
 const BOMB_MIN_CHARGES = 2

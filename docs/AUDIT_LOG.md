@@ -1067,3 +1067,65 @@ You approved fixes 1–3.
 - **Beginner who never picks Relaxed (Monte Carlo):** 7 / 13 / 28 / 22% drop by planet before the turret easing.
 
 **Tests:** 299 passing.
+
+## Phase 16: iterate until the senior designer scores ≥ 7 everywhere (branch `iterate/designer-7`, not released)
+**Rule from the owner:** no release below 7. v0.11.0 stays live while we iterate.
+
+### Score history
+| Category | v0.10 | v0.11 | Pass 1 | Pass 2 | Now |
+|---|---|---|---|---|---|
+| Core loop | 7 | 7 | 7 | 7 | **7** |
+| Game feel | 7 | 7 | 7 | 7 | **7** |
+| Onboarding | 6 | 6 | 7* | 7* | **7*** |
+| Content depth | 3 | 4 | 6 | 6 | **6** (blocked by real players) |
+| Presentation | 4 | 5 | 6 | 6 | **7** |
+| GTM readiness | 3 | 4 | 5 | 5 | **5** (blocked by owner actions) |
+
+\* Conditional: holds if at least 4 of 5 cold testers finish the tutorial and use all 4 spells.
+
+### What was built
+- **Onboarding:**
+  - RHYTHM CHECK calibration (12 taps, median error becomes `offset_ms`; automatic on the first web launch, plus a title button);
+  - PERFECT window +15 ms on web;
+  - first-unlock tips (companions, mech parts, card weakness);
+  - Ratopolis eased.
+- **Content:**
+  - 10 waves per planet;
+  - 3 unique mid-bosses with their own sprites and 2 cards each, each with a new pattern: Tanky Jr. (Baby Snake), Saucer Scout (Searchlight), Royal Guard (Spear Pincer);
+  - Splitter and Beat-Bomber mice, for 8 enemy types;
+  - planet ranks plus 3 challenges (no hits, capture every card, all 4 spells), shown as stars on the map and level select and live on the HUD;
+  - the shmup "rank" system: enemy health grows with gun level;
+  - beginner care: mice −15% per assist level, a halfway 1UP, one Splitter mini when assisted, Flexor bullets ×1.2.
+- **Persona model:**
+  - the average bot is re-fitted to the human sessions (dodge 0.95 → 0.88, aim error 15 → 28 px, clicks 0.75 → 0.65);
+  - average story run is now 9.8–10.0 min;
+  - a beginner who never picks Relaxed drops 4 / 22 / 18 / 26% by planet. The model quits 22% of the time per game over, which sets that floor.
+- **Presentation:**
+  - per-planet parallax backdrops (far and near layers plus sparks, drips, petals or embers);
+  - a distinct melody per planet, with boss variations on the same motif;
+  - a 50 ms hit-pause;
+  - animated speaker portraits in speech bubbles;
+  - **text lanes:** the HUD band, a queued banner lane, and popups and bubbles below it (bubbles never overlap);
+  - one name per spell (CIRCLE BURST, LINE SLASH, ZIGZAG BOLT, TRIANGLE SHIELD) with weakness icons;
+  - PERFECT/GOOD shown in one fixed spot above the beat bar;
+  - a compact spell-guide strip in boss fights;
+  - FEVER moved into the combo line;
+  - button prompts follow the last input device (SPACE ↔ A).
+- **GTM:**
+  - gamepad support (sticks, buttons, LT + right stick to draw);
+  - Feedback and Report-bug buttons linking to GitHub issue templates (with a 13+ consent box);
+  - the version shown on the title;
+  - a demo build flag with an end-of-demo wishlist screen;
+  - the capsule set rendered in-engine (`tools/capsules.gd`);
+  - 6 store screenshots from bot footage (`tools/capture.gd`), with no overlapping text and no cursor;
+  - raw trailer footage (`build/trailer/*.avi`).
+
+### What is left, and who
+- **Content 6 → 7:** 3+ cold testers' first runs, including retries, reach 15 min. **Owner / real players.**
+- **GTM 5 → 7:**
+  - the Steam "Coming Soon" page live (**owner**);
+  - the 45 s trailer cut from the footage (owner or editor; ffmpeg isn't installed here);
+  - 10+ cold web sessions plus the survey (median fun ≥ 4/5, wishlist intent ≥ 40%);
+  - web performance measured on a 2020-class laptop.
+
+**Tests:** 323 passing. CI runs on every push.

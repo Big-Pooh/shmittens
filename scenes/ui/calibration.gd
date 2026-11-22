@@ -43,7 +43,7 @@ func _ready():
 
 
 func _update_text():
-	label.text = "RHYTHM CHECK\nTap SPACE exactly on every thump of the drum (%d / %d)\nEsc - skip" % [errors.size(), TAPS_NEEDED]
+	label.text = "RHYTHM CHECK\nTap %s exactly on every thump of the drum" % Game.btn("SPACE", "A") + " (%d / %d)\nEsc - skip" % [errors.size(), TAPS_NEEDED]
 
 
 func _process(_delta):

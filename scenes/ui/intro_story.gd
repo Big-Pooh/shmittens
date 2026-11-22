@@ -48,7 +48,7 @@ func _ready():
 	text.add_theme_constant_override("outline_size", 7)
 	add_child(text)
 	hint = Label.new()
-	hint.text = "SPACE / click - next      Esc - skip"
+	hint.text = Game.btn("SPACE / click", "A") + " - next      " + Game.btn("Esc", "START") + " - skip"
 	hint.position = Vector2(0, 670)
 	hint.size = Vector2(1280, 30)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
