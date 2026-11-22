@@ -30,6 +30,7 @@ var alive = 0
 var bars_to_wait = 0
 var boss: Boss
 var from_wave = 0
+var endless = false
 var level_seconds = 0.0   # game time spent fighting this level (waves + boss)
 var last_rank = ""
 
@@ -62,6 +63,22 @@ func _process(delta):
 		level_seconds += delta
 
 
+# Endless mode: no level ends; bosses every Endless.BOSS_EVERY waves.
+func start_endless():
+	endless = true
+	level_index = 0
+	wave_index = -1
+	from_wave = 0
+	alive = 0
+	boss = null
+	state = State.INTRO
+	level_seconds = 0.0
+	bars_to_wait = RETRY_INTRO_BARS
+	Game.set_level(0, 0)
+	Conductor.play(Endless.TRACKS[0], Game.multiplier() + 1)
+	level_started.emit(level_index)
+
+
 func stop():
 	state = State.IDLE
 
@@ -88,11 +105,16 @@ func _on_bar(_n: int):
 				start_level(level_index + 1)
 			else:
 				state = State.DONE
+				Game.story_complete = true
+				Game.save_settings()
 				all_levels_cleared.emit()
 
 
 func _next_wave():
 	wave_index += 1
+	if endless:
+		_next_endless_wave()
+		return
 	var waves = level().waves
 	if wave_index >= waves.size():
 		_start_boss_intro()
@@ -138,10 +160,35 @@ func _spawn_boss():
 	boss_spawned.emit(boss)
 
 
+func _next_endless_wave():
+	var stage = Endless.stage(wave_index)
+	if Game.level != stage:
+		Game.level = stage
+		Conductor.play(Endless.TRACKS[stage], Game.multiplier() + 1)
+	Game.set_wave(wave_index + 1)
+	if Endless.is_boss_wave(wave_index):
+		state = State.BOSS
+		boss = Levels.create_boss(stage)
+		boss.max_health *= Endless.boss_health_scale(wave_index)
+		boss.died.connect(func(_b): state = State.WAVES)
+		get_tree().current_scene.add_child(boss)
+		boss_spawned.emit(boss)
+		return
+	for group in Endless.wave_groups(wave_index):
+		for enemy in Levels.create_group(group):
+			enemy.tree_exited.connect(_on_enemy_gone)
+			alive += 1
+			get_tree().current_scene.add_child.call_deferred(enemy)
+	wave_started.emit(wave_index, 0)
+
+
 func _on_boss_died(_boss):
+	if endless:
+		return
 	var ratio = float(Game.level_perfects) / max(Game.level_judged, 1)
 	last_rank = Levels.rank(level_seconds, level().par_seconds, ratio, Game.assist > 0 or from_wave > 0)
 	Game.ranks.append(last_rank)
+	Game.record_level_clear(level_index)
 	state = State.CLEARED
 	bars_to_wait = CLEARED_BARS
 	level_cleared.emit(level_index)

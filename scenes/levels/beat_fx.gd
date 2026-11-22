@@ -41,7 +41,7 @@ func _on_beat(n: int):
 		var at = Vector2(randf_range(0, Game.SCREEN.size.x), randf_range(0, Game.SCREEN.size.y))
 		var velocity = Vector2.from_angle(randf() * TAU) * randf_range(20, 70)
 		sparkles.append([at, velocity, 0.0, color, randf_range(2.0, 4.0) * (1.4 if downbeat else 1.0)])
-	edge_glow = 1.0 if downbeat else 0.55
+	edge_glow = (1.0 if downbeat else 0.55) * (0.4 if Game.reduce_effects else 1.0)
 	edge_color = color
 
 

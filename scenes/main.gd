@@ -35,6 +35,8 @@ func _ready():
 		var tutorial = Tutorial.new()
 		tutorial.name = "Tutorial"
 		add_child(tutorial)
+	elif Game.endless_mode:
+		level_runner.start_endless()
 	else:
 		level_runner.start_level(Game.start_level, Game.start_wave)
 
@@ -55,6 +57,9 @@ func _exit_tree():
 
 
 func _on_level_started(index: int):
+	if Game.endless_mode:
+		hud.show_message("ENDLESS\nbest %d" % Game.best_scores.get("endless", 0))
+		return
 	var level = Levels.LEVELS[index]
 	if level_runner.from_wave > 0:
 		var where = "the boss" if level_runner.from_wave >= level.waves.size() else "wave %d" % (level_runner.from_wave + 1)
@@ -108,6 +113,13 @@ func _on_all_levels_cleared():
 
 
 func _on_game_over():
+	if Game.endless_mode:
+		var best = Game.record_score("endless")
+		level_runner.stop()
+		Conductor.stop()
+		crosshair.set_captured(false)
+		hud.show_message("GAME OVER - wave %d\nscore %d%s\nR - play again     Esc - title" % [Game.wave, Game.score, "   NEW BEST!" if best else "   (best %d)" % Game.best_scores.get("endless", 0)])
+		return
 	game_over_checkpoint = level_runner.checkpoint()
 	level_runner.stop()
 	Conductor.stop()
@@ -126,6 +138,9 @@ func _unhandled_input(event):
 
 # Game over -> retry from the checkpoint with one more assist level (beginner care).
 func retry():
+	if Game.endless_mode:
+		get_tree().reload_current_scene()
+		return
 	Game.start_level = Game.level
 	Game.start_wave = game_over_checkpoint
 	Game.add_assist()

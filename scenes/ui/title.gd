@@ -7,6 +7,7 @@ const CAT_SHEET = preload("res://Art/Popo-AnimationSheet.png")
 const GOLD = Color(1, 0.82, 0.25)
 
 var cat: Sprite2D
+var settings: SettingsMenu
 var time = 0.0
 
 
@@ -34,16 +35,42 @@ func _ready():
 	add_child(cat)
 
 	var buttons = VBoxContainer.new()
-	buttons.position = Vector2(540, 470)
+	buttons.position = Vector2(540, 440)
 	buttons.custom_minimum_size = Vector2(200, 0)
 	buttons.add_theme_constant_override("separation", 12)
 	add_child(buttons)
 	var start = Button.new()
 	start.name = "Start"
-	start.text = "START"
+	start.text = "NEW GAME" if Game.unlocked_level > 0 else "START"
 	start.custom_minimum_size = Vector2(200, 50)
 	start.pressed.connect(start_game)
 	buttons.add_child(start)
+	if Game.unlocked_level > 0:
+		# saved progress: continue at the furthest level, or pick any unlocked level
+		var cont = Button.new()
+		cont.text = "CONTINUE (LEVEL %d)" % (Game.unlocked_level + 1)
+		cont.custom_minimum_size = Vector2(200, 44)
+		cont.pressed.connect(func(): start_level(Game.unlocked_level))
+		buttons.add_child(cont)
+		var row = HBoxContainer.new()
+		for i in Game.unlocked_level + 1:
+			var b = Button.new()
+			b.text = "L%d" % (i + 1)
+			b.tooltip_text = "Best: %d" % Game.best_scores.get("level%d" % (i + 1), 0)
+			b.pressed.connect(start_level.bind(i))
+			row.add_child(b)
+		buttons.add_child(row)
+	if Game.story_complete:
+		var endless = Button.new()
+		endless.text = "ENDLESS (best %d)" % Game.best_scores.get("endless", 0)
+		endless.custom_minimum_size = Vector2(200, 44)
+		endless.pressed.connect(start_endless)
+		buttons.add_child(endless)
+	var settings_button = Button.new()
+	settings_button.text = "SETTINGS"
+	settings_button.custom_minimum_size = Vector2(200, 44)
+	settings_button.pressed.connect(func(): settings.open())
+	buttons.add_child(settings_button)
 	var tutorial = Button.new()
 	tutorial.text = "TUTORIAL"
 	tutorial.custom_minimum_size = Vector2(200, 44)
@@ -55,6 +82,8 @@ func _ready():
 	quit.pressed.connect(func(): get_tree().quit())
 	buttons.add_child(quit)
 	start.grab_focus()
+	settings = SettingsMenu.new()
+	add_child(settings)
 
 	var controls = _label("WASD move  ·  mouse aims  ·  SPACE on the beat to shoot  ·  hold right-click and draw to cast skills  ·  Esc pause", 16, Color(0.7, 0.7, 0.8))
 	controls.position = Vector2(0, 670)
@@ -81,6 +110,7 @@ func _process(delta):
 
 # First time: the tutorial runs before Level 1 (it can be skipped with Tab).
 func start_game():
+	Game.endless_mode = false
 	Game.ranks.clear()
 	Game.start_level = 0
 	Game.start_wave = 0
@@ -89,7 +119,26 @@ func start_game():
 	get_tree().change_scene_to_file(MAIN_SCENE)
 
 
+func start_level(index: int):
+	Game.endless_mode = false
+	Game.tutorial_mode = false
+	Game.ranks.clear()
+	Game.start_level = index
+	Game.start_wave = 0
+	Game.clear_assist()
+	get_tree().change_scene_to_file(MAIN_SCENE)
+
+
+func start_endless():
+	Game.endless_mode = true
+	Game.tutorial_mode = false
+	Game.start_wave = 0
+	Game.clear_assist()
+	get_tree().change_scene_to_file(MAIN_SCENE)
+
+
 func start_tutorial():
+	Game.endless_mode = false
 	Game.start_wave = 0
 	Game.clear_assist()
 	Game.tutorial_mode = true

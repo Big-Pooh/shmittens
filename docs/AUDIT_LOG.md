@@ -617,3 +617,14 @@ Full tables are in `docs/KPI.md`; raw reports are in `montecarlo/report_original
 - Fun 43%; drop 16 / 15 / 12%; completion 63%; endorsement 23%; intent 18%; GTM 3%.
 - Session about 6 min; feature checklist 40%.
 - Saved in `montecarlo/panel_report_iter0.md`.
+
+### Iteration 1: standard features
+- **Settings** (title and pause): music and sound-effect volume (on separate audio channels), fullscreen, **reduce effects** (no shake, softer flashes and glow), **relaxed mode** (always at least assist 1). All saved.
+- **Progress saving:** levels unlock as cleared; CONTINUE and a level select on the title screen; best score per level.
+- **Endless mode,** unlocked after the story:
+  - a tour of all 15 story waves, with +12% enemy health per wave;
+  - a boss every 5 waves;
+  - music advances after each boss; best score saved.
+- **Tests:** 164, all passing. They save and restore your real settings and progress.
+- **Panel results:** fun 43 → 53%; endorsement 23 → 77%; intent 18 → 36% ✅; GTM 3 → 23%; checklist 40 → 100%.
+  - **Model caveat:** the checklist weighs heavily in polish, so features move these scores by design.

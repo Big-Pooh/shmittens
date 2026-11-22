@@ -186,6 +186,7 @@ func _run():
 	await _guardian_tests()
 	await _fever_tests()
 	_volley_rate_tests()
+	await _iteration1_tests()
 	await _screen_tests()
 
 	print("%d passed, %d failed" % [passed, failed])
@@ -1114,3 +1115,59 @@ func _lead_note_tests():
 	await process_frame
 	check(notes.size() == MusicPatterns.LEAD[0].size() and notes[0] == [MusicPatterns.LEAD[0][0][1], MusicPatterns.LEAD[0][0][2]], "Conductor emits the lead melody notes of bar 1 (%d)" % notes.size())
 	conductor.time_override = -1.0
+
+
+# ---------------------------------------------------------------- GTM iteration 1: settings, progress, endless
+
+func _iteration1_tests():
+	var saved = {"music": game.music_volume, "sfx": game.sfx_volume, "reduce": game.reduce_effects, "relaxed": game.relaxed_mode,
+		"unlocked": game.unlocked_level, "story": game.story_complete, "best": game.best_scores.duplicate()}
+	# settings persist
+	game.music_volume = 0.3
+	game.save_settings()
+	game.music_volume = 0.9
+	game.load_settings()
+	check(is_equal_approx(game.music_volume, 0.3), "settings are saved and loaded")
+	game.apply_settings()
+	check(is_equal_approx(db_to_linear(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("Music"))), 0.3), "music volume applies to the Music bus")
+	# reduce effects disables shake; relaxed mode keeps assist >= 1
+	await _start_main()
+	main.level_runner.stop()
+	game.reduce_effects = true
+	game.shake(15.0)
+	await frames(2)
+	check(main.position == Vector2.ZERO, "reduce effects disables screen shake")
+	game.reduce_effects = false
+	game.relaxed_mode = true
+	game.clear_assist()
+	check(game.assist == 1, "relaxed mode starts with assist 1")
+	game.carry_assist()
+	check(game.assist == 1, "relaxed mode never drops below assist 1")
+	game.relaxed_mode = false
+	game.clear_assist()
+	# progress: clearing a level unlocks the next and records the best score
+	game.unlocked_level = 0
+	game.score = 1234
+	game.record_level_clear(0)
+	check(game.unlocked_level == 1 and game.best_scores.get("level1", 0) >= 1234, "level clear unlocks the next level and saves the best score")
+	# endless waves scale up; bosses every 5th wave
+	var e = load("res://scenes/levels/endless.gd")
+	check(e.is_boss_wave(4) and not e.is_boss_wave(3) and e.stage(5) == 1, "endless: boss every 5 waves, music stage advances")
+	check(e.wave_groups(10)[0].health > e.wave_groups(0)[0].health or e.wave_groups(10)[0].enemy != e.wave_groups(0)[0].enemy, "endless waves get tougher")
+	game.endless_mode = true
+	change_scene_to_file("res://scenes/main.tscn")   # not _start_main(): that stops the runner
+	for i in 4:
+		await process_frame
+	main = current_scene
+	check(main.level_runner.endless and main.level_runner.state == main.level_runner.State.INTRO, "endless mode starts from the title flag")
+	game.endless_mode = false
+	# restore the player's real settings and progress
+	game.music_volume = saved.music
+	game.sfx_volume = saved.sfx
+	game.reduce_effects = saved.reduce
+	game.relaxed_mode = saved.relaxed
+	game.unlocked_level = saved.unlocked
+	game.story_complete = saved.story
+	game.best_scores = saved.best
+	game.save_settings()
+	game.apply_settings()

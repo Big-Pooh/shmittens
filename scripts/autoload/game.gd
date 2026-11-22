@@ -73,6 +73,18 @@ var ranks = []   # rank letter per cleared level this run
 var tutorial_mode = false
 # Automated playthroughs aim with this instead of the mouse (null = use the mouse)
 var aim_override = null
+
+# ---- settings + saved progress (user://settings.cfg, shared with the Conductor's beat offset)
+const SETTINGS_PATH = "user://settings.cfg"
+var music_volume = 0.8
+var sfx_volume = 0.8
+var fullscreen = false
+var reduce_effects = false   # accessibility: no screen shake, softer flashes
+var relaxed_mode = false     # accessibility: always at least assist 1 (slower shots, +1 life, guardian)
+var unlocked_level = 0       # highest story level the player may start
+var story_complete = false   # unlocks Endless
+var best_scores = {}         # "level1".."level3", "endless" -> best score
+var endless_mode = false
 var is_game_over = false
 var drawing = false   # true while a skill gesture is being drawn (gun is disabled)
 
@@ -198,12 +210,12 @@ func add_assist():
 
 # New game: no assist.
 func clear_assist():
-	assist = 0
+	assist = 1 if relaxed_mode else 0
 
 
 # Next level: struggling players keep a little help (one level less); others stay at 0.
 func carry_assist():
-	assist = max(assist - 1, 0)
+	assist = max(assist - 1, 1 if relaxed_mode else 0)
 
 
 # Extra warning beats for beams/dashes while assisted.
@@ -213,6 +225,8 @@ func warning_beats(base: int) -> int:
 
 # Screen shake (pixels); the main scene applies it.
 func shake(strength: float):
+	if reduce_effects:
+		return
 	shake_requested.emit(strength)
 
 
@@ -222,6 +236,61 @@ func is_fever() -> bool:
 
 func _ready():
 	Conductor.beat.connect(_on_beat)
+	load_settings()
+	apply_settings()
+
+
+func load_settings():
+	var c = ConfigFile.new()
+	if c.load(SETTINGS_PATH) != OK:
+		return
+	music_volume = c.get_value("audio", "music_volume", music_volume)
+	sfx_volume = c.get_value("audio", "sfx_volume", sfx_volume)
+	fullscreen = c.get_value("video", "fullscreen", fullscreen)
+	reduce_effects = c.get_value("access", "reduce_effects", reduce_effects)
+	relaxed_mode = c.get_value("access", "relaxed_mode", relaxed_mode)
+	unlocked_level = c.get_value("progress", "unlocked_level", unlocked_level)
+	story_complete = c.get_value("progress", "story_complete", story_complete)
+	best_scores = c.get_value("progress", "best_scores", best_scores)
+
+
+func save_settings():
+	var c = ConfigFile.new()
+	c.load(SETTINGS_PATH)   # keep other sections (beat offset, tutorial)
+	c.set_value("audio", "music_volume", music_volume)
+	c.set_value("audio", "sfx_volume", sfx_volume)
+	c.set_value("video", "fullscreen", fullscreen)
+	c.set_value("access", "reduce_effects", reduce_effects)
+	c.set_value("access", "relaxed_mode", relaxed_mode)
+	c.set_value("progress", "unlocked_level", unlocked_level)
+	c.set_value("progress", "story_complete", story_complete)
+	c.set_value("progress", "best_scores", best_scores)
+	c.save(SETTINGS_PATH)
+
+
+func apply_settings():
+	for bus_name in ["Music", "SFX"]:
+		var bus = AudioServer.get_bus_index(bus_name)
+		if bus >= 0:
+			var volume = music_volume if bus_name == "Music" else sfx_volume
+			AudioServer.set_bus_volume_db(bus, linear_to_db(max(volume, 0.0001)))
+	if DisplayServer.get_name() != "headless":
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen else DisplayServer.WINDOW_MODE_WINDOWED)
+
+
+# A story level was cleared: unlock the next one and keep the best score.
+func record_level_clear(level_index: int):
+	unlocked_level = max(unlocked_level, min(level_index + 1, 2))
+	record_score("level%d" % (level_index + 1))
+	save_settings()
+
+
+func record_score(key: String) -> bool:
+	var is_best = score > best_scores.get(key, 0)
+	if is_best:
+		best_scores[key] = score
+		save_settings()
+	return is_best
 
 
 func _on_beat(_n: int):

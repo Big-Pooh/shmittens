@@ -10,6 +10,7 @@ const TITLE_SCENE = "res://scenes/ui/title.tscn"
 var panel: PanelContainer
 var offset_label: Label
 var offset_slider: HSlider
+var settings: SettingsMenu
 
 
 func _ready():
@@ -17,6 +18,8 @@ func _ready():
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build()
 	panel.hide()
+	settings = SettingsMenu.new()
+	add_child(settings)
 
 
 func _build():
@@ -50,6 +53,10 @@ func _build():
 	hint.add_theme_font_size_override("font_size", 14)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(hint)
+	var settings_button = Button.new()
+	settings_button.text = "Settings"
+	settings_button.pressed.connect(func(): settings.open())
+	box.add_child(settings_button)
 	var quit = Button.new()
 	quit.text = "Quit to title"
 	quit.pressed.connect(quit_to_title)
@@ -70,6 +77,8 @@ func toggle():
 	var paused = not get_tree().paused
 	get_tree().paused = paused
 	panel.visible = paused
+	if not paused:
+		settings.close()
 	if paused:
 		offset_slider.set_value_no_signal(Conductor.offset_ms)
 		_update_label()

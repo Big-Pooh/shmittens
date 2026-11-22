@@ -25,10 +25,16 @@ var pool: Array[AudioStreamPlayer] = []
 
 
 func _ready():
+	if AudioServer.get_bus_index("SFX") == -1:
+		AudioServer.add_bus()
+		AudioServer.set_bus_name(AudioServer.bus_count - 1, "SFX")
+		AudioServer.set_bus_send(AudioServer.bus_count - 1, "Master")
 	for i in POOL_SIZE:
 		var player = AudioStreamPlayer.new()
+		player.bus = "SFX"
 		add_child(player)
 		pool.append(player)
+	Game.apply_settings()   # the SFX bus exists now
 
 
 func play(sound_name: String, volume_db: float = 0.0):

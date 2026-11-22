@@ -130,6 +130,8 @@ func _explode():
 
 
 func _flash(color := Color(3, 3, 3)):
+	if Game.reduce_effects:
+		color = Color(1.5, 1.5, 1.5)
 	sprite.modulate = color
 	create_tween().tween_property(sprite, "modulate", Color.WHITE, 0.12)
 
