@@ -614,10 +614,12 @@ func _level_tests():
 	check(runner.state == runner.State.BOSS_INTRO and conductor.track == "boss1", "after the last wave: boss warning + boss music")
 	# a track change restarts the beat clock: restart our fake clock too
 	bar[0] = 0
+	game.lives = 1
 	await next_bar.call()
 	await next_bar.call()
 	var bosses = get_nodes_in_group("bosses")
 	check(runner.state == runner.State.BOSS and bosses.size() == 1, "boss spawns after the 2-bar warning")
+	check(game.lives >= runner.BOSS_MIN_LIVES, "lives are topped up to at least 2 at the boss")
 	if bosses.size() == 1:
 		bosses[0].die()
 	await frames(2)

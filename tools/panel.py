@@ -209,9 +209,10 @@ def main():
     ap.add_argument("--testers", type=int, default=100)
     ap.add_argument("--jobs", type=int, default=os.cpu_count() or 4)
     ap.add_argument("--analyze-only", action="store_true")
+    ap.add_argument("--seed", type=int, default=2026, help="panel seed (different seed = different 100 testers)")
     args = ap.parse_args()
     os.makedirs(RUNS, exist_ok=True)
-    panel = make_panel(args.testers)
+    panel = make_panel(args.testers, args.seed)
     if not args.analyze_only:
         for f in glob.glob(os.path.join(RUNS, "*.json")):
             os.remove(f)

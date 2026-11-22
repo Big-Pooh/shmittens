@@ -153,8 +153,13 @@ func _start_boss_intro():
 	boss_incoming.emit(boss.boss_name)
 
 
+const BOSS_MIN_LIVES = 2   # lives are topped up to at least this when a boss appears
+
 func _spawn_boss():
 	state = State.BOSS
+	if Game.lives < BOSS_MIN_LIVES:
+		Game.lives = BOSS_MIN_LIVES
+		Game.lives_changed.emit(Game.lives)
 	boss.died.connect(_on_boss_died)
 	get_tree().current_scene.add_child(boss)
 	boss_spawned.emit(boss)
