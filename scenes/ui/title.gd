@@ -130,7 +130,14 @@ func _ask_difficulty():
 	q.text = "How do you like your challenge?\n(you can change this any time in Settings)"
 	q.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(q)
-	for option in [["RELAXED  -  slower shots, extra life, a guardian bubble", true], ["NORMAL  -  the intended challenge", false]]:
+	var options = [
+		["RELAXED  -  slower shots, extra life, a guardian bubble", "relaxed"],
+		["NORMAL  -  the intended challenge", "normal"],
+		["HARD  -  faster, denser patterns, no help", "hard"],
+	]
+	if Game.hard_cleared:
+		options.append(["TOUHOU  -  bullet hell: twice the bullets, graze x3, a bomb per life", "touhou"])
+	for option in options:
 		var b = Button.new()
 		b.text = option[0]
 		b.custom_minimum_size = Vector2(0, 48)
@@ -138,8 +145,11 @@ func _ask_difficulty():
 		box.add_child(b)
 
 
-func choose_difficulty(relaxed: bool):
-	Game.relaxed_mode = relaxed
+# difficulty: "relaxed" | "normal" | "hard" | "touhou" (old callers may pass a bool: true = relaxed)
+func choose_difficulty(difficulty):
+	if typeof(difficulty) == TYPE_BOOL:
+		difficulty = "relaxed" if difficulty else "normal"
+	Game.set_difficulty(difficulty)
 	Game.difficulty_chosen = true
 	Game.save_settings()
 	_begin_new_game()

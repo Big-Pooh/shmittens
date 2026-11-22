@@ -114,6 +114,28 @@ var sfx_volume = 0.8
 var fullscreen = false
 var reduce_effects = false   # accessibility: no screen shake, softer flashes
 var relaxed_mode = false     # accessibility: always at least assist 1 (slower shots, +1 life, guardian)
+# Challenge modes (playtest 4): 0 NORMAL, 1 HARD, 2 TOUHOU (unlocked by beating the story on HARD).
+# HARD: faster, denser patterns, tougher bosses, no assists / guardian / second wind.
+# TOUHOU: twice the bullets (a bit slower), bigger graze for triple points, 1 free bomb per life.
+enum Challenge { NORMAL, HARD, TOUHOU }
+const CHALLENGE_NAMES = ["NORMAL", "HARD", "TOUHOU"]
+const CHALLENGE_DENSITY = [1.0, 1.4, 2.0]
+const CHALLENGE_SHOT_SPEED = [1.0, 1.15, 0.9]
+const CHALLENGE_BOSS_HEALTH = [1.0, 1.25, 1.5]
+var challenge = Challenge.NORMAL
+var hard_cleared = false     # unlocks TOUHOU
+var bomb_stock = 0           # TOUHOU: free bombs (1 per life)
+# One-time tips (playtest 4: "I didn't know until the end how spell cards work")
+var tips_seen = {}
+
+
+# Returns true the first time a tip is requested (and remembers it).
+func first_time(tip: String) -> bool:
+	if tips_seen.has(tip):
+		return false
+	tips_seen[tip] = true
+	save_settings()
+	return true
 var difficulty_chosen = false   # first START asks Relaxed / Normal once
 var unlocked_level = 0       # highest story level the player may start
 var story_complete = false   # unlocks Endless
@@ -141,6 +163,7 @@ func reset():
 	drawing = false
 	dancing = false
 	beat_grazes = 0
+	bomb_stock = 1 if is_touhou() else 0
 	if overdrive == 2:
 		overdrive = 1   # an overdrive cut short by a restart stays banked
 	combo_changed.emit(combo, multiplier())
@@ -214,7 +237,7 @@ func set_overdrive(state: int):
 
 func graze(at: Vector2):
 	var on_beat = Conductor.judge() != Conductor.Judgement.MISS
-	add_score(GRAZE_SCORE)
+	add_score(GRAZE_SCORE * (3 if is_touhou() else 1))
 	track("grazes")
 	if on_beat:
 		beat_grazes += 1
@@ -309,7 +332,29 @@ func set_level(value: int, total_waves: int):
 func shot_speed_factor() -> float:
 	var base = LEVEL_SHOT_SPEED[clamp(level, 0, LEVEL_SHOT_SPEED.size() - 1)]
 	var wind = 1.0 - SECOND_WIND_SLOWDOWN if second_wind_active() else 1.0
-	return base * (1.0 - ASSIST_SHOT_SLOWDOWN * assist) * wind
+	return base * (1.0 - ASSIST_SHOT_SLOWDOWN * assist) * wind * CHALLENGE_SHOT_SPEED[challenge]
+
+
+# How many bullets patterns fire (1.0 normal, more on HARD/TOUHOU).
+func density() -> float:
+	return CHALLENGE_DENSITY[challenge]
+
+
+func is_touhou() -> bool:
+	return challenge == Challenge.TOUHOU
+
+
+func difficulty_name() -> String:
+	return "RELAXED" if relaxed_mode else CHALLENGE_NAMES[challenge]
+
+
+# Sets the difficulty: "relaxed", "normal", "hard" or "touhou".
+func set_difficulty(name: String):
+	relaxed_mode = name == "relaxed"
+	challenge = {"hard": Challenge.HARD, "touhou": Challenge.TOUHOU}.get(name, Challenge.NORMAL)
+	if challenge == Challenge.TOUHOU and not hard_cleared:
+		challenge = Challenge.HARD
+	clear_assist()
 
 
 func second_wind_active() -> bool:
@@ -327,6 +372,8 @@ func _process(delta):
 
 # Called on retry after a game over on the same level.
 func add_assist():
+	if challenge != Challenge.NORMAL:
+		return   # HARD / TOUHOU: no help
 	assist = min(assist + 1, MAX_ASSIST)
 
 
@@ -371,6 +418,9 @@ func load_settings():
 	fullscreen = c.get_value("video", "fullscreen", fullscreen)
 	reduce_effects = c.get_value("access", "reduce_effects", reduce_effects)
 	relaxed_mode = c.get_value("access", "relaxed_mode", relaxed_mode)
+	challenge = c.get_value("access", "challenge", challenge)
+	hard_cleared = c.get_value("progress", "hard_cleared", hard_cleared)
+	tips_seen = c.get_value("progress", "tips_seen", tips_seen)
 	difficulty_chosen = c.get_value("access", "difficulty_chosen", difficulty_chosen)
 	unlocked_level = c.get_value("progress", "unlocked_level", unlocked_level)
 	story_complete = c.get_value("progress", "story_complete", story_complete)
@@ -387,6 +437,9 @@ func save_settings():
 	c.set_value("video", "fullscreen", fullscreen)
 	c.set_value("access", "reduce_effects", reduce_effects)
 	c.set_value("access", "relaxed_mode", relaxed_mode)
+	c.set_value("access", "challenge", challenge)
+	c.set_value("progress", "hard_cleared", hard_cleared)
+	c.set_value("progress", "tips_seen", tips_seen)
 	c.set_value("access", "difficulty_chosen", difficulty_chosen)
 	c.set_value("progress", "unlocked_level", unlocked_level)
 	c.set_value("progress", "story_complete", story_complete)
@@ -437,7 +490,7 @@ func lose_life() -> int:
 	level_deaths += 1
 	recent_deaths.append(play_time)
 	recent_deaths = recent_deaths.filter(func(t): return play_time - t <= SECOND_WIND_WINDOW)
-	if recent_deaths.size() >= 2:
+	if recent_deaths.size() >= 2 and challenge == Challenge.NORMAL:
 		var was_active = second_wind_active()
 		second_wind_until = play_time + SECOND_WIND_TIME
 		if not was_active:
@@ -446,6 +499,8 @@ func lose_life() -> int:
 	lives_changed.emit(lives)
 	add_gun_level(-1)
 	reset_combo()
+	if is_touhou():
+		bomb_stock = 1   # a fresh bomb with every life
 	if lives == 0 and not is_game_over:
 		is_game_over = true
 		game_over.emit()

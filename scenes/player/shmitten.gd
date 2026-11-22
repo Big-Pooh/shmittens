@@ -63,7 +63,9 @@ func _ready():
 func _process(delta):
 	anim_time += delta
 	var recharge = 0.0
-	if Game.assist > 0:
+	if Game.challenge != Game.Challenge.NORMAL:
+		recharge = 0.0   # HARD / TOUHOU: no guardian
+	elif Game.assist > 0:
 		recharge = GUARDIAN_RECHARGE[min(Game.assist, 3)]
 	elif Game.level_deaths >= EARLY_GUARDIAN_DEATHS:
 		recharge = EARLY_GUARDIAN_RECHARGE

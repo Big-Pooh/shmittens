@@ -104,6 +104,6 @@ func _check_graze():
 	var player = Game.player_ref
 	if player == null or not is_instance_valid(player) or player.is_dead:
 		return
-	if global_position.distance_to(player.global_position + player.hitbox.position) < GRAZE_RADIUS:
+	if global_position.distance_to(player.global_position + player.hitbox.position) < GRAZE_RADIUS * (1.3 if Game.is_touhou() else 1.0):
 		grazed = true
 		Game.graze(global_position)

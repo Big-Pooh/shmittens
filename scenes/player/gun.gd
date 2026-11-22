@@ -23,6 +23,7 @@ const LASER_BASE = 0.8
 const LASER_PER_LEVEL = 0.4
 const FISH_COUNT = [0, 1, 2, 2, 3, 3]
 const FISH_DAMAGE = 0.5
+const LASER_CRIT = 1.5   # playtest 4: a PERFECT laser shot is a critical hit
 const JUDGEMENT_DAMAGE = {
 	Conductor.Judgement.MISS: 1.0,
 	Conductor.Judgement.GOOD: 1.5,
@@ -119,7 +120,10 @@ func fire(damage: float = CLICK_DAMAGE, judgement: int = -1):
 	match Game.weapon:
 		Game.Weapon.LASER:
 			var power = LASER_BASE + LASER_PER_LEVEL * (Game.gun_level - 1)
-			scene.add_child(PlayerShot.create(global_position, direction, damage * power, judgement, PlayerShot.Kind.LASER))
+			var crit = judgement == Conductor.Judgement.PERFECT
+			var bolt = PlayerShot.create(global_position, direction, damage * power * (LASER_CRIT if crit else 1.0), judgement, PlayerShot.Kind.LASER)
+			bolt.crit = crit
+			scene.add_child(bolt)
 		Game.Weapon.FISH:
 			var count = FISH_COUNT[clamp(Game.gun_level, 1, 5)]
 			for i in count:

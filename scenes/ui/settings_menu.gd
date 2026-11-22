@@ -35,6 +35,16 @@ func _ready():
 	fullscreen = _check(box, "Fullscreen", Game.fullscreen, func(on): Game.fullscreen = on; _changed())
 	reduce = _check(box, "Reduce effects (no screen shake, softer flashes)", Game.reduce_effects, func(on): Game.reduce_effects = on; _changed())
 	relaxed = _check(box, "Relaxed mode (slower shots, +1 life, guardian bubble)", Game.relaxed_mode, func(on): _set_relaxed(on))
+	var row = HBoxContainer.new()
+	var label = Label.new()
+	label.text = "Difficulty"
+	row.add_child(label)
+	difficulty = OptionButton.new()
+	for d in DIFFICULTIES:
+		difficulty.add_item(d.to_upper())
+	difficulty.item_selected.connect(_on_difficulty)
+	row.add_child(difficulty)
+	box.add_child(row)
 	var back = Button.new()
 	back.text = "Back"
 	back.pressed.connect(close)
@@ -68,8 +78,27 @@ func _check(box: VBoxContainer, text: String, value: bool, on_toggle: Callable) 
 func _set_relaxed(on: bool):
 	Game.relaxed_mode = on
 	if on:
+		Game.challenge = Game.Challenge.NORMAL
 		Game.assist = max(Game.assist, 1)
+	_sync_difficulty()
 	_changed()
+
+
+const DIFFICULTIES = ["relaxed", "normal", "hard", "touhou"]
+var difficulty: OptionButton
+
+
+func _on_difficulty(index: int):
+	Game.set_difficulty(DIFFICULTIES[index])
+	_sync_difficulty()
+	_changed()
+
+
+func _sync_difficulty():
+	var current = "relaxed" if Game.relaxed_mode else DIFFICULTIES[1 + Game.challenge]
+	difficulty.select(DIFFICULTIES.find(current))
+	difficulty.set_item_disabled(3, not Game.hard_cleared)
+	relaxed.set_pressed_no_signal(Game.relaxed_mode)
 
 
 func _changed():
@@ -86,7 +115,7 @@ func open():
 	sfx.set_value_no_signal(Game.sfx_volume)
 	fullscreen.set_pressed_no_signal(Game.fullscreen)
 	reduce.set_pressed_no_signal(Game.reduce_effects)
-	relaxed.set_pressed_no_signal(Game.relaxed_mode)
+	_sync_difficulty()
 	panel.show()
 
 

@@ -95,7 +95,7 @@ func build(texture: Texture2D, sprite_scale: float, radius: float, health: float
 
 
 func _ready():
-	max_health *= 1.0 - ASSIST_HEALTH_CUT * Game.assist
+	max_health *= (1.0 - ASSIST_HEALTH_CUT * Game.assist) * Game.CHALLENGE_BOSS_HEALTH[Game.challenge]
 	super()
 	add_to_group("bosses")
 	health_changed.emit(health, max_health)
@@ -324,7 +324,15 @@ func staff_note(pitch: int, speed: float, count: int = 1):
 
 
 # Evenly spaced fan around `center_degrees` (180 = straight left). Not aimed.
+# Bullet counts scale with the challenge mode (HARD x1.4, TOUHOU x2).
+static func dense(n: int) -> int:
+	return int(round(n * Game.density()))
+
+
 func arc(count: int, spread_degrees: float, speed: float, center_degrees: float = 180.0):
+	if Game.density() > 1.0:
+		spread_degrees /= Game.density()
+		count = dense(count)
 	if Game.assist >= 1:
 		count = max(count - Game.assist, 3)
 		spread_degrees *= 1.2
@@ -335,6 +343,7 @@ func arc(count: int, spread_degrees: float, speed: float, center_degrees: float 
 
 # Rotating arms: each call fires one shot per arm and turns the spiral by step_degrees.
 func spiral(arms: int, speed: float, step_degrees: float, kind: int = EnemyShot.Kind.RICE):
+	arms = dense(arms)
 	if Game.assist >= 2 and arms > 1:
 		arms -= 1
 	for i in arms:
@@ -345,6 +354,7 @@ func spiral(arms: int, speed: float, step_degrees: float, kind: int = EnemyShot.
 # A column of bullets across the screen at the boss's front, leaving a gap of gap_size pixels
 # centred on gap_y. Bullets travel straight left.
 func wall(gap_y: float, gap_size: float, speed: float, spacing: float = 46.0):
+	spacing /= sqrt(Game.density())
 	if Game.assist > 0:
 		gap_size *= 1.25
 	var x = global_position.x - hit_radius
@@ -366,6 +376,7 @@ func fan(count: int, spread_degrees: float, speed: float):
 
 
 func ring(count: int, speed: float, offset_angle: float = 0.0, kind: int = 0):
+	count = dense(count)
 	if Game.assist >= 2:
 		count = max(count - 4, 6)
 	for i in count:
@@ -385,6 +396,7 @@ func flower(petals: int, count: int, speed: float, kind: int = EnemyShot.Kind.RI
 # Freeze-and-scatter: a ring that flies out, stops dead on the next beat, holds for a beat,
 # then every bullet re-aims at the cat (with `then_turn` radians of fan per bullet).
 func freeze_ring(count: int, speed: float, then_speed: float, kind: int = EnemyShot.Kind.ORB, offset: float = 0.0):
+	count = dense(count)
 	if Game.assist >= 1:
 		count = max(count - 4, 4)
 	var spb = Conductor.seconds_per_beat

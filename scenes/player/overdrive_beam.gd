@@ -8,8 +8,11 @@ class_name OverdriveBeam
 # it touches the whole time. Full music while it lasts.
 
 const LENGTH = 1600.0
-const WIDTH = 90.0
-const TICK_DAMAGE = 3.0
+# playtest 4: "underpowered - it should hit hard": 3 -> 8 per 8th note, wider, and bosses
+# also lose BOSS_TICK_FRACTION of their health per tick (about a fifth of a boss over 5 s).
+const WIDTH = 130.0
+const TICK_DAMAGE = 8.0
+const BOSS_TICK_FRACTION = 0.012
 const RAINBOW = [Color(1, 0.4, 0.5), Color(1, 0.7, 0.3), Color(1, 0.95, 0.4), Color(0.5, 1, 0.6), Color(0.4, 0.8, 1), Color(0.75, 0.5, 1)]
 
 var source: Node2D
@@ -55,7 +58,12 @@ func _physics_process(delta):
 		last_half = half
 		for enemy in get_tree().get_nodes_in_group("enemies"):
 			if not enemy.is_dead and _in_beam(enemy.global_position, 30.0):
-				enemy.take_hit(TICK_DAMAGE, direction, Conductor.Judgement.PERFECT)
+				var dmg = TICK_DAMAGE
+				if enemy is Boss:
+					dmg += enemy.max_health * BOSS_TICK_FRACTION
+				enemy.take_hit(dmg, direction, Conductor.Judgement.PERFECT)
+		Game.shake(3.0)
+		Sfx.play("hit", -2.0)
 	queue_redraw()
 	if time >= Game.OVERDRIVE_SECONDS:
 		_end()

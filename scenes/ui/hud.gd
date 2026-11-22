@@ -58,7 +58,13 @@ func _ready():
 	Game.dance_changed.connect(_on_dance)
 	boss_box.add_child(card_label)
 	boss_box.add_child(armor_label)
-	Game.overdrive_changed.connect(func(state): overdrive_label.visible = state == 1)
+	Game.overdrive_changed.connect(func(state):
+		overdrive_label.visible = state == 1
+		if state == 1 and Game.first_time("overdrive"):
+			show_tip("CATNIP OVERDRIVE READY!\n50 on-beat hits in a row. Press F for 5 seconds of a giant rainbow beam - save it for a boss!"))
+	Game.charges_changed.connect(func(charges, _cheese):
+		if charges >= 2 and Game.first_time("bomb"):
+			show_tip("You have spell charges!\nDraw a spell with RIGHT-CLICK over the mice - or press X for an emergency CATNIP BOMB (uses all charges)."))
 	overdrive_label.visible = Game.overdrive == 1
 
 
@@ -223,6 +229,8 @@ func _update_wave_label():
 		wave_label.text = "LEVEL %d   BOSS" % (Game.level + 1)
 	else:
 		wave_label.text = "LEVEL %d   WAVE %d/%d" % [Game.level + 1, Game.wave, Game.wave_total]
+	if Game.challenge != Game.Challenge.NORMAL and not Game.tutorial_mode:
+		wave_label.text = Game.CHALLENGE_NAMES[Game.challenge] + "   " + wave_label.text
 
 
 func _on_lives(lives: int):
@@ -270,6 +278,8 @@ func _on_card_started(index: int, card_name: String, _seconds: float, boss: Boss
 		armor_label.text = ""
 	if card_name != "":
 		_flash_text("SPELL CARD  -  " + card_name.to_upper(), Color(1, 0.75, 0.95))
+	if index == 0 and Game.first_time("spell_cards"):
+		show_tip("BOSS SPELL CARDS\nEvery boss attacks in named SPELL CARDS. Each one owns a slice of its health bar and has a timer.\nEmpty the slice (or outlast the timer) to move on. Do it WITHOUT getting hit or bombing\nto CAPTURE the card: big bonus + a battery. Your drawn spells and the bomb (X) hit bosses hard.")
 
 
 func _on_card_ended(_index: int, captured: bool):
@@ -323,6 +333,30 @@ func _on_fever(active: bool):
 		fever_label.scale = Vector2.ONE * 1.4
 		create_tween().tween_property(fever_label, "scale", Vector2.ONE, 0.2)
 		Sfx.play("jingle")
+
+
+# A one-time tip box at the bottom-middle, gone after a few seconds.
+func show_tip(text: String):
+	var box = PanelContainer.new()
+	box.position = Vector2(140, 470)
+	box.custom_minimum_size = Vector2(1000, 0)
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.1, 0.05, 0.2, 0.88)
+	style.border_color = Color(1, 0.75, 0.95)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(8)
+	style.set_content_margin_all(12)
+	box.add_theme_stylebox_override("panel", style)
+	var label = _label(text, 18, Color(1, 0.95, 1))
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.custom_minimum_size = Vector2(970, 0)
+	box.add_child(label)
+	add_child(box)
+	var tween = box.create_tween()
+	tween.tween_interval(7.0)
+	tween.tween_property(box, "modulate:a", 0.0, 0.6)
+	tween.tween_callback(box.queue_free)
 
 
 # First line = big title, the rest = smaller body text (both wrap).

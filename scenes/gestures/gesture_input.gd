@@ -245,13 +245,21 @@ func cancel_bullets(to_cheese: int):
 # Emergency bomb: costs every charge you have (at least 1).
 func bomb() -> bool:
 	var player = _player()
-	if player == null or player.is_dead or Game.is_game_over or Game.charges <= 0:
+	if player == null or player.is_dead or Game.is_game_over:
+		return false
+	var spent = 0
+	if Game.bomb_stock > 0:
+		# TOUHOU: the free bomb of this life (strength of 3 charges), charges are kept
+		Game.bomb_stock -= 1
+		spent = 3
+	elif Game.charges > 0:
+		spent = Game.charges
+		Game.charges = 0
+		Game.charges_changed.emit(Game.charges, Game.cheese)
+	else:
 		return false
 	if drawing:
 		cancel()
-	var spent = Game.charges
-	Game.charges = 0
-	Game.charges_changed.emit(Game.charges, Game.cheese)
 	cancel_bullets(0)
 	for enemy in get_tree().get_nodes_in_group("enemies"):
 		if enemy.is_dead:

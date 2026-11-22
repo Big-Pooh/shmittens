@@ -23,6 +23,7 @@ const FALLOFF_END = 700.0
 const FALLOFF_MIN = 0.3
 const BOLT_RANGE = 760.0
 var origin: Vector2
+var crit = false   # PERFECT laser bolt: shows "CRIT!" on hit
 
 var velocity: Vector2
 var damage = 1.0
@@ -92,7 +93,26 @@ func damage_now() -> float:
 	return damage * lerp(1.0, FALLOFF_MIN, t)
 
 
+func _crit_popup(at: Vector2):
+	var label = Label.new()
+	label.text = "CRIT!"
+	label.add_theme_font_size_override("font_size", 22)
+	label.add_theme_color_override("font_color", Color(1, 0.4, 0.4))
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	label.add_theme_constant_override("outline_size", 5)
+	label.position = at + Vector2(-24, -40)
+	label.z_index = 45
+	get_tree().current_scene.add_child(label)
+	var tween = label.create_tween()
+	tween.tween_property(label, "position:y", label.position.y - 26, 0.4)
+	tween.parallel().tween_property(label, "modulate:a", 0.0, 0.4)
+	tween.tween_callback(label.queue_free)
+	Game.track("crits")
+
+
 func _on_area_entered(area):
+	if area is EnemyBase and crit and not area.is_dead and not already_hit.has(area):
+		_crit_popup(area.global_position)
 	if area is EnemyShot:
 		area.queue_free()   # spread pellets erase bullets and keep going
 		return

@@ -119,6 +119,8 @@ func _on_bar(_n: int):
 			else:
 				state = State.DONE
 				Game.story_complete = true
+				if Game.challenge != Game.Challenge.NORMAL:
+					Game.hard_cleared = true   # unlocks TOUHOU
 				Game.save_settings()
 				all_levels_cleared.emit()
 
@@ -135,7 +137,7 @@ func _next_wave():
 	Game.set_wave(wave_index + 1)
 	Game.set_dancing(false)
 	for group in waves[wave_index]:
-		for enemy in Levels.create_group(group, level().get("volley_rate", 1.0)):
+		for enemy in Levels.create_group(group, level().get("volley_rate", 1.0) * Game.density()):
 			enemy.tree_exited.connect(_on_enemy_gone)
 			alive += 1
 			get_tree().current_scene.add_child.call_deferred(enemy)
