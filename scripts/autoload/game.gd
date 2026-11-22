@@ -134,7 +134,7 @@ var meows_enabled = true     # Settings -> "Cat meows"
 # HARD: faster, denser patterns, tougher bosses, no assists / guardian / second wind.
 # TOUHOU: twice the bullets (a bit slower), bigger graze for triple points, 1 free bomb per life.
 enum Challenge { NORMAL, HARD, TOUHOU }
-const CHALLENGE_NAMES = ["NORMAL", "HARD", "TOUHOU"]
+const CHALLENGE_NAMES = ["NORMAL", "HARD", "BULLET HELL"]   # (never "Touhou": trademark)
 const CHALLENGE_DENSITY = [1.0, 1.4, 2.0]
 const CHALLENGE_SHOT_SPEED = [1.0, 1.15, 0.9]
 const CHALLENGE_BOSS_HEALTH = [1.0, 1.6, 2.0]   # longer fights for players who chose them

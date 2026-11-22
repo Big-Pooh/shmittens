@@ -163,7 +163,7 @@ func _ask_difficulty():
 		["HARD  -  faster, denser patterns, no help", "hard"],
 	]
 	if Game.hard_cleared:
-		options.append(["TOUHOU  -  bullet hell: twice the bullets, graze x3, a bomb per life", "touhou"])
+		options.append(["BULLET HELL  -  twice the bullets, graze x3, a bomb per life", "touhou"])
 	for option in options:
 		var b = Button.new()
 		b.text = option[0]

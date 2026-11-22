@@ -43,7 +43,7 @@ func _ready():
 	row.add_child(label)
 	difficulty = OptionButton.new()
 	for d in DIFFICULTIES:
-		difficulty.add_item(d.to_upper())
+		difficulty.add_item("BULLET HELL" if d == "touhou" else d.to_upper())
 	difficulty.item_selected.connect(_on_difficulty)
 	row.add_child(difficulty)
 	box.add_child(row)
