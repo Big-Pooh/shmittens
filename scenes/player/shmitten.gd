@@ -41,11 +41,18 @@ var guardian_timer = 0.0
 
 
 var sprite_base: Vector2
+var focus_marker: Node2D   # drawn ABOVE the cat sprite (playtest 3: the dot was hidden under it)
 
 
 func _ready():
 	add_to_group("player")
 	sprite_base = sprite.position
+	focus_marker = Node2D.new()
+	focus_marker.name = "FocusMarker"
+	focus_marker.z_index = 30
+	focus_marker.position = hitbox.position
+	focus_marker.draw.connect(_draw_focus)
+	add_child(focus_marker)
 	spawn_position = position
 	Conductor.beat.connect(_on_beat)
 	hitbox.area_entered.connect(_on_hitbox_area_entered)
@@ -67,6 +74,11 @@ func _process(delta):
 	queue_redraw()
 	sprite.frame = int(anim_time * FLY_FPS) % FLY_FRAMES
 	_dance()
+	var show_focus = focused and not is_dead
+	focus_marker.visible = show_focus
+	sprite.self_modulate.a = 0.6 if show_focus else 1.0   # see-through cat while focusing
+	if show_focus:
+		focus_marker.queue_redraw()
 
 
 # Dance break: hop on every beat, sway left/right on alternate beats, spin on the bar.
@@ -146,10 +158,6 @@ func apply_movement(accel):
 
 
 func _draw():
-	if focused and not is_dead:
-		# the real hitbox (core) so the player can thread bullets
-		draw_circle(hitbox.position, 8.0, Color(1, 1, 1, 0.9))
-		draw_circle(hitbox.position, 5.0, Color(1, 0.3, 0.5, 1.0))
 	if guardian_ready:
 		draw_arc(Vector2(4, 4), 40.0, 0, TAU, 32, Color(1, 0.9, 0.5, 0.55), 2.5)
 
@@ -223,3 +231,11 @@ func respawn():
 func _end_invulnerability():
 	sprite.modulate.a = 1.0
 	is_invulnerable = false
+
+
+# FOCUS: a ring that slowly turns plus the real hitbox, on top of the cat.
+func _draw_focus():
+	var t = anim_time * 2.0
+	focus_marker.draw_arc(Vector2.ZERO, 26.0, t, t + TAU * 0.8, 32, Color(0.6, 0.95, 1.0, 0.8), 2.0)
+	focus_marker.draw_circle(Vector2.ZERO, 8.0, Color(1, 1, 1, 1.0))
+	focus_marker.draw_circle(Vector2.ZERO, 5.0, Color(1, 0.25, 0.5, 1.0))

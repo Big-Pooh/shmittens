@@ -103,6 +103,7 @@ func _close_level():
 	for key in ["clicks", "casts", "empowered", "fizzles", "fizzle_unrecognised", "fizzle_no_charge"]:
 		level_stats[key] = stats.get(key, 0)
 	stats.clear()
+	level_stats["score_at_clear"] = game.score
 	levels.append(level_stats.duplicate(true))
 
 

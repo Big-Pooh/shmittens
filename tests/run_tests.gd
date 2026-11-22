@@ -1366,6 +1366,22 @@ func _playtest2_tests():
 	var normal_speed = cat.velocity.length()
 	Input.action_release("move_right")
 	check(focused_speed < normal_speed * 0.5 and normal_speed > 500.0, "focus (Shift) moves slower (%d vs %d)" % [focused_speed, normal_speed])
+	game.focus_override = true
+	await frames(2)
+	await process_frame
+	var marker = cat.get_node("FocusMarker")
+	check(marker.visible and marker.z_index > cat.get_node("Sprite2D").z_index, "focus shows the hitbox above the cat sprite")
+	game.focus_override = false
+	var shift = InputEventKey.new()
+	shift.physical_keycode = KEY_SHIFT
+	shift.keycode = KEY_SHIFT
+	shift.pressed = true
+	Input.parse_input_event(shift)
+	Input.flush_buffered_events()
+	check(Input.is_action_pressed("focus"), "the Shift key triggers focus")
+	shift.pressed = false
+	Input.parse_input_event(shift)
+	Input.flush_buffered_events()
 	# snappy controls: from full speed right, reversing gets to full speed left within ~0.1 s
 	Input.action_press("move_left")
 	await frames(6)
