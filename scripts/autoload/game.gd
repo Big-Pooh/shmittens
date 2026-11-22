@@ -14,6 +14,7 @@ signal reward(kind: String)          # "battery" / "yarn" from combo milestones
 signal level_changed(level: int)
 signal shake_requested(strength: float)
 signal fever_changed(active: bool)
+signal second_wind_changed(active: bool)
 signal player_hit(cause: String)   # "shot", "ram", "beam" (for stats)
 
 const START_LIVES = 3
@@ -68,6 +69,14 @@ var assist = 0
 var level_judged = 0
 var level_perfects = 0
 var level_deaths = 0   # deaths in the current level attempt (early guardian)
+# Second Wind (beginner care, reacts within a level): 2 deaths within SECOND_WIND_WINDOW seconds
+# -> enemy shots SECOND_WIND_SLOWDOWN slower for SECOND_WIND_TIME seconds.
+const SECOND_WIND_WINDOW = 45.0
+const SECOND_WIND_TIME = 45.0
+const SECOND_WIND_SLOWDOWN = 0.15
+var play_time = 0.0
+var recent_deaths = []
+var second_wind_until = -1.0
 var ranks = []   # rank letter per cleared level this run
 # true while the tutorial runs (main.gd starts the Tutorial instead of a level)
 var tutorial_mode = false
@@ -99,6 +108,8 @@ func reset():
 	combo = 0
 	plain_kills = 0
 	fever_beats = 0
+	recent_deaths.clear()
+	second_wind_until = -1.0
 	is_game_over = false
 	drawing = false
 	combo_changed.emit(combo, multiplier())
@@ -200,7 +211,21 @@ func set_level(value: int, total_waves: int):
 # Enemy shot speed multiplier: gentler early levels, slower with assist.
 func shot_speed_factor() -> float:
 	var base = LEVEL_SHOT_SPEED[clamp(level, 0, LEVEL_SHOT_SPEED.size() - 1)]
-	return base * (1.0 - ASSIST_SHOT_SLOWDOWN * assist)
+	var wind = 1.0 - SECOND_WIND_SLOWDOWN if second_wind_active() else 1.0
+	return base * (1.0 - ASSIST_SHOT_SLOWDOWN * assist) * wind
+
+
+func second_wind_active() -> bool:
+	return play_time < second_wind_until
+
+
+func _process(delta):
+	if get_tree().paused:
+		return
+	var was = second_wind_active()
+	play_time += delta
+	if was and not second_wind_active():
+		second_wind_changed.emit(false)
 
 
 # Called on retry after a game over on the same level.
@@ -309,6 +334,13 @@ func set_wave(value: int):
 # Called when the cat is hit. Returns the lives left.
 func lose_life() -> int:
 	level_deaths += 1
+	recent_deaths.append(play_time)
+	recent_deaths = recent_deaths.filter(func(t): return play_time - t <= SECOND_WIND_WINDOW)
+	if recent_deaths.size() >= 2:
+		var was_active = second_wind_active()
+		second_wind_until = play_time + SECOND_WIND_TIME
+		if not was_active:
+			second_wind_changed.emit(true)
 	lives = max(lives - 1, 0)
 	lives_changed.emit(lives)
 	add_gun_level(-1)

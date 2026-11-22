@@ -20,6 +20,7 @@ var gun_label: Label
 var message: Label
 var combo_label: Label
 var fever_label: Label
+var wind_label: Label
 var boss_box: VBoxContainer
 var boss_label: Label
 var boss_bar: ProgressBar
@@ -36,6 +37,7 @@ func _ready():
 	Game.gun_level_changed.connect(func(l): gun_label.text = "GUN Lv %d" % l)
 	Game.combo_changed.connect(_on_combo)
 	Game.fever_changed.connect(_on_fever)
+	Game.second_wind_changed.connect(func(on): wind_label.visible = on)
 	_on_combo(Game.combo, Game.multiplier())
 	_on_lives(Game.lives)
 	score_label.text = "SCORE  %06d" % Game.score
@@ -121,6 +123,11 @@ func _build():
 	fever_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	fever_label.hide()
 	add_child(fever_label)
+
+	wind_label = _label("SECOND WIND - enemy shots slowed", 18, Color(0.6, 0.9, 1))
+	wind_label.position = Vector2(20, 630)
+	wind_label.hide()
+	add_child(wind_label)
 
 	var beat_bar = BeatBar.new()
 	beat_bar.position = Vector2(640 - 220, 664)

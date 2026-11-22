@@ -187,6 +187,7 @@ func _run():
 	await _fever_tests()
 	_volley_rate_tests()
 	await _iteration1_tests()
+	_second_wind_tests()
 	await _screen_tests()
 
 	print("%d passed, %d failed" % [passed, failed])
@@ -1179,3 +1180,18 @@ func _iteration1_tests():
 	game.best_scores = saved.best
 	game.save_settings()
 	game.apply_settings()
+
+
+func _second_wind_tests():
+	game.reset()
+	game.level = 0
+	var normal = game.shot_speed_factor()
+	game.play_time = 100.0
+	game.lose_life()
+	check(not game.second_wind_active(), "one death: no Second Wind")
+	game.play_time = 130.0
+	game.lose_life()
+	check(game.second_wind_active() and is_equal_approx(game.shot_speed_factor(), normal * 0.85), "2 deaths within 45 s: Second Wind slows shots 15 percent")
+	game.play_time = 180.0
+	check(not game.second_wind_active(), "Second Wind wears off after 45 s")
+	game.reset()
