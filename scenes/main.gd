@@ -23,6 +23,7 @@ const DANCE_SCORE = 50
 const DANCE_CHEESE = 4
 var dance_hits = 0
 var transition_card: TransitionCard
+var companions: Companions
 
 
 func _ready():
@@ -31,6 +32,9 @@ func _ready():
 	Game.reward.connect(_on_reward)
 	Game.judged.connect(_on_judged)
 	Game.grazed.connect(_on_grazed)
+	companions = Companions.new()
+	companions.name = "Companions"
+	add_child(companions)
 	Game.dance_changed.connect(func(on): if on: dance_hits = 0)
 	Game.shake_requested.connect(func(s): shake_strength = max(shake_strength, s))
 	level_runner.level_started.connect(_on_level_started)

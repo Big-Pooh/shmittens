@@ -369,6 +369,61 @@ def orb_shot():
     c.save("shot_orb.png")
 
 
+def companion_pip():
+    # Pip: a hamster pilot in a tiny round saucer (faces right, flies with the cat)
+    c = Canvas(16, 14)
+    c.ellipse(8, 10.5, 7.5, 2.6, (255, 200, 90, 255))         # saucer
+    c.ellipse(8, 9.8, 5.0, 1.2, (255, 235, 160, 255))
+    c.ellipse(8, 6, 4.2, 3.8, (240, 190, 140, 255))           # hamster head
+    c.ellipse(5.2, 3.0, 1.4, 1.4, (240, 190, 140, 255))
+    c.ellipse(10.8, 3.0, 1.4, 1.4, (240, 190, 140, 255))
+    c.set(5, 3, PINK)
+    c.set(11, 3, PINK)
+    c.set(9, 5, EYE)
+    c.set(10, 5, EYE)
+    c.set(10, 4, WHITE)
+    c.set(11, 7, PINK_D)
+    c.set(8, 7, BLUSH)
+    c.outline()
+    c.save("companion_pip.png")
+
+
+def companion_nori():
+    # Nori: a little black-and-white engineer kitten with goggles and a jetpack
+    c = Canvas(16, 14)
+    c.rect(1, 6, 3, 10, STEEL)                                 # jetpack
+    c.set(1, 11, ORANGE)
+    c.set(2, 12, GOLD)
+    c.ellipse(8.5, 9.5, 5.0, 3.6, (70, 66, 86, 255))           # body
+    c.ellipse(9.5, 10.5, 2.6, 1.8, WHITE)
+    c.ellipse(9.5, 5.5, 4.2, 3.6, (70, 66, 86, 255))           # head
+    c.poly([(6, 3.5), (7, 0.5), (8.5, 3)], (70, 66, 86, 255))  # ears
+    c.poly([(10.5, 3), (12, 0.5), (13, 3.5)], (70, 66, 86, 255))
+    c.rect(8, 4, 13, 4, GOLD_D)                                # goggles
+    c.rect(10, 4, 12, 5, (255, 240, 140, 255))
+    c.set(11, 5, EYE)
+    c.set(13, 7, PINK)
+    c.set(12, 7, BLUSH)
+    c.outline()
+    c.save("companion_nori.png")
+
+
+def companion_kiwi():
+    # Kiwi: a round little green bird
+    c = Canvas(15, 13)
+    c.ellipse(7, 7, 5.8, 5.2, (130, 220, 120, 255))
+    c.ellipse(7.5, 8.5, 3.6, 3.0, (210, 250, 190, 255))
+    c.poly([(2, 6), (5, 8), (2, 10)], (90, 180, 90, 255))     # wing
+    c.poly([(12, 6.5), (14.6, 7.5), (12, 8.5)], ORANGE)        # beak
+    c.set(10, 5, EYE)
+    c.set(10, 4, WHITE)
+    c.set(9, 8, BLUSH)
+    c.set(6, 1, (90, 180, 90, 255))                            # tuft
+    c.set(7, 2, (90, 180, 90, 255))
+    c.outline()
+    c.save("companion_kiwi.png")
+
+
 def main():
     mouse("grunt.png", LILAC, LILAC_L, accessory=grunt_bits)
     mouse("gunner.png", PEACH, PEACH_L, accessory=gunner_bits)
@@ -387,6 +442,9 @@ def main():
     fish_shot()
     rice_shot()
     orb_shot()
+    companion_pip()
+    companion_nori()
+    companion_kiwi()
     print("wrote cute sprites to", os.path.normpath(OUT))
 
 

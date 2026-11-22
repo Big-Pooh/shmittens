@@ -198,6 +198,7 @@ func _run():
 	await _screen_tests()
 	await _playtest2_tests()
 	await _playtest3_tests()
+	await _playtest4_tests()
 
 	game.difficulty_chosen = original.chosen
 	game.relaxed_mode = original.relaxed
@@ -1646,4 +1647,85 @@ func _playtest3_tests():
 	game.assist = 0
 	check(not main.offers_relaxed(), "not offered on the first game over")
 	game.relaxed_mode = was_relaxed
+	cat.is_invulnerable = false
+
+
+# ---------------------------------------------------------------- playtest 4
+func _playtest4_tests():
+	await _start_main()
+	main.level_runner.stop()
+	await _clear_world()
+	var conductor = root.get_node("Conductor")
+	cat.position = Vector2(220, 360)
+	cat.is_invulnerable = true
+
+	# companions join every 10 combo, zap on the beat, leave when the combo breaks
+	var crew = main.companions
+	game.reset_combo()
+	for i in 10:
+		game.register_judgement(conductor.Judgement.PERFECT)
+	check(crew.count() == 1, "a companion joins at 10 combo")
+	for i in 20:
+		game.register_judgement(conductor.Judgement.PERFECT)
+	check(crew.count() == 3, "three companions at 30 combo")
+	var target = load("res://scenes/enemies/grunt.tscn").instantiate()
+	target.position = Vector2(700, 360)
+	target.max_health = 50
+	main.add_child(target)
+	await frames(2)
+	crew._on_beat(1)
+	check(is_equal_approx(target.health, 50 - 3 * crew.ZAP_DAMAGE * 0.5) or target.health < 50, "companions zap the nearest mouse on the beat (%.2f)" % target.health)
+	game.register_judgement(conductor.Judgement.MISS)
+	check(crew.count() == 0, "companions leave when the combo breaks")
+	await _clear_world()
+
+	# PERFECT laser crits
+	var gun = cat.get_node("Gun")
+	game.set_weapon(game.Weapon.LASER)
+	game.gun_level = 1
+	game.aim_override = Vector2(900, 360)
+	game.fever_beats = 0   # the combo above triggered FEVER (+50%)
+	gun.fire(2.0, conductor.Judgement.PERFECT)
+	var bolt = _shots()[-1]
+	check(bolt.crit and is_equal_approx(bolt.damage, 2.0 * gun.LASER_BASE * gun.LASER_CRIT), "a PERFECT laser shot is a critical hit (x1.5)")
+	gun.fire(1.0, -1)
+	check(not _shots()[-1].crit, "held laser shots don't crit")
+	game.aim_override = null
+	game.set_weapon(game.Weapon.SPREAD)
+	await _clear_world()
+
+	# challenge modes
+	var saved = [game.challenge, game.relaxed_mode, game.hard_cleared]
+	game.hard_cleared = false
+	game.set_difficulty("touhou")
+	check(game.challenge == game.Challenge.HARD, "TOUHOU stays locked until HARD is beaten")
+	game.hard_cleared = true
+	game.set_difficulty("touhou")
+	check(game.is_touhou() and game.density() == 2.0, "TOUHOU doubles pattern density once unlocked")
+	game.add_assist()
+	check(game.assist == 0, "no assists on HARD/TOUHOU")
+	var boss = load("res://scenes/enemies/bosses/mecha_tank.gd").new()
+	boss.position = Vector2(1000, 360)
+	boss.drops = false
+	main.add_child(boss)
+	await frames(2)
+	check(is_equal_approx(boss.max_health, 380.0 * 1.5), "TOUHOU bosses have 1.5x health")
+	var shots = _count("enemy_shots")
+	boss.ring(10, 100.0)
+	await frames(1)
+	check(_count("enemy_shots") - shots == 20, "TOUHOU rings have twice the bullets")
+	boss.queue_free()
+	game.reset()
+	check(game.bomb_stock == 1, "TOUHOU: a free bomb per life")
+	game.set_difficulty("hard")
+	check(game.challenge == game.Challenge.HARD and game.shot_speed_factor() > 1.0, "HARD: faster bullets")
+	game.challenge = saved[0]
+	game.relaxed_mode = saved[1]
+	game.hard_cleared = saved[2]
+	game.reset()
+	await _clear_world()
+
+	# overdrive hits hard
+	var beam_script = load("res://scenes/player/overdrive_beam.gd")
+	check(beam_script.TICK_DAMAGE >= 8.0, "overdrive ticks hit hard (%.0f)" % beam_script.TICK_DAMAGE)
 	cat.is_invulnerable = false
