@@ -591,3 +591,29 @@ Full tables are in `docs/KPI.md`; raw reports are in `montecarlo/report_original
 - Beginners and the **final boss**: 55% clear and 84% modelled drop in L3.
 - Speedrunner L2 fun dip.
 - All of this is modelled. A human playtest is still the real check.
+
+---
+
+## Phase 9: playtest 1 feedback + GTM-readiness panel (2026-11-22, branch `feedback/playtest-1`)
+
+### Your playtest feedback, applied (separate commits)
+- **Shoot on Space instead of left-click.** The mouse still aims; right-click still draws skills.
+- **"You could dodge really easily":** grunt volleys now aim at the cat; gunners fire 3-shot spreads; shot speed by level is ×1.0 / ×1.15 / ×1.3.
+- **Bosses follow the music:** bullets on the lead-melody notes, with aim tilted by pitch.
+  - Monte Carlo A/B: neutral to slightly harder.
+  - The model can't measure "feels musical", so it needs your playtest.
+
+### Panel method (`tools/panel.py`)
+- **Testers:** 100 simulated first-time testers with random skill, patience, rhythm affinity, challenge preference and aesthetic sensitivity. Each plays a full sped-up run.
+- **Evaluator views:** player (had fun, drop rate, completion), critic (endorsement from a rubric), business (purchase intent, GTM success).
+- **Targets were adjusted to benchmarks because the 80% asks were unrealistic:**
+  - only ~8% of Steam games gross over $100k (OpenCritic/VG Insights), and ~66% earn under $1k;
+  - Next Fest's median demo-to-wishlist is ~19%;
+  - demo completion under 40% signals a problem.
+  - Resulting targets: GTM ≥ 24% (3× base), purchase intent ≥ 25%, completion ≥ 60%, drop ≤ 20% per level. Fun and endorsement stay at ≥ 80% (Steam "Very Positive").
+- **Fixed judgements:** art and audio quality = 0.5 (generated placeholders). Code changes can't legitimately raise them.
+
+### Iteration 0 (baseline)
+- Fun 43%; drop 16 / 15 / 12%; completion 63%; endorsement 23%; intent 18%; GTM 3%.
+- Session about 6 min; feature checklist 40%.
+- Saved in `montecarlo/panel_report_iter0.md`.

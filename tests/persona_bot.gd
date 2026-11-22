@@ -49,11 +49,31 @@ var release_at = -1.0
 var sim_time = 0.0
 
 
+# persona = "noob" | "average" | "speedrunner" | "skill:<0..1>" (blend: 0 = noob, 0.5 = average, 1 = speedrunner)
 func setup(persona: String, seed_value: int, shared_stats: Dictionary):
 	persona_name = persona
-	p = PERSONAS[persona]
+	if persona.begins_with("skill:"):
+		p = blend(float(persona.substr(6)))
+	else:
+		p = PERSONAS[persona]
 	rng.seed = seed_value
 	stats = shared_stats
+
+
+static func blend(skill: float) -> Dictionary:
+	skill = clamp(skill, 0.0, 1.0)
+	var lo = PERSONAS.noob if skill < 0.5 else PERSONAS.average
+	var hi = PERSONAS.average if skill < 0.5 else PERSONAS.speedrunner
+	var t = skill * 2.0 if skill < 0.5 else (skill - 0.5) * 2.0
+	var out = {}
+	for key in lo:
+		if typeof(lo[key]) == TYPE_BOOL:
+			out[key] = hi[key] if t >= 0.5 else lo[key]
+		elif typeof(lo[key]) == TYPE_INT:
+			out[key] = int(round(lerp(float(lo[key]), float(hi[key]), t)))
+		else:
+			out[key] = lerp(lo[key], hi[key], t)
+	return out
 
 
 func _ready():

@@ -58,7 +58,7 @@ Resume a session by reading this file and `docs/PLAN.md` only. The full history 
 
 ## Current state
 - **`main`:** includes the tooling and the 10 tuning commits, merged from `tuning/personas` (see `docs/KPI.md` and the audit log). Revert any single decision with `git revert <commit>`.
-- **Next:** your playtest.
+- **Branch `feedback/playtest-1`:** playtest fixes, music bosses, and the GTM-readiness iterations (panel: `python3 tools/panel.py`, about 100 s). Latest results are in `montecarlo/panel_report.md`; history is in `docs/AUDIT_LOG.md` phase 9.
 - **KPIs:** `python3 tools/montecarlo.py --runs 40` (about 1.5 min); the report is in `montecarlo/report.md`.
 - **Open issues:** the beginner at the final boss (L3: 55% clear); the speedrunner L2 fun dip.
 
