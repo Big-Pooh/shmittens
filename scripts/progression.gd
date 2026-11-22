@@ -8,11 +8,11 @@ class_name Progression
 const ACHIEVEMENTS = [
 	# id, title, description, stat, threshold
 	["lift_off", "Lift-off!", "Clear your first planet", "levels_cleared", 1],
-	["rescue", "Princess Rescued", "Finish the story", "story_completes", 1],
+	["rescue", "Star Bringer", "Finish the story (both worlds)", "story_completes", 1],
 	["purrfect_pitch", "Purr-fect Pitch", "Land 100 PERFECT shots", "perfects", 100],
 	["spellcat", "Spellcat", "Cast 50 drawn spells", "spells_cast", 50],
 	["card_shark", "Card Shark", "Capture your first spell card", "cards_collected_new", 1],
-	["full_deck", "Full Deck", "Collect every spell card", "album_cards", 17],
+	["full_deck", "Full Deck", "Collect every spell card", "album_cards", 30],
 	["pawframe", "Pawframe Pilot", "Pilot the PAWFRAME MK-IX", "mechs", 1],
 	["overdrive", "Catnip Overdrive", "Unleash an overdrive", "overdrives_used", 1],
 	["whiskers", "Whisker Width", "Graze 100 bullets", "grazes", 100],
@@ -33,7 +33,7 @@ const HATS = [
 	["hat_headphones", "Headphones", "album_cards", 5, "Collect 5 spell cards"],
 	["hat_wizard", "Wizard Hat", "spells_cast", 100, "Cast 100 spells"],
 	["hat_crown", "Royal Crown", "story_completes", 1, "Finish the story"],
-	["hat_halo", "Halo", "album_cards", 17, "Collect every spell card"],
+	["hat_halo", "Halo", "album_cards", 30, "Collect every spell card"],
 ]
 
 

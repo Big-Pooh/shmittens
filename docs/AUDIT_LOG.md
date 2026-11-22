@@ -1146,3 +1146,37 @@ You approved fixes 1–3.
   - **bounce fan;**
   - **split orbs.**
   - **Where they appear:** Tanky's "Clockwork Waltz" gets butterfly wings; the Cheese Saucer's "Cheese Rain" bounces off the sewer walls; Ratbert gets a galaxy in "Rat Race Rondo" and split orbs in his final card; Sho's "Protein Rain" shakes split, the Waltz gets wings, and "Muscle Supernova" alternates rose and galaxy.
+
+## Phase 17: go-live sprints 1–7 (branch `iterate/designer-7`, not released)
+**Why:** you asked to run every gap from the go-live list at full speed, checking only at the end. Core loop frozen.
+- **S1 Music:** every track is a 32-bar arrangement: intro, A, B (new chords, inverted motif), bridge (half-time), A′ (motif an octave up, closing fill).
+  - Boss tracks build, with double kicks at the climax.
+  - The boss "staff note" bullets follow the arranged lead; the intro has no lead.
+  - Import uses QOA compression (the whole game imports to about 20 MB).
+- **S2 Animation:** every mouse, boss and companion has a blink/bob frame (`*_b.png`) swapped on every beat, so the cast dances to the music. Pastel defeat poof; bouncy boss entrance.
+- **S3 UI theme** (`scripts/ui_theme.gd`):
+  - a pastel theme on the root window: rounded lilac buttons with a gold hover, plum panels, mint sliders;
+  - overlay menus get the theme automatically;
+  - hover and press sounds on every button;
+  - a centred title layout.
+- **S4 Meta** (`scripts/progression.gd`):
+  - lifetime stats;
+  - 16 achievements with toasts;
+  - 6 hats (Party, Flower Crown, Headphones, Wizard, Royal Crown, Halo), unlocked by stars, cards, spells or completion, worn in-game and on the title;
+  - a WARDROBE & TROPHIES screen.
+- **S5 Settings:** key rebinding (a Controls screen, saved, with reset to defaults); high-contrast colour-blind bullets; the settings panel fits the screen.
+- **S6 World 2:**
+  - **Planets:** Cheddaria, Neon Nibble, Frostwhisker, Mount Flexmore; 10 waves each, mid-bosses, 4 new backdrop themes.
+  - **Bosses:** The Big Cheese, DJ Squeak, Captain Frostbite, and Sho MAXIMUM FLEX, with 13 new spell cards (30 in total).
+  - **Music:** 8 new arranged tracks with motifs.
+  - **Story:** Sho escapes with the Star of Pisitania; the map is per world, with a Stargate home; ending variants for demo and full game.
+  - **Demo:** stops after world 1.
+- **S7 Tech:**
+  - `scripts/platform.gd` (Steam-ready no-op);
+  - `tests/perf_test.gd`: a real BULLET HELL fight peaks at 53 bullets and 4.3 ms per frame;
+  - per-frame optimisations: shared beat phase, cached hitbox, throttled achievement checks, bullets don't monitor overlaps;
+  - `docs/RELEASE_CHECKLIST.md`.
+  - Skipped (needs the Steam account): app ID, achievement upload, cloud saves.
+- **CI fix:** tests always start outside the tutorial (CI has no saved settings).
+
+**Tests:** 341 passing.

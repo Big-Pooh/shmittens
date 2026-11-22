@@ -219,6 +219,8 @@ func _on_beat(_n: int):
 
 
 func _physics_process(delta):
+	Game.player_alive = not is_dead
+	Game.player_core = global_position + hitbox.position
 	if is_dead:
 		return
 	move(delta)

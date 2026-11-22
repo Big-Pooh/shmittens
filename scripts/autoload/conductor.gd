@@ -181,7 +181,13 @@ func judge(t: float = song_time()) -> Judgement:
 	return Judgement.MISS
 
 
+# Sprint 7 performance: the beat phase computed ONCE per frame for every bullet that pulses
+# (calling beat_phase() per bullet queried the audio clock hundreds of times a frame).
+var frame_phase = 0.0
+
+
 func _process(_delta):
+	frame_phase = beat_phase() if playing or time_override >= 0.0 else 0.0
 	# While the game is paused: pause the music and freeze the clock; on resume, shift the
 	# start time by the paused duration so beats continue exactly where they left off.
 	if get_tree().paused:

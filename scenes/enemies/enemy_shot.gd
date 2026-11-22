@@ -22,6 +22,7 @@ const TEXTURE = preload("res://Art/Generated/enemy_shot.png")
 const SPRITE_SCALE = 3.0
 const HIT_RADIUS = {Kind.CANDY: 5.0, Kind.RICE: 4.0, Kind.ORB: 9.0}
 const GRAZE_RADIUS = 30.0
+const BOUNDS = Rect2(-40, -40, 1360, 800)   # Game.SCREEN grown by 40 (precomputed)
 
 var velocity: Vector2
 var volley = ""   # shots fired together share this (simulated players read a volley as one pattern)
@@ -69,6 +70,7 @@ func _ready():
 	add_to_group("enemy_shots")
 	collision_layer = Game.LAYER_ENEMY_SHOT
 	collision_mask = 0
+	monitoring = false   # the cat's hitbox detects bullets; bullets never need to scan (perf)
 	sprite = Sprite2D.new()
 	sprite.texture = TEXTURES[kind]
 	sprite.scale = Vector2.ONE * SPRITE_SCALE
@@ -145,22 +147,20 @@ func _physics_process(delta):
 		bounces -= 1
 		_face()
 	if pulse:
-		var p = 1.0 - Conductor.beat_phase()
+		var p = 1.0 - Conductor.frame_phase
 		position += velocity * (0.7 + 0.9 * p * p) * delta
 		sprite.scale = Vector2.ONE * SPRITE_SCALE * (1.0 + 0.3 * p * p * p)
 	else:
 		position += velocity * delta
 	_check_graze()
-	if not Game.SCREEN.grow(40).has_point(position):
+	if not BOUNDS.has_point(position):
 		queue_free()
 
 
 func _check_graze():
-	if grazed:
+	if grazed or not Game.player_alive:
 		return
-	var player = Game.player_ref
-	if player == null or not is_instance_valid(player) or player.is_dead:
-		return
-	if global_position.distance_to(player.global_position + player.hitbox.position) < GRAZE_RADIUS * (1.3 if Game.is_touhou() else 1.0):
+	var r = GRAZE_RADIUS * (1.3 if Game.challenge == 2 else 1.0)
+	if position.distance_squared_to(Game.player_core) < r * r:
 		grazed = true
 		Game.graze(global_position)

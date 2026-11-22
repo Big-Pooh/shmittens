@@ -67,6 +67,8 @@ var weapon = Weapon.FISH   # playtest 3: Fish is the default; the others reward 
 var focus_override = false   # automated playthroughs hold "focus" with this
 var dancing = false          # true during a dance break between waves
 var player_ref: Node2D = null   # the cat (set by Shmitten; bullets use it for graze/aim)
+var player_core = Vector2(-9999, -9999)   # cat hitbox centre, cached once per physics frame
+var player_alive = false
 # GRAZE (playtest 3, Touhou): a bullet passing very close counts once: GRAZE_SCORE points; on
 # the beat it also builds toward cheese (1 per GRAZES_PER_CHEESE on-beat grazes).
 const GRAZE_SCORE = 20
@@ -355,11 +357,21 @@ var session_file = ""
 func track(key: String, amount: float = 1.0):
 	session[key] = session.get(key, 0.0) + amount
 	lifetime[key] = lifetime.get(key, 0.0) + amount
-	if not _checking:
+	# sprint 7 perf: per-frame timing stats never unlock anything; other checks are throttled
+	if key.begins_with("seconds_") or key == "focus_seconds":
+		return
+	var now = Time.get_ticks_msec()
+	if not _checking and (now - _last_check_msec > 500 or key in INSTANT_KEYS):
 		_checking = true
+		_last_check_msec = now
 		if not Progression.check(self).is_empty():
 			save_settings()
 		_checking = false
+
+
+var _last_check_msec = -100000
+# events that should unlock immediately (rare, milestone-like)
+const INSTANT_KEYS = ["levels_cleared", "story_completes", "hard_completes", "cards_collected_new", "mechs", "overdrives_used", "no_hit_planets", "spell_breaks", "pets"]
 
 
 var _checking = false
@@ -743,7 +755,8 @@ func collect_card(card_name: String, boss_name: String, weak: String, script_pat
 # Every spell card in the game (bosses and mid-bosses), for the album.
 static func all_cards() -> Array:
 	var out = []
-	for path in ["res://scenes/enemies/bosses/mecha_tank.gd", "res://scenes/enemies/bosses/tanky_jr.gd", "res://scenes/enemies/bosses/mothership.gd", "res://scenes/enemies/bosses/saucer_scout.gd", "res://scenes/enemies/bosses/rat_king.gd", "res://scenes/enemies/bosses/royal_guard.gd", "res://scenes/enemies/bosses/sho.gd"]:
+	for path in ["res://scenes/enemies/bosses/mecha_tank.gd", "res://scenes/enemies/bosses/tanky_jr.gd", "res://scenes/enemies/bosses/mothership.gd", "res://scenes/enemies/bosses/saucer_scout.gd", "res://scenes/enemies/bosses/rat_king.gd", "res://scenes/enemies/bosses/royal_guard.gd", "res://scenes/enemies/bosses/sho.gd",
+			"res://scenes/enemies/bosses/big_cheese.gd", "res://scenes/enemies/bosses/dj_squeak.gd", "res://scenes/enemies/bosses/frostbite.gd", "res://scenes/enemies/bosses/sho_max.gd"]:
 		var b = load(path).new()
 		for c in b.cards:
 			out.append({"name": c.name, "boss": b.boss_name, "weak": c.get("weak", ""), "script": path, "captures": 0})

@@ -25,10 +25,11 @@ func _ready():
 	title.add_theme_color_override("font_color", Color(1, 0.82, 0.35))
 	add_child(title)
 	var grid = GridContainer.new()
-	grid.columns = 8
-	grid.add_theme_constant_override("h_separation", 12)
-	grid.add_theme_constant_override("v_separation", 12)
-	grid.position = Vector2(640 - (8 * 118 + 7 * 12) / 2.0, 72)
+	grid.columns = 10
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 8)
+	grid.position = Vector2(640 - (10 * 118 + 9 * 8) / 2.0 * 0.82, 64)
+	grid.scale = Vector2(0.82, 0.82)
 	add_child(grid)
 	for c in all:
 		var have = Game.card_album.has(c.name)

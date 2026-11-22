@@ -2150,7 +2150,7 @@ func _designer7_tests():
 	check(game.card_album.has("Toy Cannon Parade") and game.level_cards_won.size() == 1 and game.level_cards_won[0][1], "capturing a spell card adds it to the album (NEW)")
 	cb.queue_free()
 	var everything = game.all_cards()
-	check(everything.size() >= 17 and everything.any(func(c): return c.name == "Muscle Supernova"), "the album knows every spell card in the game (%d)" % everything.size())
+	check(everything.size() == 30 and everything.any(func(c): return c.name == "Muscle Supernova"), "the album knows every spell card in the game (%d)" % everything.size())
 	var card_ui = load("res://scenes/ui/transition_card.gd").create(0, "A", 60, 80)
 	main.add_child(card_ui)
 	await frames(2)
@@ -2190,6 +2190,7 @@ func _designer7_tests():
 	check(game.achievements.has("good_kitty"), "petting the cat 10 times unlocks an achievement")
 	for i in 100:
 		game.track("spells_cast")
+	load("res://scripts/progression.gd").check(game)   # (checks are throttled in play)
 	check(game.hats_unlocked.has("hat_wizard") and game.achievements.has("spellcat"), "100 spells unlock the Wizard Hat (and Spellcat)")
 	game.set_hat("hat_halo")
 	check(game.hat != "hat_halo", "locked hats can't be worn")
