@@ -16,25 +16,18 @@ func _ready():
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	Engine.time_scale = 1.0
 	Conductor.play("level1", 1)
-	# v0.12 pink pass: raspberry backdrop with soft pink glows behind the stars
-	var bg = ColorRect.new()
-	bg.color = UiTheme.BG
-	bg.size = Game.SCREEN.size
-	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(bg)
-	var glow = Node2D.new()
-	glow.draw.connect(func():
-		for g in [[Vector2(200, 600), 320.0], [Vector2(1100, 150), 280.0], [Vector2(640, 380), 220.0]]:
-			for r in 6:
-				glow.draw_circle(g[0], g[1] * (1.0 - r * 0.14), Color(1, 0.45, 0.75, 0.035)))
-	add_child(glow)
-	var stars = Node2D.new()
-	stars.set_script(preload("res://scenes/levels/starfield.gd"))
-	add_child(stars)
+	# the space scene: nebulae, stars, shooting stars, the moon (title redesign)
+	add_child(TitleSpace.new())
 
-	var title = _label("SHMITTENS! ✰", 84, GOLD)
-	title.position = Vector2(0, 70)
+	var title = _label("SHMITTENS!", 84, GOLD)
+	title.position = Vector2(-30, 70)
 	add_child(title)
+	# ...followed by a glowing star
+	var star = TitleStar.new()
+	var font = title.get_theme_font("font")
+	var w = font.get_string_size("SHMITTENS!", HORIZONTAL_ALIGNMENT_LEFT, -1, 84).x
+	star.position = Vector2(640 - 30 + w / 2.0 + 52, 70 + 60)
+	add_child(star)
 	title.add_theme_color_override("font_outline_color", Color(0.85, 0.3, 0.6))
 	title.add_theme_constant_override("outline_size", 14)
 	var subtitle = _label("Sho, the buff demon lord of the mice, has kidnapped the Princess of Pisitania.\nOnly one cat - and her friends - can bring her home.", 22, UiTheme.PINK_LIGHT)
