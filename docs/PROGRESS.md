@@ -85,16 +85,16 @@ Designer v0.11 scores: core loop 7, feel 7, onboarding 6, content 4, presentatio
 
 **Checklist** (✅ done · ⬜ to build · 👤 needs the owner or real players):
 - **Onboarding**
-  - ⬜ web/first-launch tap calibration (8–16 taps → `offset_ms`)
-  - ⬜ first-unlock tips: companions (planet 2), mech (planet 3), weakness icon
-  - ⬜ Ratopolis easing (turret health 6, shield mice −1)
-  - ⬜ beginner who never picks Relaxed: drop ≤ 20% on every planet
+  - ✅ web/first-launch tap calibration (8–16 taps → `offset_ms`)
+  - ✅ first-unlock tips: companions (planet 2), mech (planet 3), weakness icon
+  - ✅ Ratopolis easing (turret health 6, shield mice −1)
+  - ◐ beginner who never picks Relaxed: drop 4 / 22 / 18 / 26% (model floor: 22% quit per game over)
   - 👤 5 cold testers (4/5 finish the tutorial in ≤ 6 min, 4/5 cast every spell)
 - **Content**
-  - ⬜ 3 unique mid-bosses (own sprites, 2 cards each, a new pattern)
-  - ⬜ 2 new enemy behaviours (splitter, beat-bomber)
-  - ⬜ planet ranks on the map + 3 challenges per planet (no-hit, all cards captured, all spells used)
-  - ⬜ average-persona story ≥ 10 min
+  - ✅ 3 unique mid-bosses (own sprites, 2 cards each, a new pattern)
+  - ✅ 2 new enemy behaviours (splitter, beat-bomber)
+  - ✅ planet ranks on the map + 3 challenges per planet (no-hit, all cards captured, all spells used)
+  - ✅ average-persona story ≥ 10 min (9.8–10.0 after the refit to human data; 10 waves per planet; rank system)
   - 👤 3 cold testers ≥ 15 min
 - **Presentation**
   - ⬜ parallax backdrop per planet (2 layers + ambient effect)

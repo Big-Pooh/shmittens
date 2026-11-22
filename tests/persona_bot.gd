@@ -20,10 +20,12 @@ const PERSONAS = {
 		"gesture_mess_chance": 0.25, "draw_time": 1.3, "release_on_beat": false, "release_sigma": 0.2,
 		"weapon_sense": 0.35, "focus_skill": 0.15, "bomb_panic": 0.35,
 	},
+	# average re-fit to the human sessions (design review: the bot was ~30x less likely to die
+	# than the real tester on Flexor): dodge 0.95 -> 0.88, aim 15 -> 28 px, clicks 0.75 -> 0.65
 	"average": {
-		"timing_sigma": 0.06, "timing_bias": 0.02, "click_prob": 0.75, "spam_per_sec": 0.3,
-		"hold_prob": 0.25, "reaction": 0.22, "dodge_chance": 0.95, "pickup_radius": 320.0,
-		"aim_error": 15.0, "home_x": 260.0, "gesture_min_charges": 1, "gesture_noise": 0.07,
+		"timing_sigma": 0.06, "timing_bias": 0.02, "click_prob": 0.65, "spam_per_sec": 0.3,
+		"hold_prob": 0.25, "reaction": 0.24, "dodge_chance": 0.88, "pickup_radius": 320.0,
+		"aim_error": 28.0, "home_x": 260.0, "gesture_min_charges": 1, "gesture_noise": 0.07,
 		"gesture_mess_chance": 0.05, "draw_time": 0.8, "release_on_beat": true, "release_sigma": 0.07,
 		"weapon_sense": 0.85, "focus_skill": 0.6, "bomb_panic": 0.2,
 	},

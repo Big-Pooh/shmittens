@@ -582,6 +582,7 @@ func _enemy_tests():
 
 	# shield mouse: plate blocks off-beat frontal shots; beat, angle and skills get through
 	var conductor = root.get_node("Conductor")
+	game.gun_level = 1   # (rank: enemy health grows with gun level)
 	var shielded = load("res://scenes/enemies/shield_mouse.tscn").instantiate()
 	shielded.position = Vector2(800, 400)
 	shielded.max_health = 20
@@ -624,7 +625,7 @@ func _level_tests():
 					var mb = Levels.create_midboss(group)
 					check(mb.is_midboss and mb.cards.size() == 2 and mb.get_script() != load("res://scenes/enemies/bosses/mecha_tank.gd"), "mid-boss %s is a unique boss with 2 spell cards" % mb.boss_name)
 					mb.free()
-	check(wave_counts.all(func(n): return n == 8) and midbosses == 3, "every planet has 8 waves; planets 2-4 have a mid-boss (%s, %d)" % [wave_counts, midbosses])
+	check(wave_counts.all(func(n): return n == 10) and midbosses == 3, "every planet has 10 waves; planets 2-4 have a mid-boss (%s, %d)" % [wave_counts, midbosses])
 
 	# drive the music bar by bar and clear each wave by force
 	var spb = conductor.seconds_per_beat
@@ -1987,7 +1988,7 @@ func _playtest5_tests():
 	main.add_child(shielded)
 	await frames(1)
 	shielded.take_skill_damage(5.0, "lightning")
-	check(is_equal_approx(shielded.health, 85.0), "zigzag lightning does x3 to shield mice")
+	check(is_equal_approx(shielded.max_health - shielded.health, 15.0), "zigzag lightning does x3 to shield mice (%.1f of %.1f)" % [shielded.health, shielded.max_health])
 	shielded.queue_free()
 	game.level = 0
 	game.reset_combo()
@@ -2080,4 +2081,13 @@ func _designer7_tests():
 	check(game.stars(0) == 3 and game.planet_records.level1.rank in ["A", "S"], "a planet record keeps the best rank and the stars")
 	game.planet_records = saved_records
 	cat.is_invulnerable = false
+	# rank: tougher mice when the gun is stronger
+	game.gun_level = 5
+	var tough = load("res://scenes/enemies/grunt.tscn").instantiate()
+	tough.max_health = 10
+	main.add_child(tough)
+	await frames(1)
+	check(is_equal_approx(tough.max_health, 10 * (1 + 4 * game.RANK_PER_GUN_LEVEL)), "rank: mice are tougher when your gun is stronger (%.1f)" % tough.max_health)
+	tough.queue_free()
+	game.gun_level = 1
 

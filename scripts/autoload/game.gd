@@ -89,6 +89,15 @@ const MECH_COMBO = 75
 var mech_parts = 0
 var mech_used_this_level = false
 var magnet_until = -1.0
+# RANK (classic shmup dynamic difficulty, content pass): the stronger your gun, the tougher the
+# mice - so skilled players get meatier fights while beginners (who lose gun levels when hit)
+# barely notice. Applied to health when an enemy spawns.
+const RANK_PER_GUN_LEVEL = 0.15        # mice: up to x1.6 at gun level 5
+const BOSS_RANK_PER_GUN_LEVEL = 0.075  # bosses: up to x1.3
+
+
+func rank_health(is_boss: bool) -> float:
+	return 1.0 + (BOSS_RANK_PER_GUN_LEVEL if is_boss else RANK_PER_GUN_LEVEL) * (gun_level - 1)
 # PLANET CHALLENGES (replay goals, design review): per planet attempt we track hits taken, spell
 # cards captured vs met, and which spell shapes were cast. Best results are saved per planet:
 # planet_records["level1"] = {"rank": "A", "no_hit": true, "all_cards": false, "all_spells": true}
@@ -112,7 +121,7 @@ var start_wave = 0
 # Effects: enemy shots ASSIST_SHOT_SLOWDOWN slower per level, +1 life per level (up to +2).
 const MAX_ASSIST = 3
 const ASSIST_SHOT_SLOWDOWN = 0.12
-const LEVEL_SHOT_SPEED = [1.0, 1.15, 1.3, 1.3]
+const LEVEL_SHOT_SPEED = [1.0, 1.15, 1.3, 1.2]   # Flexor: denser waves, slightly slower bullets
 const LEVEL_COUNT = 4   # Levels.LEVELS.size() (playtest 4: + Flexor, Sho's planet)   # playtest 1: dodging felt too easy (was 0.8/0.9/1.0)
 var assist = 0
 # per-level rank stats (time is measured by the level runner)

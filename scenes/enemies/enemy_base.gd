@@ -34,9 +34,17 @@ func _ready():
 	add_to_group("enemies")
 	collision_layer = Game.LAYER_ENEMY
 	collision_mask = 0
+	if not tutorial_exempt():
+		max_health *= Game.rank_health(self is Boss)
+		if not self is Boss:
+			max_health *= 1.0 - 0.15 * min(Game.assist, 2)   # beginner care after a game over
 	health = max_health
 	entering = slot_position != Vector2.INF
 	Conductor.beat.connect(_on_conductor_beat)
+
+
+func tutorial_exempt() -> bool:
+	return Game.tutorial_mode or Game.player_ref == null
 
 
 func _physics_process(delta):

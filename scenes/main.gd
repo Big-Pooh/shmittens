@@ -54,6 +54,7 @@ func _ready():
 	level_runner.boss_spawned.connect(_on_boss_spawned)
 	level_runner.level_cleared.connect(_on_level_cleared)
 	level_runner.all_levels_cleared.connect(_on_all_levels_cleared)
+	level_runner.halfway_1up.connect(func(): hud.flash_text("HALFWAY THERE!  +1 LIFE", Color(0.6, 1, 0.7)); Sfx.play("power_up"))
 	if Game.tutorial_mode:
 		var tutorial = Tutorial.new()
 		tutorial.name = "Tutorial"

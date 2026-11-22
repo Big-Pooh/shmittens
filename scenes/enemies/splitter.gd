@@ -8,7 +8,7 @@ class_name Splitter
 
 const SPLIT_SCENE = preload("res://scenes/enemies/splitter.tscn")
 const MINIS = 2
-const MINI_SPEED = 170.0
+const MINI_SPEED = 140.0
 
 var is_mini = false
 var mini_velocity = Vector2.ZERO
@@ -34,7 +34,7 @@ func on_beat(n: int):
 
 func die():
 	if not is_dead and not is_mini:
-		for i in MINIS:
+		for i in (1 if Game.assist > 0 else MINIS):   # beginner care: one mini when assisted
 			var m = SPLIT_SCENE.instantiate()
 			m.is_mini = true
 			m.drops = false

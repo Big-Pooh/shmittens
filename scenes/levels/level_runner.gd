@@ -18,6 +18,7 @@ signal boss_incoming(boss_name: String)
 signal boss_spawned(boss: Boss)
 signal level_cleared(index: int)
 signal all_levels_cleared
+signal halfway_1up
 
 enum State { IDLE, INTRO, WAVES, BOSS_INTRO, BOSS, CLEARED, DONE }
 
@@ -136,6 +137,12 @@ func _next_wave():
 		return
 	Game.set_wave(wave_index + 1)
 	Game.set_dancing(false)
+	# HALFWAY 1UP (beginner care): reaching the middle of a planet refills one lost life
+	if wave_index == waves.size() / 2 and Game.lives < Game.START_LIVES:
+		Game.lives += 1
+		Game.lives_changed.emit(Game.lives)
+		Game.track("halfway_1ups")
+		halfway_1up.emit()
 	for group in waves[wave_index]:
 		for enemy in Levels.create_group(group, level().get("volley_rate", 1.0) * Game.density()):
 			enemy.tree_exited.connect(_on_enemy_gone)
