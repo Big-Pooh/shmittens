@@ -21,6 +21,7 @@ const LAYERS = ["drums", "bass", "arp", "lead"]
 const BEATS_PER_BAR = 4
 const PERFECT_WINDOW = 0.05
 const GOOD_WINDOW = 0.10
+const ASSIST_GOOD_WINDOW = 0.14   # beginner care: wider GOOD window while assisted
 const TRACK_BPM = {
 	"level1": 110, "level2": 125, "level3": 140,
 	"boss1": 120, "boss2": 135, "boss3": 150,
@@ -163,7 +164,7 @@ func judge(t: float = song_time()) -> Judgement:
 	var error = absf(beat_error(t))
 	if error <= PERFECT_WINDOW:
 		return Judgement.PERFECT
-	if error <= GOOD_WINDOW:
+	if error <= (ASSIST_GOOD_WINDOW if Game.assist > 0 else GOOD_WINDOW):
 		return Judgement.GOOD
 	return Judgement.MISS
 

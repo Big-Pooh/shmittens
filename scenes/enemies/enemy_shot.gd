@@ -25,7 +25,7 @@ func _ready():
 	add_child(sprite)
 	var shape = CollisionShape2D.new()
 	var circle = CircleShape2D.new()
-	circle.radius = 7.0
+	circle.radius = 5.0   # smaller than the sprite: near-misses that look like misses are misses
 	shape.shape = circle
 	add_child(shape)
 

@@ -5,7 +5,7 @@
 [ext_resource type="Script" path="res://scenes/player/gun.gd" id="3_gun"]
 
 [sub_resource type="CircleShape2D" id="core"]
-radius = 9.0
+radius = 7.0
 
 [sub_resource type="CircleShape2D" id="pickup_radius"]
 radius = 44.0
