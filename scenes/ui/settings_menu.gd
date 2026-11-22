@@ -14,17 +14,18 @@ var fullscreen: CheckButton
 var reduce: CheckButton
 var relaxed: CheckButton
 var meows: CheckButton
+var contrast: CheckButton
 
 
 func _ready():
 	layer = 95
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	panel = PanelContainer.new()
-	panel.position = Vector2(420, 150)
+	panel.position = Vector2(420, 24)   # tall enough for every option (sprint 5)
 	panel.custom_minimum_size = Vector2(440, 0)
 	add_child(panel)
 	var box = VBoxContainer.new()
-	box.add_theme_constant_override("separation", 10)
+	box.add_theme_constant_override("separation", 6)
 	panel.add_child(box)
 	var title = Label.new()
 	title.text = "SETTINGS"
@@ -34,6 +35,11 @@ func _ready():
 	music = _slider(box, "Music volume", Game.music_volume, func(v): Game.music_volume = v; _changed())
 	sfx = _slider(box, "Sound effects volume", Game.sfx_volume, func(v): Game.sfx_volume = v; _changed())
 	meows = _check(box, "Cat meows", Game.meows_enabled, func(on): Game.meows_enabled = on; _changed())
+	contrast = _check(box, "High-contrast bullets (colour-blind friendly)", Game.high_contrast, func(on): Game.high_contrast = on; _changed())
+	var controls = Button.new()
+	controls.text = "Controls (rebind keys)..."
+	controls.pressed.connect(func(): get_tree().root.add_child(ControlsMenu.new()))
+	box.add_child(controls)
 	fullscreen = _check(box, "Fullscreen", Game.fullscreen, func(on): Game.fullscreen = on; _changed())
 	reduce = _check(box, "Reduce effects (no screen shake, softer flashes)", Game.reduce_effects, func(on): Game.reduce_effects = on; _changed())
 	relaxed = _check(box, "Relaxed mode (slower shots, +1 life, guardian bubble)", Game.relaxed_mode, func(on): _set_relaxed(on))

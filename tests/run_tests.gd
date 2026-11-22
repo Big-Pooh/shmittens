@@ -2191,6 +2191,25 @@ func _designer7_tests():
 	game.achievements = saved_meta[1]
 	game.hats_unlocked = saved_meta[2]
 	game.hat = saved_meta[3]
+	# sprint 5: key rebinding + high contrast
+	var saved_bind = game.bindings.duplicate()
+	game.rebind("bomb", KEY_B)
+	var bev = InputEventKey.new()
+	bev.physical_keycode = KEY_B
+	check(bev.is_action("bomb") and game.key_name("bomb") == "B", "keys can be rebound (bomb -> B)")
+	game.reset_bindings()
+	var xev = InputEventKey.new()
+	xev.physical_keycode = KEY_X
+	check(xev.is_action("bomb") and game.bindings.is_empty(), "reset restores the default keys")
+	game.bindings = saved_bind
+	game.apply_bindings()
+	game.high_contrast = true
+	var hc = EnemyShot.create(Vector2(500, 300), Vector2.LEFT, 10.0)
+	main.add_child(hc)
+	await frames(1)
+	check(hc.sprite.self_modulate.b < 0.5, "high-contrast mode recolours enemy bullets")
+	hc.queue_free()
+	game.high_contrast = false
 
 func Boss_names_ok() -> bool:
 	var names = load("res://scenes/enemies/bosses/boss.gd").SPELL_NAMES

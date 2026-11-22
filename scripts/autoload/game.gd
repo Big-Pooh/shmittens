@@ -161,6 +161,60 @@ var fullscreen = false
 var reduce_effects = false   # accessibility: no screen shake, softer flashes
 var relaxed_mode = false     # accessibility: always at least assist 1 (slower shots, +1 life, guardian)
 var meows_enabled = true     # Settings -> "Cat meows"
+var high_contrast = false    # Settings -> high-contrast bullets (colour-blind friendly)
+var bindings = {}            # action -> physical keycode (rebinding, sprint 5)
+var _default_keys = {}
+
+
+# Current keyboard key of an action, for the controls menu.
+func key_name(action: String) -> String:
+	for e in InputMap.action_get_events(action):
+		if e is InputEventKey:
+			return OS.get_keycode_string(e.physical_keycode if e.physical_keycode != 0 else e.keycode)
+	return "-"
+
+
+func _remember_defaults():
+	if not _default_keys.is_empty():
+		return
+	for action in InputMap.get_actions():
+		for e in InputMap.action_get_events(action):
+			if e is InputEventKey:
+				_default_keys[action] = e.physical_keycode
+				break
+
+
+func rebind(action: String, physical_keycode: int):
+	_remember_defaults()
+	for e in InputMap.action_get_events(action):
+		if e is InputEventKey:
+			InputMap.action_erase_event(action, e)
+	var ev = InputEventKey.new()
+	ev.physical_keycode = physical_keycode
+	InputMap.action_add_event(action, ev)
+	bindings[action] = physical_keycode
+	save_settings()
+
+
+func apply_bindings():
+	_remember_defaults()
+	for action in bindings:
+		if InputMap.has_action(action):
+			for e in InputMap.action_get_events(action):
+				if e is InputEventKey:
+					InputMap.action_erase_event(action, e)
+			var ev = InputEventKey.new()
+			ev.physical_keycode = bindings[action]
+			InputMap.action_add_event(action, ev)
+
+
+func reset_bindings():
+	_remember_defaults()
+	for action in bindings.keys():
+		if _default_keys.has(action):
+			rebind(action, _default_keys[action])
+	bindings.clear()
+	save_settings()
 # Challenge modes (playtest 4): 0 NORMAL, 1 HARD, 2 TOUHOU (unlocked by beating the story on HARD).
 # HARD: faster, denser patterns, tougher bosses, no assists / guardian / second wind.
 # TOUHOU: twice the bullets (a bit slower), bigger graze for triple points, 1 free bomb per life.
@@ -618,6 +672,9 @@ func load_settings():
 	reduce_effects = c.get_value("access", "reduce_effects", reduce_effects)
 	relaxed_mode = c.get_value("access", "relaxed_mode", relaxed_mode)
 	meows_enabled = c.get_value("audio", "meows", meows_enabled)
+	high_contrast = c.get_value("access", "high_contrast", high_contrast)
+	bindings = c.get_value("controls", "bindings", bindings)
+	apply_bindings()
 	challenge = c.get_value("access", "challenge", challenge)
 	hard_cleared = c.get_value("progress", "hard_cleared", hard_cleared)
 	planet_records = c.get_value("progress", "planet_records", planet_records)
@@ -644,6 +701,8 @@ func save_settings():
 	c.set_value("access", "reduce_effects", reduce_effects)
 	c.set_value("access", "relaxed_mode", relaxed_mode)
 	c.set_value("audio", "meows", meows_enabled)
+	c.set_value("access", "high_contrast", high_contrast)
+	c.set_value("controls", "bindings", bindings)
 	c.set_value("access", "challenge", challenge)
 	c.set_value("progress", "hard_cleared", hard_cleared)
 	c.set_value("progress", "planet_records", planet_records)

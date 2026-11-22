@@ -72,6 +72,10 @@ func _ready():
 	sprite = Sprite2D.new()
 	sprite.texture = TEXTURES[kind]
 	sprite.scale = Vector2.ONE * SPRITE_SCALE
+	if Game.high_contrast:
+		# colour-blind friendly: every enemy bullet bright yellow-white, slightly bigger
+		sprite.self_modulate = Color(1.6, 1.6, 0.4)
+		sprite.scale *= 1.15
 	add_child(sprite)
 	var shape = CollisionShape2D.new()
 	var circle = CircleShape2D.new()
