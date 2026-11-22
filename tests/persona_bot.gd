@@ -184,28 +184,68 @@ func _noticed(node: Node, now: float) -> bool:
 
 
 func _move(target):
-	var desired = Vector2.ZERO
 	var threats = _threats()
-	if not threats.is_empty():
-		for danger in threats:
-			var away = -danger
-			if away.length() < 1.0:
-				away = Vector2(0, 1 if cat.global_position.y < 360 else -1)
-			desired += Vector2(away.x * 0.3, away.y).normalized()
-	else:
-		var goal = Vector2(p.home_x, cat.global_position.y)
-		if target:
-			goal.y = target.global_position.y
-		var pickup = _nearest_pickup()
-		if pickup:
-			goal = pickup.global_position
+	var desired = Vector2.ZERO
+	var goal = Vector2(p.home_x, cat.global_position.y)
+	if target:
+		goal.y = target.global_position.y
+	var pickup = _nearest_pickup()
+	if pickup:
+		goal = pickup.global_position
+	if threats.is_empty():
 		var to_goal = goal - cat.global_position
 		if to_goal.length() > 20.0:
 			desired = to_goal.normalized()
+	else:
+		desired = _safest_direction(goal)
 	_press("move_right", desired.x > 0.3)
 	_press("move_left", desired.x < -0.3)
 	_press("move_down", desired.y > 0.3)
 	_press("move_up", desired.y < -0.3)
+
+
+# Look-ahead dodging (like a human scanning the screen): try 8 directions + staying put,
+# simulate noticed bullets/beams/enemies 0.6 s ahead, pick the move with the most clearance
+# (ties broken toward the goal). Only threats this persona has noticed are considered.
+const MOVE_SPEED = 430.0
+const LOOKAHEAD = [0.1, 0.2, 0.3, 0.45, 0.6]
+
+func _safest_direction(goal: Vector2) -> Vector2:
+	var now = sim_time
+	var shots = []
+	for shot in get_tree().get_nodes_in_group("enemy_shots"):
+		if _noticed(shot, now):
+			shots.append([shot.global_position, shot.velocity])
+	var beams = []
+	for node in get_tree().current_scene.get_children():
+		if node is EnemyBeam and _noticed(node, now):
+			beams.append([node.global_position.y, node.right_x, node.warn_time - node.time, node.warn_time + node.active_time - node.time])
+	var bodies = []
+	for e in _enemies():
+		if _noticed(e, now):
+			bodies.append(e.global_position)
+	var best_dir = Vector2.ZERO
+	var best_score = -INF
+	var lo = Game.SCREEN.position + Vector2(40, 36)
+	var hi = Game.SCREEN.end - Vector2(40, 36)
+	for i in 9:
+		var dir = Vector2.ZERO if i == 8 else Vector2.from_angle(TAU * i / 8.0)
+		var clearance = 200.0
+		for t in LOOKAHEAD:
+			var pos = (cat.global_position + dir * MOVE_SPEED * t).clamp(lo, hi)
+			for s in shots:
+				clearance = min(clearance, pos.distance_to(s[0] + s[1] * t))
+			for b in beams:
+				if t >= b[2] - 0.1 and t <= b[3] and pos.x <= b[1]:
+					clearance = min(clearance, absf(pos.y - b[0]) - EnemyBeam.WIDTH / 2.0)
+			for body in bodies:
+				clearance = min(clearance, pos.distance_to(body) - 40.0)
+		var toward_goal = dir.dot((goal - cat.global_position).normalized()) if dir != Vector2.ZERO else 0.0
+		var score = min(clearance, 90.0) + toward_goal * 8.0
+		if score > best_score:
+			best_score = score
+			best_dir = dir
+	return best_dir
 
 
 func _nearest_pickup():
