@@ -1016,7 +1016,24 @@ func _tutorial_tests():
 	check(tutorial.gesture_index == 0, "wrong gesture doesn't advance")
 	for skill in ["shockwave", "laser", "lightning", "shield"]:
 		gestures.cast_skill(skill, false, Vector2.RIGHT)
-	check(tutorial.step == 6, "all 4 gestures complete the tutorial")
+	check(tutorial.step == 6 and tutorial.practice_boss != null, "after the spells comes the spell-card step (a practice boss)")
+	await frames(3)
+	var trainer = tutorial.practice_boss
+	trainer.entering = false
+	await frames(2)
+	trainer.card_intro = 0
+	game.player_hit.emit("shot")   # got hit during the card: not captured
+	trainer.take_damage(trainer.max_health)
+	await frames(3)
+	check(tutorial.step == 6 and tutorial.card_attempts == 1, "a card cleared after being hit doesn't count: try again")
+	await frames(3)
+	trainer = tutorial.practice_boss
+	trainer.entering = false
+	await frames(2)
+	trainer.card_intro = 0
+	trainer.take_damage(trainer.max_health)
+	await frames(2)
+	check(tutorial.step == 7, "capturing the practice spell card completes the tutorial")
 	await wait(4.5)
 	for i in 3:
 		await process_frame
