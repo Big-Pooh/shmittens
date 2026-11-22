@@ -1690,6 +1690,7 @@ func _playtest4_tests():
 
 	# companions join every 10 combo, zap on the beat, leave when the combo breaks
 	var crew = main.companions
+	conductor.beat.disconnect(crew._on_beat)   # drive the companions' beats by hand (no live beats)
 	game.reset_combo()
 	for i in 10:
 		game.register_judgement(conductor.Judgement.PERFECT)
@@ -1719,6 +1720,7 @@ func _playtest4_tests():
 	cat.is_invulnerable = true
 	game.register_judgement(conductor.Judgement.MISS)
 	check(crew.count() == 0, "companions leave when the combo breaks")
+	conductor.beat.connect(crew._on_beat)
 	await _clear_world()
 
 	# PERFECT laser crits

@@ -4,15 +4,15 @@
 |---|---|---|---|---|
 | Player | had fun | 100% | ≥ 80% | ✅ |
 | Player | drop rate level 1 | 0% | ≤ 20% | ✅ |
-| Player | drop rate level 2 | 1% | ≤ 20% | ✅ |
-| Player | drop rate level 3 | 1% | ≤ 20% | ✅ |
+| Player | drop rate level 2 | 2% | ≤ 20% | ✅ |
+| Player | drop rate level 3 | 2% | ≤ 20% | ✅ |
 | Player | drop rate level 4 | 2% | ≤ 20% | ✅ |
-| Player | completion (finish the story) | 95% | ≥ 60% | ✅ |
+| Player | completion (finish the story) | 94% | ≥ 60% | ✅ |
 | Critic | likely to endorse | 92% | ≥ 80% | ✅ |
-| Business | purchase intent (monetization) | 77% | ≥ 25% | ✅ |
+| Business | purchase intent (monetization) | 76% | ≥ 25% | ✅ |
 | Business | GTM success (P > $100k gross) | 60% | ≥ 24% | ✅ |
 
-Average session: 7.9 min. Critic rubric score: 0.77. Feature checklist: 100%.
+Average session: 8.1 min. Critic rubric score: 0.77. Feature checklist: 100%.
 
 | Feature checklist | weight | done |
 |---|---|---|
@@ -38,3 +38,6 @@ Average session: 7.9 min. Critic rubric score: 0.77. Feature checklist: 100%.
 | story intro + planet journey map | 1.0 | 100% |
 | difficulty modes (hard / touhou) | 1.0 | 100% |
 | companions | 0.5 | 100% |
+| humour / personality (banter) | 1.0 | 100% |
+| rare aspirational power-up (mech) | 0.5 | 100% |
+| tutorial teaches every system (incl. spell cards) | 1.0 | 100% |

@@ -25,6 +25,7 @@ const LASER_PER_LEVEL = 0.4
 # and they turn slower (PlayerShot.FISH_TURN_RATE), so aiming the laser clearly pays more.
 const FISH_COUNT = [0, 1, 1, 2, 2, 3]
 const FISH_DAMAGE = 0.35
+const ASSIST_FISH_BONUS = 1.5   # beginner care: fish hit harder after a game over / in Relaxed
 const LASER_CRIT = 1.5   # playtest 4: a PERFECT laser shot is a critical hit
 const JUDGEMENT_DAMAGE = {
 	Conductor.Judgement.MISS: 1.0,
@@ -154,7 +155,8 @@ func fire(damage: float = CLICK_DAMAGE, judgement: int = -1):
 			var count = FISH_COUNT[clamp(Game.gun_level, 1, 5)]
 			for i in count:
 				var offset = deg_to_rad((i - (count - 1) / 2.0) * 25.0)
-				scene.add_child(PlayerShot.create(global_position, Vector2.from_angle(base_angle + offset), damage * FISH_DAMAGE, judgement, PlayerShot.Kind.FISH))
+				var fish_damage = FISH_DAMAGE * (ASSIST_FISH_BONUS if Game.assist > 0 else 1.0)
+				scene.add_child(PlayerShot.create(global_position, Vector2.from_angle(base_angle + offset), damage * fish_damage, judgement, PlayerShot.Kind.FISH))
 		_:
 			var streams = 2 + Game.gun_level
 			for i in streams:

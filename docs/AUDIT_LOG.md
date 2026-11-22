@@ -918,3 +918,65 @@ What you asked for:
   - beginner: capped by the card timers.
 
 **Tests:** 264 passing.
+
+## Phase 13: playtest 5 (iteration 9, branch `feedback/playtest-2`)
+**Why:** your fifth playtest. Session stats: 11 bombs, 6 spell cards missed, Fish 74%, 1 death on Normal.
+
+Your feedback:
+- the story shouldn't be separate;
+- tie the patterns to the music;
+- Overdrive is fine;
+- companions need distinct roles on different timings;
+- cut bombs to about a quarter;
+- teach spell cards explicitly, with a tutorial you can't finish without them;
+- add a rare mech power-up tied to good performance;
+- weaker Fish;
+- add gags (my choice, for the target audience);
+- should there be a shop?
+
+### What changed and why
+- **Story:** every NEW GAME opens with the 5-panel story (Esc skips it). The STORY button is gone.
+- **Bombs:** one per planet, and only with ≥2 charges (Touhou keeps its free bomb per life). Your 11 bombs would have been at most 4 across 4 planets.
+- **Companions:**
+  - **Pip (laser):** zaps on beats 1 and 3.
+  - **Nori (shield):** a one-hit bubble on beat 2 of every other bar.
+  - **Kiwi (shockwave):** a small ring on beat 4 that erases nearby bullets and hits mice for 2.
+  - They never act on the same beat.
+- **Patterns tied to the music:**
+  - every boss bullet pulses with the beat: it surges after each beat and glides before the next, at the same average speed, and swells on the beat;
+  - bosses bounce on the kick drum;
+  - armoured cards stream one spiral bullet on every off-beat hi-hat;
+  - arcs and suns mirror every 4-bar phrase, one loop of the song;
+  - new Conductor `eighth` signal.
+- **Tutorial:** step 7/7 is a practice boss ("Training Tanky", one 30 s card). You must CAPTURE the card to finish. If you're hit or bomb, it restarts; after 3 attempts, simply clearing it passes (beginner care). During this step hits count for the capture, but you have 9 lives.
+- **MECHA-MEOW:**
+  - **earning it:** you earn mech parts by capturing a boss spell card or by every 40-combo. 3 parts drop a golden MECH CORE.
+  - **the mech:** 12 s with twin heavy cannon bolts (×2 damage, piercing, scaling with gun level), 4 homing missiles every bar, 3 hits of armour, and 0.8× movement.
+  - Parts carry across planets and are lost on a game over.
+  - The HUD shows a MECH PARTS meter.
+- **Fish:** 0.5 → 0.35 damage, counts 1/1/2/2/3 (was 1/2/2/3/3), turn rate 7 → 4.5, speed 640 → 560. Beginner care: ×1.5 Fish damage with assist or Relaxed.
+- **Gags (`scenes/ui/banter.gd`):**
+  - mice speech bubbles when waves arrive ("I was promised dental.") and sometimes on defeat;
+  - a one-liner for every boss spell card ("Do you even lift, kitty?"), a stun line and a defeat line;
+  - cat puns every 10 combo;
+  - companion catchphrases;
+  - game-over gags;
+  - joke tips on the planet map;
+  - a pet-the-cat easter egg on the title screen;
+  - "Sho has been sentenced to 1000 hours of cardio" in the ending.
+  - The audience is cat lovers and casual rhythm players of all ages, so: wholesome puns, cartoon villains, no meanness.
+
+### Results
+| KPI | Panel A | Panel B | Target |
+|---|---|---|---|
+| had fun | 99% | 100% | ≥ 80% |
+| drop L1–L4 | 0 / 1 / 2 / 1% | 0 / 2 / 2 / 2% | ≤ 20% |
+| completion | 96% | 94% | ≥ 60% |
+| endorse | 91% | 92% | ≥ 80% |
+| purchase intent | 74% | 76% | ≥ 25% |
+| GTM | 60% (cap) | 60% (cap) | ≥ 24% |
+
+- **Monte Carlo, beginner in Normal mode (never picks Relaxed):** drop 6 / 19 / 22 / 24%, at the 20% line within noise. The weaker Fish costs beginners the most; the assist Fish bonus and the Relaxed offer are the safety nets.
+- **Boss medians on Normal:** average player 28–53 s; speedrunner 7–12 s. The mech, Overdrive and crits all stack for perfect play. Hard and Touhou give 1.6–2× longer fights.
+
+**Tests:** 284 passing. The companion test is now independent of the live music clock (one run had seen an extra real beat).

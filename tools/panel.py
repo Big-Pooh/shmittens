@@ -80,6 +80,10 @@ CHECKLIST = [
     ("story intro + planet journey map", 1.0, lambda: 1.0 if _exists("scenes", "ui", "intro_story.gd") else 0.0),
     ("difficulty modes (hard / touhou)", 1.0, lambda: 1.0 if _grep("scripts/autoload/game.gd", "Challenge") else 0.0),
     ("companions", 0.5, lambda: 1.0 if _exists("scenes", "player", "companions.gd") else 0.0),
+    # playtest 5
+    ("humour / personality (banter)", 1.0, lambda: 1.0 if _exists("scenes", "ui", "banter.gd") else 0.0),
+    ("rare aspirational power-up (mech)", 0.5, lambda: 1.0 if _grep("scenes/player/shmitten.gd", "start_mech") else 0.0),
+    ("tutorial teaches every system (incl. spell cards)", 1.0, lambda: 1.0 if _grep("scenes/tutorial.gd", "STEP_CARD") else 0.0),
 ]
 
 
