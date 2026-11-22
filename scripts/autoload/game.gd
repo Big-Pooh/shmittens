@@ -300,6 +300,18 @@ func eat_bullet():
 		add_cheese(1)
 
 
+# HIT-PAUSE (presentation pass): freeze the action for a moment on big impacts (armour
+# shattered, a spell card ending). The music clock runs on real time, so the beat never slips.
+const HIT_PAUSE = 0.05
+
+func hit_pause(seconds: float = HIT_PAUSE):
+	if drawing or reduce_effects or Engine.time_scale < 0.99 or not is_inside_tree():
+		return
+	Engine.time_scale = 0.05
+	get_tree().create_timer(seconds, true, false, true).timeout.connect(func(): if not drawing: Engine.time_scale = 1.0)
+	track("hit_pauses")
+
+
 func set_overdrive(state: int):
 	overdrive = state
 	overdrive_changed.emit(state)

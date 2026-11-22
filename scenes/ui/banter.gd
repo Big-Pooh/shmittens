@@ -112,27 +112,82 @@ func say_at(at: Vector2, text: String, color: Color, seconds: float = 1.8):
 	label.position = at + Vector2(-40, -70)
 
 
-func _bubble(text: String, color: Color, target, offset: Vector2, seconds: float) -> Label:
+const CAT_SHEET = preload("res://Art/Popo-AnimationSheet.png")
+
+
+# Speech bubble with an animated PORTRAIT of the speaker (presentation pass): the speaker's own
+# sprite (the cat's flying frames) in a little frame that bobs and blinks while it talks.
+func _bubble(text: String, color: Color, target, offset: Vector2, seconds: float) -> Control:
+	var panel = PanelContainer.new()
+	var style = StyleBoxFlat.new()
+	style.bg_color = color
+	style.set_corner_radius_all(10)
+	style.set_content_margin_all(5)
+	panel.add_theme_stylebox_override("panel", style)
+	var row = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	panel.add_child(row)
+	var portrait = _portrait(target)
+	if portrait:
+		row.add_child(portrait)
 	var label = Label.new()
 	label.text = text
 	label.add_theme_font_size_override("font_size", 16)
 	label.add_theme_color_override("font_color", Color(0.15, 0.1, 0.25))
-	var style = StyleBoxFlat.new()
-	style.bg_color = color
-	style.set_corner_radius_all(10)
-	style.set_content_margin_all(6)
-	label.add_theme_stylebox_override("normal", style)
-	add_child(label)
-	bubbles.append([label, target, offset, seconds])
+	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(label)
+	add_child(panel)
+	bubbles.append([panel, target, offset, seconds])
 	if target:
-		label.position = target.global_position + offset
-	return label
+		panel.position = target.global_position + offset
+	return panel
+
+
+# The text of a bubble (tests).
+static func text_of(bubble: Control) -> String:
+	for l in bubble.find_children("*", "Label", true, false):
+		return l.text
+	return ""
+
+
+func _portrait(target) -> Control:
+	if target == null or not is_instance_valid(target):
+		return null
+	var tex: Texture2D = null
+	var region = Rect2()
+	if target is Shmitten:
+		tex = CAT_SHEET
+		region = Rect2(0, 0, 64, 48)
+	elif "sprite" in target and target.sprite and target.sprite.texture:
+		tex = target.sprite.texture
+	if tex == null:
+		return null
+	var holder = Control.new()
+	holder.custom_minimum_size = Vector2(34, 30)
+	var icon = TextureRect.new()
+	if region.size != Vector2.ZERO:
+		var atlas = AtlasTexture.new()
+		atlas.atlas = tex
+		atlas.region = region
+		tex = atlas
+	icon.texture = tex
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.size = Vector2(34, 30)
+	icon.pivot_offset = Vector2(17, 15)
+	holder.add_child(icon)
+	# 3-frame talk animation: bob up, squash, back (loops while the bubble lives)
+	var tween = icon.create_tween().set_loops()
+	tween.tween_property(icon, "scale", Vector2(1.08, 0.92), 0.12)
+	tween.tween_property(icon, "scale", Vector2(0.94, 1.08), 0.12)
+	tween.tween_property(icon, "scale", Vector2.ONE, 0.12)
+	return holder
 
 
 func _process(delta):
 	for b in bubbles:
 		b[3] -= delta
-		var label: Label = b[0]
+		var label: Control = b[0]
 		if b[1] != null and is_instance_valid(b[1]):
 			label.position = b[1].global_position + b[2]
 		label.position.x = clamp(label.position.x, 8.0, 1272.0 - label.size.x)

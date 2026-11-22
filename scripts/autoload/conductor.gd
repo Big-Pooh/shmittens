@@ -217,7 +217,7 @@ func _process(_delta):
 		eighth.emit(_last_eighth)
 		var bar_index = (_last_eighth / 8) % MusicPatterns.BARS
 		var step = _last_eighth % 8
-		for note in MusicPatterns.LEAD[bar_index]:
+		for note in MusicPatterns.lead(track)[bar_index]:
 			if note[0] == step:
 				lead_note.emit(note[1], note[2])
 		if _generation != generation:

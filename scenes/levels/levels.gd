@@ -24,6 +24,7 @@ const ENEMY_SCENES = {
 const LEVELS = [
 	{
 		"title": "MOUSETRONICA",
+		"theme": "factory",
 		"planet": "Mousetronica, the factory planet",
 		"planet_color": Color(0.95, 0.6, 0.35),
 		"track": "level1",
@@ -52,6 +53,7 @@ const LEVELS = [
 	},
 	{
 		"title": "DRAINIA",
+		"theme": "sewer",
 		"planet": "Drainia, the sewer moon",
 		"planet_color": Color(0.4, 0.8, 0.6),
 		"track": "level2",
@@ -80,6 +82,7 @@ const LEVELS = [
 	},
 	{
 		"title": "RATOPOLIS",
+		"theme": "castle",
 		"planet": "Ratopolis, the castle planet",
 		"planet_color": Color(0.65, 0.5, 0.9),
 		"track": "level3",
@@ -111,6 +114,7 @@ const LEVELS = [
 	},
 	{
 		"title": "FLEXOR",
+		"theme": "fortress",
 		"planet": "Flexor, Sho's fortress planet",
 		"planet_color": Color(0.9, 0.3, 0.45),
 		"track": "level4",

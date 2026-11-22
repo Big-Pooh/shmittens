@@ -1941,13 +1941,13 @@ func _playtest5_tests():
 	var quip_boss = await _make_boss("res://scenes/enemies/bosses/sho.gd")
 	var bubbles = banter.bubbles.size()
 	banter.boss_card(quip_boss, 0)
-	check(banter.bubbles.size() == bubbles + 1 and banter.bubbles[-1][0].text == "Do you even lift, kitty?", "Sho quips at his first spell card")
+	check(banter.bubbles.size() == bubbles + 1 and banter.text_of(banter.bubbles[-1][0]) == "Do you even lift, kitty?", "Sho quips at his first spell card")
 	quip_boss.queue_free()
 	game.reset_combo()
 	bubbles = banter.bubbles.size()
 	for i in 10:
 		game.register_judgement(conductor.Judgement.PERFECT)
-	check(banter.bubbles.size() > bubbles and Banter_lines_has(banter.bubbles[-1][0].text), "the cat makes a pun every 10 combo")
+	check(banter.bubbles.size() > bubbles and Banter_lines_has(banter.text_of(banter.bubbles[-1][0])), "the cat makes a pun every 10 combo")
 	game.reset_combo()
 	await _clear_world()
 
@@ -2090,4 +2090,20 @@ func _designer7_tests():
 	check(is_equal_approx(tough.max_health, 10 * (1 + 4 * game.RANK_PER_GUN_LEVEL)), "rank: mice are tougher when your gun is stronger (%.1f)" % tough.max_health)
 	tough.queue_free()
 	game.gun_level = 1
+	# presentation: per-planet melodies, portraits, hit-pause
+	var MP = load("res://scripts/music_patterns.gd")
+	check(MP.lead("level1") != MP.lead("level2") and MP.lead("level3") != MP.lead("level4"), "every planet has its own melody")
+	check(MP.lead("boss1")[0].size() == MP.lead("level1")[0].size(), "each boss plays a variation of its planet's motif")
+	var q = await _make_boss("res://scenes/enemies/bosses/sho.gd")
+	main.banter.boss_card(q, 0)
+	check(main.banter.bubbles[-1][0].find_children("*", "TextureRect", true, false).size() == 1, "speech bubbles show the speaker's portrait")
+	q.queue_free()
+	game.reduce_effects = false
+	game.drawing = false
+	Engine.time_scale = 1.0
+	game.hit_pause(0.05)
+	check(Engine.time_scale < 0.1, "hit-pause freezes the action on big impacts")
+	await create_timer(0.12, true, false, true).timeout
+	check(is_equal_approx(Engine.time_scale, 1.0), "...for a moment only")
+	await _clear_world()
 

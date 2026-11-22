@@ -157,6 +157,7 @@ func _start_card(index: int):
 
 func _end_card(captured: bool):
 	var ended = card
+	Game.hit_pause()
 	Game.track("cards_captured" if captured else "cards_missed")
 	if captured:
 		captures += 1
@@ -296,6 +297,7 @@ func _crack(amount: float):
 	armor = max(armor - amount, 0.0)
 	if armor <= 0.0:
 		stunned_beats = STUN_BEATS
+		Game.hit_pause()
 		Sfx.play("armor_break")
 		Game.shake(14.0)
 		_flash(Color(1, 3, 3))
