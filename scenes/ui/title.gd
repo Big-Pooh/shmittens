@@ -110,6 +110,42 @@ func _process(delta):
 
 # First time: the tutorial runs before Level 1 (it can be skipped with Tab).
 func start_game():
+	if not Game.difficulty_chosen:
+		_ask_difficulty()
+		return
+	_begin_new_game()
+
+
+# First START: let new players pick their challenge (changeable later in Settings).
+func _ask_difficulty():
+	var panel = PanelContainer.new()
+	panel.name = "DifficultyChoice"
+	panel.position = Vector2(390, 250)
+	panel.custom_minimum_size = Vector2(500, 0)
+	add_child(panel)
+	var box = VBoxContainer.new()
+	box.add_theme_constant_override("separation", 12)
+	panel.add_child(box)
+	var q = Label.new()
+	q.text = "How do you like your challenge?\n(you can change this any time in Settings)"
+	q.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(q)
+	for option in [["RELAXED  -  slower shots, extra life, a guardian bubble", true], ["NORMAL  -  the intended challenge", false]]:
+		var b = Button.new()
+		b.text = option[0]
+		b.custom_minimum_size = Vector2(0, 48)
+		b.pressed.connect(choose_difficulty.bind(option[1]))
+		box.add_child(b)
+
+
+func choose_difficulty(relaxed: bool):
+	Game.relaxed_mode = relaxed
+	Game.difficulty_chosen = true
+	Game.save_settings()
+	_begin_new_game()
+
+
+func _begin_new_game():
 	Game.endless_mode = false
 	Game.ranks.clear()
 	Game.start_level = 0

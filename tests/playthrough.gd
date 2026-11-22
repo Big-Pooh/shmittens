@@ -19,6 +19,7 @@ var game
 var conductor
 var sim_seconds = 0.0
 var bot = null
+var relaxed = false   # tester picked RELAXED at the first-start prompt
 
 
 func _initialize():
@@ -27,6 +28,7 @@ func _initialize():
 		persona = args[0]
 	if args.size() > 1:
 		seed_value = int(args[1])
+	relaxed = args.size() > 2 and args[2] == "relaxed"
 	seed(seed_value)
 	_run.call_deferred()
 
@@ -43,6 +45,8 @@ func _run():
 	conductor.time_override = 0.0
 	game.tutorial_mode = false
 	game.start_level = 0
+	game.relaxed_mode = relaxed
+	game.clear_assist()
 	game.judged.connect(_on_judged)
 	game.player_hit.connect(_on_hit)
 	game.combo_changed.connect(func(c, _m): level_stats.max_combo = max(level_stats.get("max_combo", 0), c))

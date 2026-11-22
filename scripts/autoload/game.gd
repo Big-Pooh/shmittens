@@ -90,6 +90,7 @@ var sfx_volume = 0.8
 var fullscreen = false
 var reduce_effects = false   # accessibility: no screen shake, softer flashes
 var relaxed_mode = false     # accessibility: always at least assist 1 (slower shots, +1 life, guardian)
+var difficulty_chosen = false   # first START asks Relaxed / Normal once
 var unlocked_level = 0       # highest story level the player may start
 var story_complete = false   # unlocks Endless
 var best_scores = {}         # "level1".."level3", "endless" -> best score
@@ -274,6 +275,7 @@ func load_settings():
 	fullscreen = c.get_value("video", "fullscreen", fullscreen)
 	reduce_effects = c.get_value("access", "reduce_effects", reduce_effects)
 	relaxed_mode = c.get_value("access", "relaxed_mode", relaxed_mode)
+	difficulty_chosen = c.get_value("access", "difficulty_chosen", difficulty_chosen)
 	unlocked_level = c.get_value("progress", "unlocked_level", unlocked_level)
 	story_complete = c.get_value("progress", "story_complete", story_complete)
 	best_scores = c.get_value("progress", "best_scores", best_scores)
@@ -287,6 +289,7 @@ func save_settings():
 	c.set_value("video", "fullscreen", fullscreen)
 	c.set_value("access", "reduce_effects", reduce_effects)
 	c.set_value("access", "relaxed_mode", relaxed_mode)
+	c.set_value("access", "difficulty_chosen", difficulty_chosen)
 	c.set_value("progress", "unlocked_level", unlocked_level)
 	c.set_value("progress", "story_complete", story_complete)
 	c.set_value("progress", "best_scores", best_scores)

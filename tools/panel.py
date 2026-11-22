@@ -13,6 +13,7 @@ Panel: each tester i has (seeded)
   rhythm     ~ U(0, 1)             - how much they enjoy rhythm mechanics
   challenge  ~ clamp(N(skill, .2)) - preferred difficulty
   aesthetic  ~ U(0, 1)             - how much art/audio quality matters to them
+  relaxed    - picks RELAXED at the first-start prompt: 70% of testers with challenge < 0.3 (assumption)
 Each tester plays one full sped-up run (bot persona "skill:<skill>").
 
 Targets (benchmark-adjusted, see docs/KPI.md):
@@ -79,12 +80,13 @@ def make_panel(n, seed=2026):
             "id": i + 1, "skill": skill, "patience": rng.uniform(0.25, 1.0), "rhythm": rng.random(),
             "challenge": min(max(rng.gauss(skill, 0.2), 0.0), 1.0), "aesthetic": rng.random(),
         })
+        panel[-1]["relaxed"] = panel[-1]["challenge"] < 0.3 and rng.random() < 0.7
     return panel
 
 
 def run_tester(t):
     cmd = [GODOT, "--headless", "--fixed-fps", "60", "--path", ROOT, "-s", "tests/playthrough.gd", "--",
-           "skill:%.3f" % t["skill"], str(t["id"])]
+           "skill:%.3f" % t["skill"], str(t["id"]), "relaxed" if t["relaxed"] else "normal"]
     out = subprocess.run(cmd, capture_output=True, text=True, timeout=900).stdout
     for line in out.splitlines():
         if line.startswith("RESULT "):

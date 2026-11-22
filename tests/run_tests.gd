@@ -86,6 +86,8 @@ func _run():
 	LaserBeam = load("res://scenes/gestures/skills/laser_beam.gd")
 	ChainLightning = load("res://scenes/gestures/skills/chain_lightning.gd")
 	Levels = load("res://scenes/levels/levels.gd")
+	# restore the player's real settings after the run (some tests change and save them)
+	var original = {"chosen": root.get_node("Game").difficulty_chosen, "relaxed": root.get_node("Game").relaxed_mode}
 	EnemyBeam = load("res://scenes/enemies/enemy_beam.gd")
 	ShieldMouseScript = load("res://scenes/enemies/shield_mouse.gd")
 	await _start_main()
@@ -190,6 +192,9 @@ func _run():
 	_second_wind_tests()
 	await _screen_tests()
 
+	game.difficulty_chosen = original.chosen
+	game.relaxed_mode = original.relaxed
+	game.save_settings()
 	print("%d passed, %d failed" % [passed, failed])
 	quit(1 if failed else 0)
 
@@ -758,6 +763,7 @@ func _screen_tests():
 	for i in 3:
 		await process_frame
 	check(current_scene.name == "Title", "title screen loads")
+	game.difficulty_chosen = true
 	current_scene.start_game()
 	for i in 3:
 		await process_frame
@@ -958,6 +964,8 @@ func _tutorial_tests():
 	check(not game.tutorial_mode and current_scene.get_node_or_null("Tutorial") == null, "Tab skips the tutorial")
 
 	# Start offers the tutorial only the first time
+	var saved_choice = game.difficulty_chosen
+	game.difficulty_chosen = true
 	TutorialScript.set_done(false)
 	change_scene_to_file("res://scenes/ui/title.tscn")
 	for i in 3:
@@ -975,6 +983,23 @@ func _tutorial_tests():
 		await process_frame
 	check(current_scene.get_node_or_null("Tutorial") == null, "later Starts go straight to level 1")
 	TutorialScript.set_done(was_done)
+	# first START asks for the difficulty once
+	game.difficulty_chosen = false
+	var saved_relaxed = game.relaxed_mode
+	change_scene_to_file("res://scenes/ui/title.tscn")
+	for i in 3:
+		await process_frame
+	current_scene.start_game()
+	check(current_scene.get_node_or_null("DifficultyChoice") != null, "first START asks Relaxed / Normal")
+	current_scene.choose_difficulty(true)
+	for i in 4:
+		await process_frame
+	check(game.relaxed_mode and game.difficulty_chosen and current_scene.name == "Main", "choosing RELAXED saves it and starts the game")
+	game.relaxed_mode = saved_relaxed
+	game.difficulty_chosen = saved_choice
+	game.clear_assist()
+	game.tutorial_mode = false
+	game.save_settings()
 	game.tutorial_mode = false
 
 

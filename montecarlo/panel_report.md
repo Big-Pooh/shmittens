@@ -4,14 +4,14 @@
 |---|---|---|---|---|
 | Player | had fun | 74% | ≥ 80% | ❌ |
 | Player | drop rate level 1 | 6% | ≤ 20% | ✅ |
-| Player | drop rate level 2 | 9% | ≤ 20% | ✅ |
+| Player | drop rate level 2 | 10% | ≤ 20% | ✅ |
 | Player | drop rate level 3 | 6% | ≤ 20% | ✅ |
 | Player | completion (finish the story) | 80% | ≥ 60% | ✅ |
 | Critic | likely to endorse | 84% | ≥ 80% | ✅ |
 | Business | purchase intent (monetization) | 53% | ≥ 25% | ✅ |
 | Business | GTM success (P > $100k gross) | 45% | ≥ 24% | ✅ |
 
-Average session: 5.3 min. Critic rubric score: 0.72. Feature checklist: 100%.
+Average session: 5.5 min. Critic rubric score: 0.72. Feature checklist: 100%.
 
 | Feature checklist | weight | done |
 |---|---|---|
