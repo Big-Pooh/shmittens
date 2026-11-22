@@ -190,6 +190,7 @@ func _run():
 	_volley_rate_tests()
 	await _iteration1_tests()
 	_second_wind_tests()
+	await _spell_chain_tests()
 	await _screen_tests()
 
 	game.difficulty_chosen = original.chosen
@@ -1220,3 +1221,31 @@ func _second_wind_tests():
 	game.play_time = 180.0
 	check(not game.second_wind_active(), "Second Wind wears off after 45 s")
 	game.reset()
+
+
+func _spell_chain_tests():
+	await _start_main()
+	main.level_runner.stop()
+	var conductor = root.get_node("Conductor")
+	var gestures = main.get_node("GestureInput")
+	var spb = conductor.seconds_per_beat
+	conductor.time_override = 8 * spb + 0.01            # bar 2
+	gestures.cast_skill("shield", false)
+	check(gestures.chain == 0 and is_equal_approx(game.spell_power, 1.0), "first cast: no chain")
+	conductor.time_override = 12 * spb + 0.01           # bar 3 (consecutive)
+	gestures.cast_skill("shield", false)
+	check(gestures.chain == 1 and is_equal_approx(game.spell_power, 1.25), "cast on the next bar chains (+25 percent)")
+	conductor.time_override = 16 * spb + 0.01
+	gestures.cast_skill("shield", false)
+	conductor.time_override = 20 * spb + 0.01
+	gestures.cast_skill("shield", false)
+	conductor.time_override = 24 * spb + 0.01
+	gestures.cast_skill("shield", false)
+	check(gestures.chain == gestures.CHAIN_MAX, "chain caps at x%d" % (gestures.CHAIN_MAX + 1))
+	conductor.time_override = 36 * spb + 0.01           # skipped bars
+	gestures.cast_skill("shield", false)
+	check(gestures.chain == 0, "skipping a bar breaks the chain")
+	var wave = Shockwave.create(Vector2.ZERO, false)
+	check(is_equal_approx(wave.damage, Shockwave.DAMAGE * game.spell_power), "skills use the chain power")
+	wave.free()
+	conductor.time_override = -1.0

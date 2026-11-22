@@ -17,6 +17,10 @@ const SOUNDS = {
 	"siren": preload("res://Audio/siren.wav"),
 	"jingle": preload("res://Audio/jingle.wav"),
 	"perfect": preload("res://Audio/perfect.wav"),
+	"chain_1": preload("res://Audio/chain_1.wav"),
+	"chain_2": preload("res://Audio/chain_2.wav"),
+	"chain_3": preload("res://Audio/chain_3.wav"),
+	"chain_4": preload("res://Audio/chain_4.wav"),
 }
 
 const POOL_SIZE = 12

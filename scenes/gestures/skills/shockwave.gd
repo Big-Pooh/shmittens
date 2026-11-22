@@ -23,7 +23,7 @@ static func create(at: Vector2, empowered: bool) -> Shockwave:
 	wave.position = at
 	var boost = 1.5 if empowered else 1.0
 	wave.max_radius = RADIUS * boost
-	wave.damage = DAMAGE * boost
+	wave.damage = DAMAGE * boost * Game.spell_power
 	return wave
 
 

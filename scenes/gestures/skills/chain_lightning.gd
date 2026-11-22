@@ -26,7 +26,7 @@ static func create(from: Vector2, toward: Vector2, empowered: bool) -> ChainLigh
 	var bolt = ChainLightning.new()
 	bolt.origin = from
 	bolt.aim = toward
-	bolt.damage = DAMAGE * (1.5 if empowered else 1.0)
+	bolt.damage = DAMAGE * (1.5 if empowered else 1.0) * Game.spell_power
 	bolt.jumps = EMPOWERED_JUMPS if empowered else JUMPS
 	return bolt
 

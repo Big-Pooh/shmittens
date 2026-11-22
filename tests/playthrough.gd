@@ -40,6 +40,10 @@ func _new_level_stats(index: int) -> Dictionary:
 
 func _run():
 	game = root.get_node("Game")
+	game.persist = false   # simulated testers must never touch the player's real save
+	game.unlocked_level = 0
+	game.story_complete = false
+	game.best_scores = {}
 	conductor = root.get_node("Conductor")
 	conductor.sim_clock = true
 	conductor.time_override = 0.0

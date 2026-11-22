@@ -34,6 +34,7 @@ const FEVER_EVERY = 16
 const FEVER_BEATS = 8
 const FEVER_DAMAGE = 1.5
 var fever_beats = 0
+var spell_power = 1.0   # Spell Chain multiplier for the skill being cast (set by GestureInput)
 
 # Physics layer bits (match [layer_names] in project.godot)
 const LAYER_PLAYER = 1
@@ -95,6 +96,8 @@ var unlocked_level = 0       # highest story level the player may start
 var story_complete = false   # unlocks Endless
 var best_scores = {}         # "level1".."level3", "endless" -> best score
 var endless_mode = false
+# false in simulations (tests/playthrough.gd): never write the player's real save/settings
+var persist = true
 var is_game_over = false
 var drawing = false   # true while a skill gesture is being drawn (gun is disabled)
 
@@ -282,6 +285,8 @@ func load_settings():
 
 
 func save_settings():
+	if not persist:
+		return
 	var c = ConfigFile.new()
 	c.load(SETTINGS_PATH)   # keep other sections (beat offset, tutorial)
 	c.set_value("audio", "music_volume", music_volume)

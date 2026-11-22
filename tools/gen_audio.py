@@ -83,6 +83,10 @@ def main():
     write("siren.wav", siren)
     write("jingle.wav", sum((sweep(0.08, f, f, 0.2, square, 0.6) for f in (784, 988, 1175, 1568)), []))
     write("perfect.wav", sweep(0.06, 2093, 2093, 0.15, tri, 3.0))
+    # spell-chain stings: rising pentatonic notes (A minor), one per chain link
+    for i, semis in enumerate([0, 3, 7, 12]):
+        f = 440.0 * 2 ** (semis / 12.0)
+        write("chain_%d.wav" % (i + 1), mix(sweep(0.25, f, f, 0.18, tri, 1.2), sweep(0.25, f * 2, f * 2, 0.06, square, 2.0)))
     print("wrote sounds to %s" % os.path.normpath(OUT))
     write_music()
 

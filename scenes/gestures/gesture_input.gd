@@ -12,6 +12,12 @@ signal cast(skill: String, empowered: bool)
 signal fizzled(reason: String)
 
 const SLOW_MO_SCALE = 0.3
+# Spell Chain (signature mechanic): casting on consecutive bars links spells. Each link adds
+# CHAIN_BONUS power (max CHAIN_MAX links) and plays a rising note in the track's key.
+const CHAIN_BONUS = 0.25
+const CHAIN_MAX = 3
+var chain = 0
+var last_cast_bar = -100
 const MAX_DRAW_TIME = 2.0
 const MIN_POINT_SPACING = 4.0
 const SKILL_FOR_SHAPE = {
@@ -141,6 +147,10 @@ func cast_skill(skill: String, empowered: bool, direction: Vector2 = Vector2.RIG
 	var player = _player()
 	if player == null:
 		return
+	var bar = int(floor(Conductor.beat_position() / Conductor.BEATS_PER_BAR))
+	chain = min(chain + 1, CHAIN_MAX) if bar - last_cast_bar == 1 else 0
+	last_cast_bar = bar
+	Game.spell_power = 1.0 + CHAIN_BONUS * chain
 	var scene = get_tree().current_scene
 	match skill:
 		"shockwave":
@@ -156,6 +166,9 @@ func cast_skill(skill: String, empowered: bool, direction: Vector2 = Vector2.RIG
 	var text = skill.to_upper() + "!"
 	if empowered:
 		text = "EMPOWERED " + text
+	if chain > 0:
+		text += "  CHAIN x%d" % (chain + 1)
+		Sfx.play("chain_%d" % chain, -4.0)
 	_popup(text, SKILL_COLORS[skill])
 	cast.emit(skill, empowered)
 

@@ -15,7 +15,7 @@ var time = 0.0
 
 static func create(empowered: bool) -> Shield:
 	var shield = Shield.new()
-	shield.duration = DURATION * (1.5 if empowered else 1.0)
+	shield.duration = DURATION * (1.5 if empowered else 1.0) * Game.spell_power
 	shield.name = "Shield"
 	return shield
 

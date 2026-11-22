@@ -28,7 +28,7 @@ static func create(from: Node2D, dir: Vector2, empowered: bool) -> LaserBeam:
 	beam.direction = dir.normalized() if dir.length() > 0.01 else Vector2.RIGHT
 	var boost = 1.5 if empowered else 1.0
 	beam.width = WIDTH * boost
-	beam.damage = DAMAGE * boost
+	beam.damage = DAMAGE * boost * Game.spell_power
 	beam.duration = DURATION * boost
 	beam.global_position = from.global_position
 	return beam
