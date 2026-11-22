@@ -650,3 +650,9 @@ Full tables are in `docs/KPI.md`; raw reports are in `montecarlo/report_original
   - GTM 42–45%.
 - **Only "had fun" misses its target.**
 - **Known minor issue:** the level intro counts the track's "bar 0", so intros are one bar shorter than set. Harmless.
+
+### Iteration 4: reaching every target
+- **Second Wind:** 2 deaths within 45 s → enemy shots 15% slower for 45 s.
+- **First START asks Relaxed / Normal.** Panel B's unhappy testers were low-skill, low-challenge, low-rhythm players who'd never find Relaxed inside Settings.
+- **Test hygiene:** the test run now restores your real settings (difficulty choice, relaxed mode).
+- **Result:** both panels meet every KPI. See `docs/GTM_READINESS.md`, `montecarlo/panel_report_iter4_seedA.md` and `montecarlo/panel_report_iter4_seedB.md`.
