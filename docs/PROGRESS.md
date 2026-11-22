@@ -78,3 +78,36 @@ Resume a session by reading this file and `docs/PLAN.md` only. The full history 
 - The cat sheet's rows 1–4 are unused (waiting for you to say what those poses are for).
 - The stale `movie_writer` path to an old "Game Prototypes" folder was dropped from `project.godot`.
 - The test runner loads game classes at runtime on purpose (see the comment in `tests/run_tests.gd`).
+
+## ACTIVE GOAL (2026-11-22): every senior-designer score ≥ 7, then ship
+Branch `iterate/designer-7`. **Do not release or deploy Pages until the designer scores every category ≥ 7.** v0.11.0 stays live. Push commits for backup only.
+Designer v0.11 scores: core loop 7, feel 7, onboarding 6, content 4, presentation 5, GTM 4.
+
+**Checklist** (✅ done · ⬜ to build · 👤 needs the owner or real players):
+- **Onboarding**
+  - ⬜ web/first-launch tap calibration (8–16 taps → `offset_ms`)
+  - ⬜ first-unlock tips: companions (planet 2), mech (planet 3), weakness icon
+  - ⬜ Ratopolis easing (turret health 6, shield mice −1)
+  - ⬜ beginner who never picks Relaxed: drop ≤ 20% on every planet
+  - 👤 5 cold testers (4/5 finish the tutorial in ≤ 6 min, 4/5 cast every spell)
+- **Content**
+  - ⬜ 3 unique mid-bosses (own sprites, 2 cards each, a new pattern)
+  - ⬜ 2 new enemy behaviours (splitter, beat-bomber)
+  - ⬜ planet ranks on the map + 3 challenges per planet (no-hit, all cards captured, all spells used)
+  - ⬜ average-persona story ≥ 10 min
+  - 👤 3 cold testers ≥ 15 min
+- **Presentation**
+  - ⬜ parallax backdrop per planet (2 layers + ambient effect)
+  - ⬜ a distinct lead melody per planet, with the boss sharing its motif
+  - ⬜ hit-pause 40–60 ms on phase breaks and Spell Break
+  - ⬜ animated portraits in speech bubbles
+  - ⬜ HUD overlap check at 1080p; web performance
+- **GTM**
+  - ⬜ capsule set + 5 screenshots + trailer capture (generated)
+  - ⬜ in-game feedback link + bug-report path
+  - ⬜ demo-scope freeze flag
+  - ⬜ gamepad support (or "mouse required")
+  - 👤 Steam page live
+  - 👤 10+ cold playtests and survey
+  - 👤 devlog + GIFs posted
+  - 👤 ≥ 100 wishlists
